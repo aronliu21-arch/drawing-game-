@@ -449,9 +449,11 @@ function fitBoard() {
   const side = getComputedStyle(wrap).flexDirection === 'row';
   const toolsH = shown && !side ? tools.offsetHeight + 6 : 0;
   const toolsW = shown && side ? tools.offsetWidth + 6 : 0;
-  const portraitTall = matchMedia('(orientation: portrait) and (min-width: 600px)').matches;
+  const portrait = matchMedia('(orientation: portrait)').matches;
+  const phone = matchMedia('(max-width: 599px)').matches;
   const availW = wrap.clientWidth - toolsW;
-  const availH = portraitTall ? window.innerHeight * 0.55 - toolsH : wrap.clientHeight - toolsH;
+  // upright screens: the board takes the top part; the rest is guessing and chat
+  const availH = portrait ? window.innerHeight * (phone ? 0.5 : 0.55) - toolsH : wrap.clientHeight - toolsH;
   let w = Math.min(availW, (availH * 4) / 3);
   w = Math.max(160, Math.floor(w));
   box.style.width = w + 'px'; box.style.height = Math.floor((w * 3) / 4) + 'px';

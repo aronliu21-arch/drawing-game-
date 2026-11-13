@@ -32,7 +32,8 @@ const ALL = {};
   };
   const dad = await mk('dad', { width: 1280, height: 800 });
   const ipad = await mk('ipad', { width: 1180, height: 820 });
-  const phone = await mk('phone', { width: 844, height: 390 }, { isMobile: true, deviceScaleFactor: 1 });
+  // iPhone held upright (iPhone 17 size); a sideways check runs at the end
+  const phone = await mk('phone', { width: 402, height: 874 }, { isMobile: true, deviceScaleFactor: 1 });
 
   const setup = async (page, name, level, colorIdx) => {
     await page.fill('#name', name);
@@ -104,6 +105,15 @@ const ALL = {};
     await dp.mouse.move(box.x + 10, box.y + 10); await dp.mouse.down(); await dp.mouse.move(box.x + 100, box.y + 100, { steps: 5 }); await dp.mouse.up();
     await dp.click('#t-undo');
     await sleep(400);
+    const fits = async (p, n) => {
+      const r = await p.evaluate(() => {
+        const vw = innerWidth, vh = innerHeight, box = (s) => document.querySelector(s).getBoundingClientRect();
+        const b = box('#board'), g = box('#guess');
+        return { wide: document.documentElement.scrollWidth > vw + 1, board: b.left >= -1 && b.right <= vw + 1 && b.top >= 0 && b.bottom <= vh + 1 && b.width > 200, guess: g.bottom <= vh + 1 && g.width > 150, tools: [...document.querySelectorAll('#tools:not(.hidden) .tool')].every((t) => { const r = t.getBoundingClientRect(); return r.right <= vw + 1 && r.width >= 44; }) };
+      });
+      for (const [k, ok] of Object.entries(r)) if ((k === 'wide' && ok) || (k !== 'wide' && !ok)) throw new Error(`${n} layout problem: ${k}`);
+    };
+    await fits(phone, 'phone');
     if (drawer === 'phone') { await dp.screenshot({ path: `${OUT}/4b-phone-drawing.png` }); await dp.click('#t-color'); await dp.screenshot({ path: `${OUT}/4c-phone-palette.png` }); await dp.click('#palette button:nth-child(1)'); }
 
     const guessers = Object.entries(pages).filter(([n]) => n !== drawer);
@@ -143,6 +153,11 @@ const ALL = {};
   await ipad.waitForFunction(() => window.__test.state().phase === 'lobby');
   await phone.click('#btn-leave');
   await dad.waitForFunction(() => window.__test.state().players.length === 2, null, { timeout: 8000 });
+
+  // the same phone held sideways still works
+  await phone.setViewportSize({ width: 874, height: 402 });
+  await sleep(300);
+  await phone.screenshot({ path: `${OUT}/8-phone-sideways-lobby.png` });
 
   // iPad portrait layout check
   await ipad.setViewportSize({ width: 820, height: 1180 });
