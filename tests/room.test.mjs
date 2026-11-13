@@ -7,7 +7,7 @@ let passed = 0;
 const test = (name, fn) => { fn(); passed++; console.log('ok -', name); };
 
 // ---------- words ----------
-test('the word list has exactly 200 unique drawable words', () => {
+test('the Grade 1 list has exactly 200 unique short words', () => {
   const owner = new Map();
   for (const level of Object.keys(LEVELS)) {
     const list = WORDS[level];
@@ -15,6 +15,7 @@ test('the word list has exactly 200 unique drawable words', () => {
     assert.equal(new Set(list).size, 200, `${level} has duplicates`);
     for (const w of list) {
       assert.match(w, /^[a-z]+( [a-z]+)*$/, `bad spelling format: ${w}`);
+      assert.ok(w.length <= 5, `"${w}" is too long for Grade 1 (5 letters max)`);
       assert.ok(!owner.has(w), `"${w}" is in both ${owner.get(w)} and ${level}`);
       owner.set(w, level);
     }

@@ -4,7 +4,7 @@ A family drawing-and-guessing game. One player draws a word and everyone else ra
 
 ## How a game works
 
-1. Each player opens the game on their own device and types a name. Everyone draws from the same list of **200 Grade 1–2 picture words** (*frog*, *kite*, *snowman*, …) in `js/words.js`.
+1. Each player opens the game on their own device and types a name. Everyone draws from the same list of **200 Grade 1 picture words**, each 5 letters or fewer (*frog*, *kite*, *cake*, …) in `js/words.js`.
 2. One player taps **Create a private room** and gets a 4-digit room number and a QR code. Everyone else types the number or scans the code.
 3. The host picks the number of rounds (1–6) and the draw time (60–150 s), then taps **Start**.
 4. On each turn, the artist picks 1 of 5 words (🔊 reads a word aloud). Everyone else types guesses.
@@ -52,7 +52,7 @@ NODE_PATH=$(npm root -g) npm run e2e   # 3 browsers play a full game over the ho
 
 | File | What it does |
 |---|---|
-| `js/words.js` | The 200-word Grade 1–2 list (add more levels there; a level picker appears automatically) |
+| `js/words.js` | The 200-word Grade 1 list (add more levels there; a level picker appears automatically) |
 | `js/room.js` | The referee: turns, word choice, guess checking, hints, scoring. Runs on the host's device only |
 | `js/net.js` | Peer-to-peer (PeerJS) and home-relay connections |
 | `js/canvas.js` | Drawing board; replays the same operations on every device |

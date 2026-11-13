@@ -1,47 +1,41 @@
-// Word list: 200 drawable Grade 1–2 words. Everyone draws from this list.
-// (More levels can be added to LEVELS and WORDS; a level picker appears
-// on the home screen automatically when there is more than one.)
-// Rules for every list: each word can be drawn as a picture, it is spelled
-// with letters and spaces only, and no word appears in two lists.
-// tests/words.test.mjs checks all of this.
+// Word list: 200 Grade 1 picture words. Everyone draws from this list.
+// Rules (checked by tests/room.test.mjs): every word is easy to draw,
+// has 5 letters or fewer, uses letters only, and appears once.
+// More levels can be added to LEVELS and WORDS; a level picker then
+// appears on the home screen automatically.
 
 export const LEVELS = {
-  g12: { label: 'Grade 1–2 words', short: 'Gr 1–2', emoji: '🐣' },
+  // the key stays 'g12' so word history saved on devices keeps working
+  g12: { label: 'Grade 1 words', short: 'Gr 1', emoji: '🐣' },
 };
 
 export const WORDS = {
-  // Short, phonics-friendly picture words a 1st–2nd grader can read and spell.
   g12: [
     // animals
-    'cat', 'dog', 'pig', 'cow', 'hen', 'duck', 'fish', 'frog', 'bird', 'bee',
-    'ant', 'bug', 'fox', 'owl', 'bat', 'rat', 'cub', 'goat', 'horse', 'sheep',
-    'lion', 'bear', 'snake', 'snail', 'whale', 'shark', 'crab', 'worm', 'mouse', 'zebra',
-    'tiger', 'monkey', 'rabbit', 'turtle', 'chick', 'puppy', 'kitten', 'spider', 'camel', 'seal',
+    'cat', 'dog', 'pig', 'cow', 'hen', 'duck', 'fish', 'frog', 'bird', 'bee', 'ant', 'bug', 'fox',
+    'owl', 'bat', 'rat', 'goat', 'horse', 'sheep', 'lion', 'bear', 'snake', 'snail', 'whale',
+    'shark', 'crab', 'worm', 'mouse', 'zebra', 'tiger', 'chick', 'seal', 'deer', 'wolf', 'crow',
+    'moth', 'pony', 'puppy', 'bunny', 'lamb', 'toad', 'swan', 'camel', 'hippo',
     // food
-    'egg', 'cake', 'pie', 'jam', 'bun', 'corn', 'pear', 'apple', 'grape', 'lemon',
-    'plum', 'bread', 'milk', 'candy', 'pizza', 'cookie', 'carrot', 'banana', 'cheese', 'soup',
-    'peas', 'nut', 'ham', 'taco', 'donut',
+    'egg', 'cake', 'pie', 'bun', 'corn', 'pear', 'apple', 'grape', 'lemon', 'plum', 'bread', 'milk',
+    'candy', 'pizza', 'soup', 'taco', 'donut', 'melon', 'toast', 'fries',
     // things
-    'bed', 'cup', 'hat', 'box', 'bag', 'pen', 'map', 'mop', 'pot', 'pan',
-    'fan', 'jar', 'key', 'lamp', 'door', 'sock', 'shoe', 'coat', 'dress', 'shirt',
-    'bell', 'ball', 'kite', 'doll', 'drum', 'book', 'clock', 'chair', 'desk', 'bike',
-    'car', 'bus', 'van', 'ship', 'boat', 'truck', 'train', 'plane', 'rocket', 'robot',
-    'crown', 'ring', 'gift',
+    'bed', 'cup', 'hat', 'box', 'bag', 'pen', 'map', 'mop', 'pot', 'pan', 'fan', 'jar', 'key',
+    'lamp', 'door', 'sock', 'shoe', 'coat', 'dress', 'shirt', 'bell', 'ball', 'kite', 'doll',
+    'drum', 'book', 'clock', 'chair', 'desk', 'bike', 'car', 'bus', 'van', 'ship', 'boat', 'truck',
+    'train', 'plane', 'robot', 'crown', 'ring', 'gift', 'tent', 'flag', 'gate', 'nail', 'cap',
+    'cape', 'mask', 'wand', 'sled', 'swing', 'slide', 'tub', 'sink', 'mug', 'bowl', 'fork', 'spoon',
+    'plate', 'broom', 'brush', 'comb', 'glove', 'scarf', 'boot', 'belt', 'bow', 'paint', 'house',
+    'cone', 'net', 'rug', 'top', 'jet', 'sofa', 'vase', 'fence', 'bench', 'rope', 'lock', 'wheel',
+    'phone',
     // nature
-    'sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'tree', 'leaf', 'rock', 'hill',
-    'sand', 'pond', 'nest', 'rose', 'seed', 'web', 'log', 'stick', 'wave', 'fire',
-    'ice', 'rainbow',
+    'sun', 'moon', 'star', 'cloud', 'rain', 'snow', 'tree', 'leaf', 'rock', 'hill', 'sand', 'pond',
+    'nest', 'rose', 'seed', 'web', 'log', 'stick', 'wave', 'fire', 'ice', 'grass', 'plant', 'shell',
+    'bone', 'lake',
     // body
-    'hand', 'foot', 'nose', 'eye', 'ear', 'arm', 'leg', 'toe', 'tooth', 'head',
-    'lips',
-    // around the house and outside
-    'house', 'tent', 'flag', 'gate', 'nail', 'cap', 'cape', 'mask', 'wand', 'sled',
-    'swing', 'slide', 'tub', 'sink', 'mug', 'bowl', 'fork', 'spoon', 'plate', 'broom',
-    'brush', 'comb', 'glove', 'mitten', 'scarf', 'boot', 'belt', 'bow', 'crayon', 'paint',
+    'hand', 'foot', 'nose', 'eye', 'ear', 'arm', 'leg', 'toe', 'tooth', 'head', 'hair',
     // fun
-    'king', 'queen', 'baby', 'ghost', 'snowman', 'pumpkin', 'heart', 'jump', 'swim', 'sleep',
-    'clown', 'farm', 'barn', 'hive', 'shell', 'bone', 'igloo', 'ladder', 'castle', 'bridge',
-    'cone', 'bubble', 'balloon', 'button', 'zoo', 'park', 'pool', 'wagon', 'dinosaur',
+    'king', 'queen', 'baby', 'ghost', 'clown', 'farm', 'barn', 'hive', 'igloo', 'zoo', 'park',
+    'pool', 'heart', 'witch', 'fairy', 'wagon',
   ],
-
 };
