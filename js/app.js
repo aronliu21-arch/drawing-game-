@@ -28,6 +28,9 @@ if (!myId) { myId = Math.random().toString(36).slice(2, 10) + Date.now().toStrin
 // ---------------- profile ----------------
 let profiles = store.get('dd-profiles', []);
 let profile = store.get('dd-current', null) || { name: '', level: 'g12', color: COLORS[0] };
+// players saved when there were more word levels move to a level that still exists
+const fixLevel = (p) => { if (!LEVELS[p.level]) p.level = Object.keys(LEVELS)[0]; return p; };
+profiles.forEach(fixLevel); fixLevel(profile);
 
 function renderProfile() {
   $('#name').value = profile.name;
@@ -38,6 +41,7 @@ function renderProfile() {
     saved.append(b);
   }
   const lv = $('#levels'); lv.replaceChildren();
+  lv.parentElement.classList.toggle('hidden', Object.keys(LEVELS).length < 2);
   for (const [k, v] of Object.entries(LEVELS)) {
     const b = el('button', { type: 'button', className: profile.level === k ? 'on' : '' }, el('b', { textContent: v.emoji }), v.label);
     b.dataset.level = k;
@@ -231,7 +235,7 @@ function renderLobby() {
   }
   const ul = $('#lobby-players'); ul.replaceChildren();
   for (const p of state.players) {
-    const li = el('li', { className: p.id === myId ? 'me' : '' }, avatar(p), p.name + (p.id === state.hostId ? ' 👑' : ''), el('span', { className: 'lvl', textContent: LEVELS[p.level]?.short || '' }));
+    const li = el('li', { className: p.id === myId ? 'me' : '' }, avatar(p), p.name + (p.id === state.hostId ? ' 👑' : ''), el('span', { className: 'lvl', textContent: Object.keys(LEVELS).length > 1 ? LEVELS[p.level]?.short || '' : '' }));
     ul.append(li);
   }
   const amHost = state.hostId === myId;
@@ -489,7 +493,7 @@ function parentGate() {
     if (!list.length) body.append(el('p', { textContent: 'No players saved on this device yet.' }));
     list.forEach((p, i) => {
       const n = store.get(seenKey(p), []).length;
-      body.append(el('label', { className: 'chk' }, el('input', { type: 'checkbox', value: i }), `${p.name} (${LEVELS[p.level]?.short}, ${n} words drawn)`));
+      body.append(el('label', { className: 'chk' }, el('input', { type: 'checkbox', value: i }), `${p.name} (${n} words drawn)`));
     });
     body.append(el('p', { className: 'note', textContent: 'This clears the list of words already drawn, so they can come up again. Only on this device.' }),
       el('div', { className: 'row' }, el('button', { textContent: 'Cancel', type: 'button', onclick: close }), el('button', { className: 'primary', textContent: 'Reset selected', type: 'button', onclick: () => {

@@ -36,12 +36,12 @@ const ALL = {};
 
   const setup = async (page, name, level, colorIdx) => {
     await page.fill('#name', name);
-    await page.click(`#levels button[data-level="${level}"]`);
     await page.click(`#colors button:nth-child(${colorIdx})`);
   };
   await setup(dad, 'Dad', 'adult', 3);
   await setup(ipad, 'Kid A', 'g34', 1);
   await setup(phone, 'Kid B', 'g12', 2);
+  if (await dad.isVisible('#levels')) throw new Error('level picker should be hidden with one word list');
   await dad.screenshot({ path: `${OUT}/1-home.png` });
 
   await dad.click('#btn-create');
@@ -64,7 +64,7 @@ const ALL = {};
 
   await dad.click('#btn-start');
   const pages = { dad, ipad, phone };
-  const levelOf = { dad: 'adult', ipad: 'g34', phone: 'g12' };
+  const levelOf = { dad: 'g12', ipad: 'g12', phone: 'g12' };
   const { WORDS } = await import('../js/words.js');
 
   for (let turn = 0; turn < 3; turn++) {

@@ -4,13 +4,10 @@ A family drawing-and-guessing game. One player draws a word and everyone else ra
 
 ## How a game works
 
-1. Each player opens the game on their own device, types a name and picks **which words they draw**:
-   - 🐣 **Grade 1–2 words** (200): short picture words like *frog*, *kite*, *snowman*
-   - 🚀 **Grade 3–4 words** (200): trickier spelling like *octopus*, *lighthouse*, *hot air balloon*
-   - 🎩 **Grown-up words** (200): hard to draw but still guessable, like *periscope*, *jet lag*, *tug of war*
+1. Each player opens the game on their own device and types a name. Everyone draws from the same list of **200 Grade 1–2 picture words** (*frog*, *kite*, *snowman*, …) in `js/words.js`.
 2. One player taps **Create a private room** and gets a 4-digit room number and a QR code. Everyone else types the number or scans the code.
 3. The host picks the number of rounds (1–6) and the draw time (60–150 s), then taps **Start**.
-4. On each turn, the artist picks 1 of 3 words **from their own list** (🔊 reads a word aloud). Everyone else types guesses.
+4. On each turn, the artist picks 1 of 3 words (🔊 reads a word aloud). Everyone else types guesses.
    - Letter hints appear as the time runs down (first letter first, never more than 40% of the word).
    - Kid spellings count: 1 slip on 4–7 letter words and 2 slips on longer words (*elefant* → elephant). Words with 3 or fewer letters must be exact. A near miss shows "so close!" to the guesser only.
    - Faster guesses score more (20–100 points, +10 for the first correct guess). The artist gets +15 for each player who guesses it.
@@ -49,13 +46,13 @@ It prints two addresses: `http://localhost:8080` for the Mac and `http://<Mac's 
 ## Develop and test
 
 ```bash
-npm test                         # word lists + game rules (no browser)
+npm test                         # word list + game rules (no browser)
 NODE_PATH=$(npm root -g) npm run e2e   # 3 browsers play a full game over the home-Wi-Fi relay
 ```
 
 | File | What it does |
 |---|---|
-| `js/words.js` | The three 200-word lists |
+| `js/words.js` | The 200-word Grade 1–2 list (add more levels there; a level picker appears automatically) |
 | `js/room.js` | The referee: turns, word choice, guess checking, hints, scoring. Runs on the host's device only |
 | `js/net.js` | Peer-to-peer (PeerJS) and home-relay connections |
 | `js/canvas.js` | Drawing board; replays the same operations on every device |

@@ -7,7 +7,7 @@ let passed = 0;
 const test = (name, fn) => { fn(); passed++; console.log('ok -', name); };
 
 // ---------- words ----------
-test('each level has exactly 200 unique drawable words', () => {
+test('the word list has exactly 200 unique drawable words', () => {
   const owner = new Map();
   for (const level of Object.keys(LEVELS)) {
     const list = WORDS[level];
@@ -42,10 +42,16 @@ function setup(n = 3) {
   let t = 1000;
   const inbox = {};
   const room = new Room({ code: '1234', hostId: 'p0', now: () => t, rand: () => 0.1, emit: (to, m) => (inbox[to] ||= []).push(m) });
-  const levels = ['adult', 'g34', 'g12'];
+  const levels = ['g12', 'g12', 'g12'];
   for (let i = 0; i < n; i++) room.handle(`p${i}`, { t: 'hello', name: `P${i}`, color: '#7048e8', level: levels[i % 3], seen: [] });
   return { room, inbox, adv: (ms) => { t += ms; room.tick(); }, now: () => t, last: (id, type) => [...(inbox[id] || [])].reverse().find((m) => m.t === type) };
 }
+
+test('an old saved level falls back to Grade 1-2', () => {
+  const { room } = setup(1);
+  room.handle('x', { t: 'hello', name: 'Old', level: 'adult' });
+  assert.equal(room.players.get('x').level, 'g12');
+});
 
 test('only the host can start, and needs 2 players', () => {
   const { room, last } = setup(1);
@@ -59,11 +65,11 @@ test('only the host can start, and needs 2 players', () => {
   assert.equal(last('p0', 'choices').choices.length, 3);
 });
 
-test('drawer gets words from their own level; guessers never see the word', () => {
+test('drawer gets Grade 1-2 words; guessers never see the word', () => {
   const { room, inbox, last } = setup(3);
   room.handle('p0', { t: 'start' });
   const ch = last('p0', 'choices').choices;
-  for (const w of ch) assert.ok(WORDS.adult.includes(w));
+  for (const w of ch) assert.ok(WORDS.g12.includes(w));
   room.handle('p0', { t: 'pick', i: 1 });
   assert.equal(room.phase, 'draw');
   assert.equal(last('p0', 'state').word, ch[1]);
@@ -94,7 +100,7 @@ test('correct guesses score, the turn ends when all have guessed, rounds advance
   adv(REVEAL_MS);
   assert.equal(room.phase, 'choose');
   assert.equal(room.drawerId, 'p1');
-  for (const w of last('p1', 'choices').choices) assert.ok(WORDS.g34.includes(w));
+  for (const w of last('p1', 'choices').choices) assert.ok(WORDS.g12.includes(w));
 });
 
 test('hints reveal letters over time, timer ends turn, choose auto-picks', () => {
