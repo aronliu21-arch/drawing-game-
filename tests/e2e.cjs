@@ -101,6 +101,16 @@ const ALL = {};
     await dp.click('[data-tool="pen"]');
     await dp.click('#t-color'); await dp.click('#palette button:nth-child(1)');
     await dp.mouse.move(cx - r * 0.5, cy + r * 0.3); await dp.mouse.down(); await dp.mouse.move(cx, cy + r * 0.6, { steps: 8 }); await dp.mouse.move(cx + r * 0.5, cy + r * 0.3, { steps: 8 }); await dp.mouse.up();
+    // shapes: drag a star to size, tap to place a heart, check the live preview
+    await dp.click('#t-shape'); await dp.click('#shapes button[data-shape="star"]');
+    await dp.mouse.move(box.x + box.width * 0.06, box.y + box.height * 0.06); await dp.mouse.down();
+    await dp.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.25, { steps: 6 });
+    const previewInk = await dp.evaluate(() => { const d = document.querySelector('#preview').getContext('2d').getImageData(0, 0, 800, 600).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; });
+    if (!previewInk) throw new Error('no live preview while sizing a shape');
+    await dp.mouse.up();
+    await dp.click('#t-shape'); await dp.click('#shapes button[data-shape="heart"]');
+    await dp.mouse.click(box.x + box.width * 0.85, box.y + box.height * 0.2);
+    await dp.click('[data-tool="pen"]');
     // a stroke that gets undone
     await dp.mouse.move(box.x + 10, box.y + 10); await dp.mouse.down(); await dp.mouse.move(box.x + 100, box.y + 100, { steps: 5 }); await dp.mouse.up();
     await dp.click('#t-undo');
@@ -114,7 +124,7 @@ const ALL = {};
       for (const [k, ok] of Object.entries(r)) if ((k === 'wide' && ok) || (k !== 'wide' && !ok)) throw new Error(`${n} layout problem: ${k}`);
     };
     await fits(phone, 'phone');
-    if (drawer === 'phone') { await dp.screenshot({ path: `${OUT}/4b-phone-drawing.png` }); await dp.click('#t-color'); await dp.screenshot({ path: `${OUT}/4c-phone-palette.png` }); await dp.click('#palette button:nth-child(1)'); }
+    if (drawer === 'phone') { await dp.screenshot({ path: `${OUT}/4b-phone-drawing.png` }); await dp.click('#t-color'); await dp.screenshot({ path: `${OUT}/4c-phone-palette.png` }); await dp.click('#palette button:nth-child(1)'); await dp.click('#t-shape'); await dp.screenshot({ path: `${OUT}/4d-phone-shapes.png` }); await dp.click('#shapes button[data-shape="circle"]'); await dp.click('[data-tool="pen"]'); }
 
     const guessers = Object.entries(pages).filter(([n]) => n !== drawer);
     // everyone's board matches the drawer's pixels

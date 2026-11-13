@@ -4,6 +4,8 @@
 //   {t:'s', id, c, w, p:[x,y,...]}  start a stroke
 //   {t:'a', id, p:[x,y,...]}         add points to a stroke
 //   {t:'f', id, x, y, c}             paint-bucket fill
+//   {t:'sh', id, k, c, w, x1, y1, x2, y2}  shape (line, rect, circle, tri,
+//                                    star, heart) stretched over a box
 //   {t:'c', id}                      clear
 //   {t:'u'}                          undo the last stroke, fill or clear
 export const W = 800, H = 600;
@@ -32,7 +34,7 @@ export class Board {
   undo() {
     for (let i = this.ops.length - 1; i >= 0; i--) {
       const o = this.ops[i];
-      if (o.t === 's' || o.t === 'f' || o.t === 'c') {
+      if (o.t === 's' || o.t === 'f' || o.t === 'c' || o.t === 'sh') {
         const id = o.id;
         const keep = this.ops.filter((x) => x.id !== id);
         this.load(keep);
@@ -45,6 +47,7 @@ export class Board {
     const c = this.ctx;
     if (op.t === 'c') { this.paintWhite(); return; }
     if (op.t === 'f') { floodFill(c, Math.round(op.x), Math.round(op.y), op.c); return; }
+    if (op.t === 'sh') { strokeShape(c, op); return; }
     if (op.t === 's' || op.t === 'a') {
       const p = op.p || [];
       let prev = op.t === 'a' ? this.last.get(op.id) : null;
@@ -66,6 +69,45 @@ export class Board {
       if (p.length >= 2) this.last.set(op.id, [x0, y0, color, width]);
     }
   }
+}
+
+export const SHAPES = ['line', 'rect', 'circle', 'tri', 'star', 'heart'];
+
+// Outline of a shape stretched over the box from (x1,y1) to (x2,y2).
+export function shapePath(ctx, k, x1, y1, x2, y2) {
+  const l = Math.min(x1, x2), t = Math.min(y1, y2), w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+  const cx = l + w / 2, cy = t + h / 2;
+  ctx.beginPath();
+  if (k === 'line') { ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); return; }
+  if (k === 'rect') { ctx.rect(l, t, w, h); return; }
+  if (k === 'circle') { ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2); return; }
+  if (k === 'tri') { ctx.moveTo(cx, t); ctx.lineTo(l + w, t + h); ctx.lineTo(l, t + h); ctx.closePath(); return; }
+  if (k === 'star') {
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 0.45 : 1;
+      const px = cx + Math.cos(a) * (w / 2) * r, py = cy + Math.sin(a) * (h / 2) * r;
+      if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.closePath(); return;
+  }
+  if (k === 'heart') {
+    const X = (u) => l + u * w, Y = (v) => t + v * h;
+    ctx.moveTo(X(0.5), Y(0.28));
+    ctx.bezierCurveTo(X(0.5), Y(0.02), X(0), Y(0), X(0), Y(0.33));
+    ctx.bezierCurveTo(X(0), Y(0.62), X(0.38), Y(0.78), X(0.5), Y(1));
+    ctx.bezierCurveTo(X(0.62), Y(0.78), X(1), Y(0.62), X(1), Y(0.33));
+    ctx.bezierCurveTo(X(1), Y(0), X(0.5), Y(0.02), X(0.5), Y(0.28));
+    ctx.closePath();
+  }
+}
+
+export function strokeShape(ctx, op) {
+  if (!SHAPES.includes(op.k)) return;
+  ctx.save();
+  ctx.strokeStyle = op.c; ctx.lineWidth = op.w; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  shapePath(ctx, op.k, op.x1, op.y1, op.x2, op.y2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }

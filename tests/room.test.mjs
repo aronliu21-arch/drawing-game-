@@ -142,6 +142,10 @@ test('drawing ops relay to others, undo removes the last stroke', () => {
   assert.equal(room.ops.length, 3);
   room.handle('p0', { t: 'draw', ops: [{ t: 'u' }] });
   assert.equal(room.ops.length, 2);
+  room.handle('p0', { t: 'draw', ops: [{ t: 'sh', id: 'z', k: 'star', c: '#000000', w: 4, x1: 10, y1: 10, x2: 90, y2: 90 }] });
+  assert.equal(room.ops.length, 3);
+  room.handle('p0', { t: 'draw', ops: [{ t: 'u' }] });
+  assert.equal(room.ops.length, 2, 'undo removes the last shape');
   assert.deepEqual(last('p1', 'draw').ops, [{ t: 'u' }]);
 });
 

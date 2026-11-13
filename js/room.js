@@ -237,7 +237,7 @@ export class Room {
   undo() {
     for (let i = this.ops.length - 1; i >= 0; i--) {
       const o = this.ops[i];
-      if (o && (o.t === 's' || o.t === 'f' || o.t === 'c')) { const id = o.id; this.ops = this.ops.filter((x) => x.id !== id); return; }
+      if (o && (o.t === 's' || o.t === 'f' || o.t === 'c' || o.t === 'sh')) { const id = o.id; this.ops = this.ops.filter((x) => x.id !== id); return; }
     }
   }
 
