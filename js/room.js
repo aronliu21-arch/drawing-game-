@@ -4,6 +4,7 @@
 import { WORDS, LEVELS } from './words.js';
 
 export const MAX_PLAYERS = 8;
+export const CHOICES = 5; // words the artist chooses from each turn
 export const CHOOSE_MS = 15000;
 export const REVEAL_MS = 6000;
 export const MAX_OPS = 30000;
@@ -185,15 +186,15 @@ export class Room {
   pickChoices(drawer) {
     const list = this.words[drawer.level] || this.words.g12;
     let pool = list.filter((w) => !drawer.seen.has(w) && !this.used.has(w));
-    if (pool.length < 3) {
+    if (pool.length < CHOICES) {
       // this player has drawn every word on the list: start the list over
       drawer.seen.clear();
       this.emit(drawer.id, { t: 'seenReset', level: drawer.level });
       pool = list.filter((w) => !this.used.has(w));
-      if (pool.length < 3) pool = [...list];
+      if (pool.length < CHOICES) pool = [...list];
     }
     const out = [];
-    while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(this.rand() * pool.length), 1)[0]);
+    while (out.length < CHOICES && pool.length) out.push(pool.splice(Math.floor(this.rand() * pool.length), 1)[0]);
     return out;
   }
 
