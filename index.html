@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Doodle Dash">
+<meta name="theme-color" content="#1c7ed6">
+<title>Doodle Dash</title>
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<button id="btn-sound" class="sound-btn" aria-label="Sound on or off">🔊</button>
+
+<!-- HOME -->
+<section id="s-home" class="screen active">
+  <div class="home-wrap">
+    <h1 class="logo"><span>Doodle</span> <span>Dash</span> ✏️</h1>
+    <p class="tag">Draw it. Guess it. Win it!</p>
+
+    <div class="card">
+      <h2>Who's playing on this device?</h2>
+      <div id="saved" class="saved"></div>
+      <label class="field">Name
+        <input id="name" maxlength="16" autocomplete="off" autocapitalize="words" placeholder="Type your name">
+      </label>
+      <div class="field">Words I draw
+        <div id="levels" class="levels"></div>
+      </div>
+      <div class="field">My color
+        <div id="colors" class="colors"></div>
+      </div>
+    </div>
+
+    <div class="card actions">
+      <button id="btn-create" class="big primary">🏠 Create a private room</button>
+      <div class="or">or join with a room number</div>
+      <form id="join-form" class="join">
+        <input id="join-code" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="1234" autocomplete="off" aria-label="Room number">
+        <button class="big">Join ▶</button>
+      </form>
+      <p id="home-msg" class="msg" role="status"></p>
+    </div>
+
+    <button id="btn-reset" class="link">Reset word history (grown-ups)</button>
+    <p id="net-note" class="note"></p>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section id="s-lobby" class="screen">
+  <div class="lobby-wrap">
+    <div class="card code-card">
+      <div class="code-label">Room number</div>
+      <div id="lobby-code" class="code">----</div>
+      <div id="qr" class="qr"></div>
+      <p class="hint-text">On another device, open this game and type the number, or scan the code with the camera.</p>
+    </div>
+    <div class="card">
+      <h2>Players</h2>
+      <ul id="lobby-players" class="plist"></ul>
+      <div id="host-settings" class="settings">
+        <label>Rounds
+          <select id="set-rounds"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select>
+        </label>
+        <label>Draw time
+          <select id="set-time"><option value="60">60 s</option><option value="90" selected>90 s</option><option value="120">120 s</option><option value="150">150 s</option></select>
+        </label>
+        <button id="btn-start" class="big primary">Start game ▶</button>
+      </div>
+      <p id="lobby-wait" class="msg">Waiting for the host to start…</p>
+      <p id="lobby-msg" class="msg"></p>
+      <button id="btn-leave" class="link">Leave room</button>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="s-game" class="screen">
+  <div class="gbar">
+    <span id="g-round" class="round"></span>
+    <span id="g-hint" class="hint"></span>
+    <span id="g-timer" class="timer">0</span>
+  </div>
+  <aside id="g-players" class="gplayers"></aside>
+  <div id="board-wrap" class="board-wrap">
+    <div id="board-box" class="board-box">
+      <canvas id="board"></canvas>
+      <div id="overlay" class="overlay hidden"></div>
+    </div>
+    <div id="tools" class="tools">
+      <button data-tool="pen" class="tool on" aria-label="Pencil">✏️</button>
+      <button data-tool="eraser" class="tool" aria-label="Eraser">🧽</button>
+      <button data-tool="fill" class="tool" aria-label="Fill bucket">🪣</button>
+      <button id="t-size" class="tool" aria-label="Brush size"><i class="dot"></i></button>
+      <button id="t-color" class="tool" aria-label="Color"><i class="swatch"></i></button>
+      <button id="t-undo" class="tool" aria-label="Undo">↩️</button>
+      <button id="t-clear" class="tool" aria-label="Clear">🗑️</button>
+    </div>
+  </div>
+  <div class="chat">
+    <div id="chat-log" class="chat-log" aria-live="polite"></div>
+    <form id="guess-form" class="guess">
+      <input id="guess" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="60" placeholder="Type your guess">
+      <button>Go</button>
+    </form>
+  </div>
+  <div id="net-status" class="net-status hidden"></div>
+</section>
+
+<!-- GAME OVER -->
+<section id="s-over" class="screen">
+  <div class="over-wrap">
+    <h1 class="logo">🏆 Game over!</h1>
+    <div id="podium" class="podium"></div>
+    <ol id="final" class="final"></ol>
+    <button id="btn-again" class="big primary">Play again ▶</button>
+    <p id="over-wait" class="msg">Waiting for the host…</p>
+    <button id="btn-leave2" class="link">Leave room</button>
+  </div>
+</section>
+
+<div id="palette" class="palette hidden"></div>
+<div id="rotate" class="rotate">📱↻<br>Turn your phone sideways</div>
+<div id="modal" class="modal hidden"><div class="card" id="modal-body"></div></div>
+<div id="confetti" class="confetti"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
