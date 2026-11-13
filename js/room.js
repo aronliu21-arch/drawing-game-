@@ -5,6 +5,10 @@ import { WORDS, LEVELS } from './words.js';
 
 export const MAX_PLAYERS = 8;
 export const CHOICES = 5; // words the artist chooses from each turn
+// Scoring. Guessers: GUESS_MIN..GUESS_MAX by speed, +FIRST_BONUS for the first.
+// Artist: ARTIST_SHARE of every correct guesser's points, +ALL_BONUS when everyone gets it,
+// so drawing well pays about as much as guessing well.
+export const GUESS_MIN = 50, GUESS_MAX = 100, FIRST_BONUS = 10, ARTIST_SHARE = 0.6, ALL_BONUS = 25;
 export const CHOOSE_MS = 15000;
 export const REVEAL_MS = 6000;
 export const MAX_OPS = 30000;
@@ -255,17 +259,21 @@ export class Room {
       p.guessed = true;
       const ms = this.settings.drawTime * 1000;
       const frac = Math.max(0, (this.endsAt - this.now()) / ms);
-      const gain = 20 + Math.round(80 * frac) + (this.firstDone ? 0 : 10);
+      const gain = GUESS_MIN + Math.round((GUESS_MAX - GUESS_MIN) * frac) + (this.firstDone ? 0 : FIRST_BONUS);
       this.firstDone = true;
       p.score += gain;
       this.gains[p.id] = (this.gains[p.id] || 0) + gain;
       const drawer = this.players.get(this.drawerId);
-      if (drawer) { drawer.score += 15; this.gains[drawer.id] = (this.gains[drawer.id] || 0) + 15; }
+      const give = (pts) => { if (drawer) { drawer.score += pts; this.gains[drawer.id] = (this.gains[drawer.id] || 0) + pts; } };
+      give(Math.round(gain * ARTIST_SHARE));
       this.chat('*', 'correct', `${p.name} guessed the word!`, { from: p.id, name: p.name });
       this.emit(p.id, { t: 'you-got-it', word: this.word, gain });
       this.broadcastState();
       const guessers = this.connected().filter((q) => q.id !== this.drawerId);
-      if (guessers.length && guessers.every((q) => q.guessed)) this.endTurn('all');
+      if (guessers.length && guessers.every((q) => q.guessed)) {
+        if (drawer) { give(ALL_BONUS); this.chat('*', 'correct', `Everyone got it! Great drawing, ${drawer.name}! +${ALL_BONUS} bonus`); }
+        this.endTurn('all');
+      }
       return;
     }
     this.chat('*', 'guess', text, { from: p.id, name: p.name, color: p.color });

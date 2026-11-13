@@ -1,6 +1,6 @@
 // Unit tests for the room referee and the word lists. Run: node tests/room.test.mjs
 import assert from 'node:assert/strict';
-import { Room, checkGuess, maskWord, CHOOSE_MS, REVEAL_MS, CHOICES } from '../js/room.js';
+import { Room, checkGuess, maskWord, CHOOSE_MS, REVEAL_MS, CHOICES, ALL_BONUS } from '../js/room.js';
 import { WORDS, LEVELS } from '../js/words.js';
 
 let passed = 0;
@@ -100,7 +100,10 @@ test('correct guesses score, the turn ends when all have guessed, rounds advance
   room.handle('p2', { t: 'guess', text: word });
   assert.equal(room.phase, 'reveal');
   assert.equal(last('p1', 'state').lastWord, word);
-  assert.equal(room.players.get('p0').score, 30);
+  // p1: instant guess = 100 + 10 first → artist 66. p2: 10 s into 90 s = 50 + 44 = 94 → artist 56. Plus everyone-got-it bonus.
+  assert.equal(room.players.get('p1').score, 110);
+  assert.equal(room.players.get('p2').score, 94);
+  assert.equal(room.players.get('p0').score, 66 + 56 + ALL_BONUS);
   adv(REVEAL_MS);
   assert.equal(room.phase, 'choose');
   assert.equal(room.drawerId, 'p1');
@@ -130,6 +133,27 @@ test('game ends after the set rounds; play again resets to lobby', () => {
   room.handle('p0', { t: 'again' });
   assert.equal(room.phase, 'lobby');
   assert.equal(room.players.get('p1').score, 0);
+});
+
+test('scoring is balanced: drawing a turn pays about as much as guessing one', () => {
+  const { room, adv } = setup(3);
+  room.handle('p0', { t: 'start' });
+  room.handle('p0', { t: 'pick', i: 0 });
+  adv(30000); room.handle('p1', { t: 'guess', text: room.word });
+  adv(15000); room.handle('p2', { t: 'guess', text: room.word });
+  const g = room.gains;
+  const avgGuess = (g.p1 + g.p2) / 2;
+  assert.ok(g.p0 >= avgGuess * 0.9 && g.p0 <= avgGuess * 1.6, `artist ${g.p0} vs guessers ${g.p1}/${g.p2}`);
+  assert.ok(g.p2 >= 50, 'a slow correct guess still earns at least 50');
+});
+
+test('nobody guessing gives the artist nothing', () => {
+  const { room, adv } = setup(2);
+  room.handle('p0', { t: 'start' });
+  room.handle('p0', { t: 'pick', i: 0 });
+  adv(room.settings.drawTime * 1000);
+  assert.equal(room.phase, 'reveal');
+  assert.equal(room.players.get('p0').score, 0);
 });
 
 test('drawing ops relay to others, undo removes the last stroke', () => {
