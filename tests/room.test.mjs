@@ -1,6 +1,6 @@
 // Unit tests for the room referee and the word lists. Run: node tests/room.test.mjs
 import assert from 'node:assert/strict';
-import { Room, checkGuess, maskWord, CHOOSE_MS, REVEAL_MS } from '../js/room.js';
+import { Room, checkGuess, maskWord, CHOOSE_MS, REVEAL_MS, CHOICES } from '../js/room.js';
 import { WORDS, LEVELS } from '../js/words.js';
 
 let passed = 0;
@@ -62,7 +62,10 @@ test('only the host can start, and needs 2 players', () => {
   assert.equal(room.phase, 'lobby');
   room.handle('p0', { t: 'start' });
   assert.equal(room.phase, 'choose');
-  assert.equal(last('p0', 'choices').choices.length, 3);
+  assert.equal(CHOICES, 5);
+  const first = last('p0', 'choices').choices;
+  assert.equal(first.length, 5);
+  assert.equal(new Set(first).size, 5, 'choices must all be different');
 });
 
 test('drawer gets Grade 1-2 words; guessers never see the word', () => {
@@ -168,13 +171,13 @@ test('reconnecting player keeps score and gets the drawing', () => {
 
 test('seen words are skipped, then the list starts over', () => {
   let t = 0; const inbox = {};
-  const room = new Room({ code: '1', hostId: 'a', now: () => t, emit: (to, m) => (inbox[to] ||= []).push(m), words: { g12: ['one', 'two', 'three', 'four'] } });
+  const room = new Room({ code: '1', hostId: 'a', now: () => t, emit: (to, m) => (inbox[to] ||= []).push(m), words: { g12: ['one', 'two', 'three', 'four', 'five', 'six'] } });
   room.handle('a', { t: 'hello', name: 'A', level: 'g12', seen: ['one'] });
   room.handle('b', { t: 'hello', name: 'B', level: 'g12' });
   room.handle('a', { t: 'start' });
   assert.ok(!room.choices.includes('one'));
   room.handle('a', { t: 'hello', name: 'A', level: 'g12', seen: ['two', 'three'] });
-  assert.deepEqual(room.pickChoices(room.players.get('a')).length, 3);
+  assert.equal(room.pickChoices(room.players.get('a')).length, 5);
   assert.ok(inbox.a.some((m) => m.t === 'seenReset'));
 });
 

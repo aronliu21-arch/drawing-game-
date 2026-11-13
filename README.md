@@ -7,7 +7,7 @@ A family drawing-and-guessing game. One player draws a word and everyone else ra
 1. Each player opens the game on their own device and types a name. Everyone draws from the same list of **200 Grade 1–2 picture words** (*frog*, *kite*, *snowman*, …) in `js/words.js`.
 2. One player taps **Create a private room** and gets a 4-digit room number and a QR code. Everyone else types the number or scans the code.
 3. The host picks the number of rounds (1–6) and the draw time (60–150 s), then taps **Start**.
-4. On each turn, the artist picks 1 of 3 words (🔊 reads a word aloud). Everyone else types guesses.
+4. On each turn, the artist picks 1 of 5 words (🔊 reads a word aloud). Everyone else types guesses.
    - Letter hints appear as the time runs down (first letter first, never more than 40% of the word).
    - Kid spellings count: 1 slip on 4–7 letter words and 2 slips on longer words (*elefant* → elephant). Words with 3 or fewer letters must be exact. A near miss shows "so close!" to the guesser only.
    - Faster guesses score more (20–100 points, +10 for the first correct guess). The artist gets +15 for each player who guesses it.
