@@ -17,7 +17,7 @@ A family drawing-and-guessing game. One player draws a word and everyone else ra
 
 Drawing tools: pencil, eraser, paint bucket, 3 brush sizes, 16 colors, undo and clear.
 
-**No repeats:** each device remembers which words each saved player has already drawn and doesn't offer them again until that player's whole list is used up. **Reset word history (grown-ups)** on the home screen clears this behind a multiplication question.
+**No repeats:** once anyone draws a word, it isn't offered again: not for the rest of the room (including **Play again**), and not in later games, because every device in the room remembers the words drawn there. When nearly all 200 words are used, the list starts over. **Reset word history (grown-ups)** on the home screen clears a device's memory behind a multiplication question.
 
 ## Two ways to play together
 

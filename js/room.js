@@ -66,7 +66,7 @@ export class Room {
     this.phase = 'lobby';
     this.settings = { rounds: 3, drawTime: 90 };
     this.turnId = 0;
-    this.used = new Set();
+    this.used = new Set(); // words drawn in this room; never offered again while it is open
     this.resetTurnFields();
   }
 
@@ -155,7 +155,6 @@ export class Room {
     // drop players who left while in the lobby
     this.order = this.order.filter((id) => this.players.get(id)?.connected);
     for (const id of [...this.players.keys()]) if (!this.order.includes(id)) this.players.delete(id);
-    this.used.clear();
     this.round = 1;
     this.roundOrder = [...this.order];
     this.turnIdx = -1;
@@ -189,13 +188,19 @@ export class Room {
 
   pickChoices(drawer) {
     const list = this.words[drawer.level] || this.words.g12;
-    let pool = list.filter((w) => !drawer.seen.has(w) && !this.used.has(w));
+    // Never offer a word anyone has already drawn: in this room, or in an
+    // earlier game remembered on any player's device.
+    const drawnBefore = (w) => this.used.has(w) || [...this.players.values()].some((p) => p.seen.has(w));
+    let pool = list.filter((w) => !drawnBefore(w));
     if (pool.length < CHOICES) {
-      // this player has drawn every word on the list: start the list over
-      drawer.seen.clear();
-      this.emit(drawer.id, { t: 'seenReset', level: drawer.level });
+      // almost every word has been drawn: forget older games, keep this room's
+      for (const p of this.players.values()) { p.seen.clear(); this.emit(p.id, { t: 'seenReset', level: p.level }); }
       pool = list.filter((w) => !this.used.has(w));
-      if (pool.length < CHOICES) pool = [...list];
+    }
+    if (pool.length < CHOICES) {
+      // even this room has used them all: start the list over
+      this.used.clear();
+      pool = [...list];
     }
     const out = [];
     while (out.length < CHOICES && pool.length) out.push(pool.splice(Math.floor(this.rand() * pool.length), 1)[0]);
@@ -213,7 +218,10 @@ export class Room {
     const drawer = this.players.get(this.drawerId);
     this.word = word;
     this.used.add(word);
-    if (drawer) { drawer.seen.add(word); this.emit(drawer.id, { t: 'seen', word, level: drawer.level }); }
+    // Nobody gets this word again. The artist's device records it now; the
+    // others record it when it is revealed, so guessers never hold it early.
+    for (const p of this.players.values()) p.seen.add(word);
+    if (drawer) this.emit(drawer.id, { t: 'seen', word, level: drawer.level });
     this.phase = 'draw';
     const ms = this.settings.drawTime * 1000;
     this.startedAt = this.now();
@@ -285,6 +293,7 @@ export class Room {
     this.lastWord = this.word || (this.choices && this.choices[0]) || null;
     if (this.phase === 'choose') this.lastWord = null;
     this.endReason = reason;
+    if (this.lastWord) for (const p of this.players.values()) if (p.id !== this.drawerId) this.emit(p.id, { t: 'seen', word: this.lastWord, level: p.level });
     this.phase = 'reveal';
     this.endsAt = this.now() + REVEAL_MS;
     this.broadcastState();

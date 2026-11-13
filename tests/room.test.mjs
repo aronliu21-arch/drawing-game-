@@ -156,6 +156,42 @@ test('nobody guessing gives the artist nothing', () => {
   assert.equal(room.players.get('p0').score, 0);
 });
 
+test('a word someone has drawn is never offered again, even after play again', () => {
+  const { room, adv } = setup(3);
+  room.handle('p0', { t: 'settings', rounds: 6, drawTime: 30 });
+  room.handle('p0', { t: 'start' });
+  const drawn = [];
+  for (let game = 0; game < 2; game++) {
+    while (room.phase !== 'over') {
+      if (room.phase === 'choose') {
+        for (const w of room.choices) assert.ok(!drawn.includes(w), `"${w}" was offered again`);
+        room.handle(room.drawerId, { t: 'pick', i: 0 });
+        drawn.push(room.word);
+      }
+      adv(30000); adv(REVEAL_MS);
+    }
+    room.handle('p0', { t: 'again' });
+    room.handle('p0', { t: 'start' });
+  }
+  assert.equal(drawn.length, 36);
+  assert.equal(new Set(drawn).size, 36);
+});
+
+test("words from another player's earlier games are skipped, and every device records drawn words", () => {
+  let t = 0; const inbox = {};
+  const words = { g12: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'] };
+  const room = new Room({ code: '1', hostId: 'a', now: () => t, rand: () => 0, emit: (to, m) => (inbox[to] ||= []).push(m), words });
+  room.handle('a', { t: 'hello', name: 'A', level: 'g12' });
+  room.handle('b', { t: 'hello', name: 'B', level: 'g12', seen: ['one', 'two'] }); // B drew these last week
+  room.handle('a', { t: 'start' });
+  assert.ok(!room.choices.includes('one') && !room.choices.includes('two'));
+  room.handle('a', { t: 'pick', i: 0 });
+  const w = room.word;
+  assert.ok(!inbox.b.some((m) => m.t === 'seen'), 'guesser must not get the word before the reveal');
+  t += room.settings.drawTime * 1000; room.tick();
+  assert.ok(inbox.b.some((m) => m.t === 'seen' && m.word === w), 'guesser device should remember the drawn word after the reveal');
+});
+
 test('drawing ops relay to others, undo removes the last stroke', () => {
   const { room, last } = setup(2);
   room.handle('p0', { t: 'start' });
