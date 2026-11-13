@@ -168,9 +168,37 @@ button:disabled { opacity: .45; }
 .final { text-align: left; max-width: 360px; margin: 0 auto 18px; font-weight: 700; }
 .final li { padding: 4px 0; }
 
-.rotate { display: none; }
+/* phones held upright: board on top, guess box right under it (stays above
+   the keyboard), then a sideways strip of players, then the chat */
 @media (orientation: portrait) and (max-width: 599px) {
-  body.in-game .rotate { display: flex; position: fixed; inset: 0; z-index: 50; background: var(--blue); color: #fff; font-size: 1.6rem; font-weight: 900; align-items: center; justify-content: center; text-align: center; line-height: 1.6; }
+  #s-game {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas: "bar" "board" "guess" "players" "chat";
+  }
+  .gbar { padding: 2px 58px 2px 8px; gap: 6px; min-height: 46px; }
+  .round { font-size: .8rem; }
+  .hint { font-size: 1.15rem; letter-spacing: 2px; }
+  .timer { width: 40px; height: 40px; }
+  .chat { display: contents; }
+  .chat-log { grid-area: chat; background: #fff; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.06); font-size: .9rem; }
+  .guess { grid-area: guess; border-top: 0; padding: 0; }
+  .gplayers { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 6px; padding: 2px; scrollbar-width: none; }
+  .gp { flex: 1 1 0; min-width: 96px; padding: 4px 6px 4px 4px; gap: 4px; }
+  .gp .sc { font-size: .72rem; }
+  .gp .av { width: 28px; height: 28px; }
+  .gp .badge { font-size: .95rem; margin-left: 2px; }
+  .tools { gap: 4px; flex-wrap: nowrap; }
+  .tools .tool { min-width: 44px; min-height: 44px; font-size: 1.15rem; }
+  .overlay { gap: 6px; padding: 8px; }
+  .overlay h3 { font-size: 1.05rem; }
+  .overlay .word { font-size: 1.9rem; }
+  .gains { font-size: .85rem; }
+  .choices { gap: 6px; }
+  .choice { gap: 2px; }
+  .choice .pick { min-height: 46px; font-size: 1.05rem; padding: 0 12px; }
+  .choice .speak { min-width: 40px; min-height: 46px; font-size: 1rem; }
 }
 
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
