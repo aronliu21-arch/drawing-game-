@@ -5,6 +5,10 @@ import { WORDS, LEVELS } from './words.js';
 
 export const MAX_PLAYERS = 8;
 export const CHOICES = 5; // words the artist chooses from each turn
+// Scoring. Guessers: GUESS_MIN..GUESS_MAX by speed, +FIRST_BONUS for the first.
+// Artist: ARTIST_SHARE of every correct guesser's points, +ALL_BONUS when everyone gets it,
+// so drawing well pays about as much as guessing well.
+export const GUESS_MIN = 50, GUESS_MAX = 100, FIRST_BONUS = 10, ARTIST_SHARE = 0.6, ALL_BONUS = 25;
 export const CHOOSE_MS = 15000;
 export const REVEAL_MS = 6000;
 export const MAX_OPS = 30000;
@@ -62,7 +66,7 @@ export class Room {
     this.phase = 'lobby';
     this.settings = { rounds: 3, drawTime: 90 };
     this.turnId = 0;
-    this.used = new Set();
+    this.used = new Set(); // words drawn in this room; never offered again while it is open
     this.resetTurnFields();
   }
 
@@ -151,7 +155,6 @@ export class Room {
     // drop players who left while in the lobby
     this.order = this.order.filter((id) => this.players.get(id)?.connected);
     for (const id of [...this.players.keys()]) if (!this.order.includes(id)) this.players.delete(id);
-    this.used.clear();
     this.round = 1;
     this.roundOrder = [...this.order];
     this.turnIdx = -1;
@@ -185,13 +188,19 @@ export class Room {
 
   pickChoices(drawer) {
     const list = this.words[drawer.level] || this.words.g12;
-    let pool = list.filter((w) => !drawer.seen.has(w) && !this.used.has(w));
+    // Never offer a word anyone has already drawn: in this room, or in an
+    // earlier game remembered on any player's device.
+    const drawnBefore = (w) => this.used.has(w) || [...this.players.values()].some((p) => p.seen.has(w));
+    let pool = list.filter((w) => !drawnBefore(w));
     if (pool.length < CHOICES) {
-      // this player has drawn every word on the list: start the list over
-      drawer.seen.clear();
-      this.emit(drawer.id, { t: 'seenReset', level: drawer.level });
+      // almost every word has been drawn: forget older games, keep this room's
+      for (const p of this.players.values()) { p.seen.clear(); this.emit(p.id, { t: 'seenReset', level: p.level }); }
       pool = list.filter((w) => !this.used.has(w));
-      if (pool.length < CHOICES) pool = [...list];
+    }
+    if (pool.length < CHOICES) {
+      // even this room has used them all: start the list over
+      this.used.clear();
+      pool = [...list];
     }
     const out = [];
     while (out.length < CHOICES && pool.length) out.push(pool.splice(Math.floor(this.rand() * pool.length), 1)[0]);
@@ -209,7 +218,10 @@ export class Room {
     const drawer = this.players.get(this.drawerId);
     this.word = word;
     this.used.add(word);
-    if (drawer) { drawer.seen.add(word); this.emit(drawer.id, { t: 'seen', word, level: drawer.level }); }
+    // Nobody gets this word again. The artist's device records it now; the
+    // others record it when it is revealed, so guessers never hold it early.
+    for (const p of this.players.values()) p.seen.add(word);
+    if (drawer) this.emit(drawer.id, { t: 'seen', word, level: drawer.level });
     this.phase = 'draw';
     const ms = this.settings.drawTime * 1000;
     this.startedAt = this.now();
@@ -255,17 +267,21 @@ export class Room {
       p.guessed = true;
       const ms = this.settings.drawTime * 1000;
       const frac = Math.max(0, (this.endsAt - this.now()) / ms);
-      const gain = 20 + Math.round(80 * frac) + (this.firstDone ? 0 : 10);
+      const gain = GUESS_MIN + Math.round((GUESS_MAX - GUESS_MIN) * frac) + (this.firstDone ? 0 : FIRST_BONUS);
       this.firstDone = true;
       p.score += gain;
       this.gains[p.id] = (this.gains[p.id] || 0) + gain;
       const drawer = this.players.get(this.drawerId);
-      if (drawer) { drawer.score += 15; this.gains[drawer.id] = (this.gains[drawer.id] || 0) + 15; }
+      const give = (pts) => { if (drawer) { drawer.score += pts; this.gains[drawer.id] = (this.gains[drawer.id] || 0) + pts; } };
+      give(Math.round(gain * ARTIST_SHARE));
       this.chat('*', 'correct', `${p.name} guessed the word!`, { from: p.id, name: p.name });
       this.emit(p.id, { t: 'you-got-it', word: this.word, gain });
       this.broadcastState();
       const guessers = this.connected().filter((q) => q.id !== this.drawerId);
-      if (guessers.length && guessers.every((q) => q.guessed)) this.endTurn('all');
+      if (guessers.length && guessers.every((q) => q.guessed)) {
+        if (drawer) { give(ALL_BONUS); this.chat('*', 'correct', `Everyone got it! Great drawing, ${drawer.name}! +${ALL_BONUS} bonus`); }
+        this.endTurn('all');
+      }
       return;
     }
     this.chat('*', 'guess', text, { from: p.id, name: p.name, color: p.color });
@@ -277,6 +293,7 @@ export class Room {
     this.lastWord = this.word || (this.choices && this.choices[0]) || null;
     if (this.phase === 'choose') this.lastWord = null;
     this.endReason = reason;
+    if (this.lastWord) for (const p of this.players.values()) if (p.id !== this.drawerId) this.emit(p.id, { t: 'seen', word: this.lastWord, level: p.level });
     this.phase = 'reveal';
     this.endsAt = this.now() + REVEAL_MS;
     this.broadcastState();

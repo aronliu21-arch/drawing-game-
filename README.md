@@ -10,13 +10,14 @@ A family drawing-and-guessing game. One player draws a word and everyone else ra
 4. On each turn, the artist picks 1 of 5 words (🔊 reads a word aloud). Everyone else types guesses.
    - Letter hints appear as the time runs down (first letter first, never more than 40% of the word).
    - Kid spellings count: 1 slip on 4–7 letter words and 2 slips on longer words (*elefant* → elephant). Words with 3 or fewer letters must be exact. A near miss shows "so close!" to the guesser only.
-   - Faster guesses score more (20–100 points, +10 for the first correct guess). The artist gets +15 for each player who guesses it.
+   - Guessers score 50–100 points (faster = more), +10 for the first correct guess.
+   - The artist earns 60% of every correct guesser's points, plus a +25 bonus when everyone gets it, so a good drawing pays about as much as a good guess.
    - Players who already know the word can only chat with each other, so nobody spoils it.
 5. After the last round, a podium shows the winners. **Play again** keeps everyone in the room.
 
 Drawing tools: pencil, eraser, paint bucket, 3 brush sizes, 16 colors, undo and clear.
 
-**No repeats:** each device remembers which words each saved player has already drawn and doesn't offer them again until that player's whole list is used up. **Reset word history (grown-ups)** on the home screen clears this behind a multiplication question.
+**No repeats:** once anyone draws a word, it isn't offered again: not for the rest of the room (including **Play again**), and not in later games, because every device in the room remembers the words drawn there. When nearly all 200 words are used, the list starts over. **Reset word history (grown-ups)** on the home screen clears a device's memory behind a multiplication question.
 
 ## Two ways to play together
 
