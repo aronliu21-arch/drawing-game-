@@ -1,0 +1,10 @@
+{
+  "name": "doodle-dash",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "test": "node tests/room.test.mjs",
+    "e2e": "node tests/e2e.cjs"
+  }
+}

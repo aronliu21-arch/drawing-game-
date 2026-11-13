@@ -1,0 +1,1 @@
+{ "name": "Doodle Dash", "short_name": "Doodle Dash", "start_url": "./", "display": "standalone", "background_color": "#e7f5ff", "theme_color": "#1c7ed6", "icons": [{ "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }
