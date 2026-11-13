@@ -1,6 +1,6 @@
 import { Room } from './room.js';
 import { LEVELS } from './words.js';
-import { Board, W, H } from './canvas.js';
+import { Board, W, H, SHAPES, strokeShape } from './canvas.js';
 import { detectMode, makeNet } from './net.js';
 import { sfx, say, unlock, isMuted, setMuted } from './audio.js';
 import qrcode from '../vendor/qrcode.mjs';
@@ -201,7 +201,7 @@ function onState(s) {
   const prev = state;
   state = s;
   deadline = performance.now() + (s.left || 0);
-  if (!prev || prev.turnId !== s.turnId) { board.reset(); myWord = null; if (s.phase !== 'choose' || s.drawerId !== myId) choices = null; closePalette(); }
+  if (!prev || prev.turnId !== s.turnId) { board.reset(); draft = null; clearPreview(); myWord = null; if (s.phase !== 'choose' || s.drawerId !== myId) choices = null; closePalette(); }
   if (s.word) myWord = s.word;
   if (s.phase !== 'choose') choices = null;
 
@@ -380,6 +380,31 @@ $('#guess-form').addEventListener('submit', (e) => {
 // ---------------- drawing ----------------
 let tool = 'pen', color = '#000000', sizeIdx = 1, opSeq = 0;
 let outbox = [], current = null;
+let shapeKind = 'circle', draft = null;
+const SHAPE_NAMES = { line: 'Line', rect: 'Square', circle: 'Circle', tri: 'Triangle', star: 'Star', heart: 'Heart' };
+const DEFAULT_SHAPE = 120; // size of a shape placed with a quick tap
+const pv = $('#preview'); pv.width = W; pv.height = H;
+const pctx = pv.getContext('2d');
+const clearPreview = () => pctx.clearRect(0, 0, W, H);
+function shapeIcon(k) {
+  const c = document.createElement('canvas'); c.width = c.height = 56;
+  const g = c.getContext('2d');
+  g.translate(0, 0);
+  strokeShape(g, { k, c: '#1b2a3a', w: 5, x1: 8, y1: k === 'line' ? 48 : 8, x2: 48, y2: k === 'line' ? 8 : 48 });
+  c.style.width = c.style.height = '28px';
+  return c;
+}
+// the shape a drag (or a quick tap) makes
+function shapeOp(d) {
+  let { x1, y1, x2, y2 } = d;
+  if (Math.abs(x2 - x1) < 10 && Math.abs(y2 - y1) < 10) {
+    const r = DEFAULT_SHAPE / 2;
+    if (d.k === 'line') { x1 -= r; x2 = x1 + DEFAULT_SHAPE; y2 = y1; }
+    else { x2 = x1 + r; y2 = y1 + r; x1 -= r; y1 -= r; }
+  }
+  const cl = (v, m) => Math.round(Math.max(0, Math.min(m, v)) * 10) / 10;
+  return { t: 'sh', id: d.id, k: d.k, c: d.c, w: d.w, x1: cl(x1, W), y1: cl(y1, H), x2: cl(x2, W), y2: cl(y2, H) };
+}
 const newId = () => myId.slice(0, 4) + (++opSeq).toString(36);
 
 function queue(op) { outbox.push(op); }
@@ -397,6 +422,12 @@ cv.addEventListener('pointerdown', (e) => {
   const [x, y] = toBoard(e);
   if (tool === 'fill') { const op = { t: 'f', id: newId(), x: Math.round(x), y: Math.round(y), c: color }; board.apply(op); queue(op); return; }
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  if (tool === 'shape') {
+    // press and drag to set the shape's size; it is placed when the finger lifts
+    draft = { id: newId(), k: shapeKind, c: color, w: SIZES[sizeIdx], x1: x, y1: y, x2: x, y2: y, pointer: e.pointerId };
+    clearPreview(); strokeShape(pctx, shapeOp(draft));
+    return;
+  }
   const c = tool === 'eraser' ? '#ffffff' : color;
   const w = tool === 'eraser' ? SIZES[sizeIdx] * 2 : SIZES[sizeIdx];
   current = { id: newId(), x, y, pointer: e.pointerId };
@@ -404,6 +435,12 @@ cv.addEventListener('pointerdown', (e) => {
   board.apply(op); queue(op);
 });
 cv.addEventListener('pointermove', (e) => {
+  if (draft && e.pointerId === draft.pointer) {
+    if (!canDraw()) { draft = null; clearPreview(); return; }
+    [draft.x2, draft.y2] = toBoard(e);
+    clearPreview(); strokeShape(pctx, shapeOp(draft));
+    return;
+  }
   if (!current || e.pointerId !== current.pointer || !canDraw()) return;
   const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
   const pts = [];
@@ -419,24 +456,48 @@ cv.addEventListener('pointermove', (e) => {
   else queue({ t: 'a', id: current.id, p: [...pts] });
 });
 const endStroke = (e) => { if (current && e.pointerId === current.pointer) current = null; };
-cv.addEventListener('pointerup', endStroke);
-cv.addEventListener('pointercancel', endStroke);
+cv.addEventListener('pointerup', (e) => {
+  endStroke(e);
+  if (draft && e.pointerId === draft.pointer) {
+    const op = shapeOp(draft);
+    draft = null; clearPreview();
+    if (canDraw()) { board.apply(op); queue(op); }
+  }
+});
+cv.addEventListener('pointercancel', (e) => { endStroke(e); if (draft && e.pointerId === draft.pointer) { draft = null; clearPreview(); } });
 
+function setTool(t) { tool = t; for (const x of document.querySelectorAll('[data-tool]')) x.classList.toggle('on', x.dataset.tool === t); }
 for (const b of document.querySelectorAll('[data-tool]')) {
-  b.onclick = () => { tool = b.dataset.tool; for (const x of document.querySelectorAll('[data-tool]')) x.classList.toggle('on', x === b); closePalette(); };
+  b.onclick = () => {
+    const wasOpen = !$('#shapes').classList.contains('hidden');
+    setTool(b.dataset.tool); closePalette();
+    if (b.dataset.tool === 'shape' && !wasOpen) $('#shapes').classList.remove('hidden');
+  };
 }
+function paintShapes() {
+  $('#t-shape').replaceChildren(shapeIcon(shapeKind));
+  $('#t-shape').setAttribute('aria-label', 'Shapes: ' + SHAPE_NAMES[shapeKind]);
+  for (const b of $('#shapes').children) b.classList.toggle('on', b.dataset.shape === shapeKind);
+}
+for (const k of SHAPES) {
+  const b = el('button', { type: 'button' }); b.dataset.shape = k; b.setAttribute('aria-label', SHAPE_NAMES[k]);
+  b.append(shapeIcon(k));
+  b.onclick = () => { shapeKind = k; setTool('shape'); paintShapes(); closePalette(); };
+  $('#shapes').append(b);
+}
+paintShapes();
 function paintToolIcons() {
   const dot = $('#t-size .dot'); const s = [8, 14, 22][sizeIdx]; dot.style.width = dot.style.height = s + 'px';
   $('#t-color .swatch').style.background = color;
 }
 $('#t-size').onclick = () => { sizeIdx = (sizeIdx + 1) % SIZES.length; paintToolIcons(); };
-$('#t-color').onclick = () => { const p = $('#palette'); p.classList.toggle('hidden'); };
+$('#t-color').onclick = () => { const open = $('#palette').classList.contains('hidden'); closePalette(); if (open) $('#palette').classList.remove('hidden'); };
 $('#t-undo').onclick = () => { if (!canDraw()) return; const op = { t: 'u' }; board.apply(op); queue(op); };
 $('#t-clear').onclick = () => { if (!canDraw()) return; const op = { t: 'c', id: newId() }; board.apply(op); queue(op); };
-function closePalette() { $('#palette').classList.add('hidden'); }
+function closePalette() { $('#palette').classList.add('hidden'); $('#shapes').classList.add('hidden'); }
 for (const c of PALETTE) {
   const b = el('button', { type: 'button' }); b.style.background = c; b.setAttribute('aria-label', 'paint ' + c);
-  b.onclick = () => { color = c; if (tool === 'eraser') { tool = 'pen'; for (const x of document.querySelectorAll('[data-tool]')) x.classList.toggle('on', x.dataset.tool === 'pen'); } paintToolIcons(); closePalette(); };
+  b.onclick = () => { color = c; if (tool === 'eraser') setTool('pen'); paintToolIcons(); closePalette(); };
   $('#palette').append(b);
 }
 paintToolIcons();
