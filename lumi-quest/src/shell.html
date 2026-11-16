@@ -1,0 +1,63 @@
+<div id="wrap">
+  <div id="stage">
+    <canvas id="cv" aria-label="Lumi Quest game"></canvas>
+
+    <div id="title">
+      <button id="btnStart" class="big start">▶ Tap to start</button>
+      <div id="menu" hidden>
+        <p class="who">Who is playing?</p>
+        <div id="profiles"></div>
+        <div class="titlebtns">
+          <button id="btnReset" class="ghost">Reset records</button>
+          <button id="btnSound2" class="ghost" aria-label="Sound">🔊</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="creator" hidden>
+      <h2 id="crName"></h2>
+      <div class="crsec"><h3>Hero class</h3><div id="crClass" class="opts"></div></div>
+      <div class="crsec two"><div><h3>Tunic</h3><div id="crColor" class="sws"></div></div><div><h3>Cape</h3><div id="crCape" class="sws"></div></div></div>
+      <div class="crsec"><h3>First Lumi friend</h3><div id="crLumi" class="opts"></div></div>
+      <button id="btnBegin" class="big">Begin the adventure ▶</button>
+    </div>
+
+    <div id="hud" hidden>
+      <div class="chip">
+        <b id="hudName"></b>
+        <div class="bar hp"><i id="hudHP"></i><span id="hudHPt"></span></div>
+        <div class="bar xp"><i id="hudXP"></i></div>
+      </div>
+      <div id="hudBtns">
+        <span class="stat">🪙 <b id="hudGold">0</b></span>
+        <span class="stat">◆ <b id="hudCrys">0/5</b></span>
+        <button id="btnBag" aria-label="Bag">🎒<small>Bag</small></button>
+        <button id="btnTeam" aria-label="Team">🐾<small>Team</small></button>
+        <button id="btnQuest" aria-label="Quest">📜<small>Quest</small></button>
+        <button id="btnSound" aria-label="Sound">🔊</button>
+        <button id="btnExit" aria-label="Exit">🚪<small>Exit</small></button>
+      </div>
+    </div>
+
+    <div id="battle" hidden>
+      <div id="bLog"></div>
+      <div id="bMoves"></div>
+    </div>
+
+    <div id="question" hidden>
+      <div id="qCard">
+        <div class="qhead"><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
+        <div id="qBigWrap"><div id="qBig" hidden></div><div id="qSub" hidden></div></div>
+        <div id="qText"></div>
+        <div id="qChoices"></div>
+        <div id="qWhy" hidden></div>
+        <button id="qNext" class="big" hidden>Continue ▶</button>
+      </div>
+    </div>
+
+    <div id="dialog" hidden><b id="dlgWho"></b><p id="dlgText"></p><span class="more">▶</span></div>
+    <div id="panel" hidden><div id="panelCard"><button id="panelClose" aria-label="Close">✕</button><div id="panelBody"></div></div></div>
+    <div id="toast"></div>
+    <div id="rotate" hidden><div>📱↻<p>Turn your phone sideways</p></div></div>
+  </div>
+</div>

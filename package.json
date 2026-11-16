@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.mjs",
-    "test": "node tests/room.test.mjs",
+    "test": "node tests/room.test.mjs && node lumi-quest/tests/check.cjs",
     "e2e": "node tests/e2e.cjs"
   }
 }

@@ -28,6 +28,7 @@ jobs:
         run: |
           mkdir _site
           cp -r index.html manifest.webmanifest css js vendor icons _site/
+          mkdir _site/lumi-quest && cp lumi-quest/index.html _site/lumi-quest/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
       - id: deployment

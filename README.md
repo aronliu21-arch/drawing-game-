@@ -59,3 +59,34 @@ NODE_PATH=$(npm root -g) npm run e2e   # 3 browsers play a full game over the ho
 | `js/canvas.js` | Drawing board; replays the same operations on every device |
 | `js/app.js` | Screens, drawing input, chat |
 | `server/server.mjs` | Home-Wi-Fi server (static files + message relay) |
+
+---
+
+# Lumi Quest 🏮 (in `lumi-quest/`)
+
+A single-player RPG for Nora and Lucas. Explore six lands, capture and train creatures called Lumis, and clear King Mumble's Fog. Every battle move is powered by a question, and each land has its own subject and question style:
+
+| Land | Subject | Question style |
+|---|---|---|
+| Numberwood | Maths | Number Duel (four choices) |
+| Coral Cove | Science | Fact or Fib (true or false, plus choices) |
+| Atlas Peaks | Geography | Map Quest (four choices) |
+| Clockwork Canyon | Logic | Pattern Lock (sequences, tap-in-order, odd one out) |
+| Lantern Isle | Chinese | Lantern Match (characters with zhuyin) |
+| Fog Citadel | All of the above | Final battle |
+
+It is one self-contained page (`lumi-quest/index.html`): canvas art, synthesized sound, no image or audio files. Progress saves per kid, per device, in `localStorage`. After merging to `main` it is served at `https://<user>.github.io/drawing-game-/lumi-quest/`.
+
+```bash
+node lumi-quest/build.mjs          # rebuild index.html after editing lumi-quest/src/
+node lumi-quest/tests/check.cjs    # question and map checks (also part of npm test)
+```
+
+| File | What it does |
+|---|---|
+| `lumi-quest/src/questions.js` | Question generators (maths, logic) and banks (science, geography, Chinese), per kid |
+| `lumi-quest/src/data.js` | Story, maps, Lumis, weapons, armour |
+| `lumi-quest/src/art.js` | All drawing: heroes, Lumis, Fog creatures, tiles |
+| `lumi-quest/src/world.js` | Walking, treasure, villagers, shop, teleport gate |
+| `lumi-quest/src/battle.js` | Battles and the question screen |
+| `lumi-quest/src/main.js` | Title, intro, hero creator, parent gate, main loop, `window.__test` hook |
