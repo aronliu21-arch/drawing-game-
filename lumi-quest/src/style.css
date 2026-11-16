@@ -25,13 +25,13 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 /* title */
 #title { position: absolute; inset: 0; pointer-events: none; }
 #title > * { pointer-events: auto; }
-.start { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); font-size: 32px; animation: pulse 1.2s ease-in-out infinite; }
+.start { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); font-size: 40px; display: inline-flex; align-items: center; gap: 10px; animation: pulse 1.2s ease-in-out infinite; }
 .start:active { transform: translateX(-50%) translateY(4px); }
 @keyframes pulse { 50% { scale: 1.06; } }
-#menu { position: absolute; left: 0; right: 0; top: 178px; text-align: center; }
-.who { font: 400 26px var(--font-d); color: #fff; margin: 0 0 8px; text-shadow: 0 3px 0 var(--ink); }
+#menu { position: absolute; left: 0; right: 0; top: 168px; text-align: center; }
+.who { font: 400 38px var(--font-d); color: #fff; margin: 0 0 8px; text-shadow: 0 3px 0 var(--ink); }
 #profiles { display: flex; gap: 40px; justify-content: center; }
-.pcard { width: 220px; background: var(--panel); border: 5px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 8px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pcard { width: 250px; background: var(--panel); border: 5px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 8px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pcard:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--ink); }
 .pcard b { font: 400 26px var(--font-d); color: #fff; border-radius: 12px; padding: 2px 22px; border: 3px solid var(--ink); }
 .pcard small { font-weight: 800; color: var(--muted); font-size: 14px; }
@@ -164,3 +164,15 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 #rotate { position: absolute; inset: 0; background: rgba(21, 19, 31, .92); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 90px; z-index: 20; }
 #rotate p { font: 400 44px var(--font-d); margin: 10px 0 0; }
 @media (prefers-reduced-motion: reduce) { .start, .more { animation: none; } #qCard.shake { animation: none; } }
+
+/* Chinese with zhuyin to the right of each character */
+.zh { display: inline-flex; align-items: center; font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", "Noto Sans CJK TC", sans-serif; font-weight: 900; }
+.zc { display: inline-flex; align-items: center; line-height: 1.1; }
+.zy { display: inline-flex; flex-direction: column; justify-content: center; font-size: .38em; line-height: 1; margin-left: .1em; font-weight: 700; }
+.zy span { display: block; }
+.zt { font-size: .38em; font-weight: 700; align-self: flex-end; margin: 0 .2em .45em -.05em; min-width: .55em; }
+.pcard small .zh { font-size: 24px; color: var(--text); }
+.pcard small { display: flex; align-items: center; justify-content: center; gap: 4px; }
+#btnReset .zh { font-size: 24px; }
+#qFace { width: 72px; height: 72px; flex: none; border-radius: 50%; background: #e5dbff; border: 3px solid var(--ink); margin: -4px 0; }
+#question:not([hidden]) ~ #toast { display: none; }

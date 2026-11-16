@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const dir = dirname(fileURLToPath(import.meta.url));
 const src = f => readFileSync(join(dir, 'src', f), 'utf8');
 const js = ['questions.js', 'data.js', 'art.js', 'audio.js', 'core.js', 'world.js', 'battle.js', 'main.js'].map(src).join('\n');
-const head = `<title>Lumi Quest</title>
+const head = `<title>光靈大冒險</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
 <style>
 ${src('style.css')}</style>`;

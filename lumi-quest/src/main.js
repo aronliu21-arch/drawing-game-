@@ -4,7 +4,8 @@ G.intro = { state: 'wait', t: 0 };
 
 // ---------- title ----------
 function profileCards() {
-  $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `Level ${s.lv} · ${s.crystals.length}/5 crystals${s.won ? ' · 🏆' : ''}` : 'New adventure'}</small></button>`; }).join('');
+  $('whoText').innerHTML = zh(ZT.who); $('btnReset').innerHTML = zh(ZT.reset);
+  $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `${zh(ZT.level)} ${s.lv} · ${zh(ZT.crystal)} ${s.crystals.length}/5${s.won ? ' 🏆' : ''}` : zh(ZT.fresh)}</small></button>`; }).join('');
   drawMinis($('profiles'));
   $('profiles').querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => pickKid(b.dataset.kid)));
 }
@@ -77,13 +78,43 @@ function lantern(c, x, y, s, lit, crack) {
   if (crack) { c.strokeStyle = '#15131f'; c.lineWidth = 3; c.beginPath(); c.moveTo(-10, -70); c.lineTo(4, -48); c.lineTo(-6, -34); c.lineTo(8, -10); c.stroke(); }
   c.restore();
 }
-function caption(c, text) { c.font = `400 26px ${FONT_D}`; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = '#15131f'; c.strokeText(text, W / 2, 500); c.fillStyle = '#fff'; c.fillText(text, W / 2, 500); }
+function caption(c, pairs) { zhDraw(c, pairs, W / 2, 506, 34, '#fff', [['#15131f', 7]]); }
+// ---------- Chinese text with zhuyin beside each character ----------
+const ZT = {
+  title: [['光', 'ㄍㄨㄤ'], ['靈', 'ㄌㄧㄥˊ'], ['大', 'ㄉㄚˋ'], ['冒', 'ㄇㄠˋ'], ['險', 'ㄒㄧㄢˇ']],
+  sub: [['找', 'ㄓㄠˇ'], ['回', 'ㄏㄨㄟˊ'], ['知', 'ㄓ'], ['識', 'ㄕˋ'], ['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ']],
+  start: [['開', 'ㄎㄞ'], ['始', 'ㄕˇ']],
+  who: [['誰', 'ㄕㄟˊ'], ['要', 'ㄧㄠˋ'], ['玩', 'ㄨㄢˊ'], ['？', '']],
+  fresh: [['新', 'ㄒㄧㄣ'], ['冒', 'ㄇㄠˋ'], ['險', 'ㄒㄧㄢˇ']],
+  level: [['等', 'ㄉㄥˇ'], ['級', 'ㄐㄧˊ']],
+  crystal: [['水', 'ㄕㄨㄟˇ'], ['晶', 'ㄐㄧㄥ']],
+  reset: [['重', 'ㄔㄨㄥˊ'], ['設', 'ㄕㄜˋ'], ['紀', 'ㄐㄧˋ'], ['錄', 'ㄌㄨˋ']],
+  cap1: [['很', 'ㄏㄣˇ'], ['久', 'ㄐㄧㄡˇ'], ['以', 'ㄧˇ'], ['前', 'ㄑㄧㄢˊ'], ['，', ''], ['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ'], ['照', 'ㄓㄠˋ'], ['亮', 'ㄌㄧㄤˋ'], ['大', 'ㄉㄚˋ'], ['地', 'ㄉㄧˋ']],
+  cap2: [['迷', 'ㄇㄧˊ'], ['霧', 'ㄨˋ'], ['大', 'ㄉㄚˋ'], ['王', 'ㄨㄤˊ'], ['出', 'ㄔㄨ'], ['現', 'ㄒㄧㄢˋ'], ['！', '']],
+  cap3: [['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ'], ['碎', 'ㄙㄨㄟˋ'], ['成', 'ㄔㄥˊ'], ['五', 'ㄨˇ'], ['顆', 'ㄎㄜ'], ['水', 'ㄕㄨㄟˇ'], ['晶', 'ㄐㄧㄥ'], ['！', '']],
+  cap4: [['兩', 'ㄌㄧㄤˇ'], ['位', 'ㄨㄟˋ'], ['小', 'ㄒㄧㄠˇ'], ['英', 'ㄧㄥ'], ['雄', 'ㄒㄩㄥˊ'], ['出', 'ㄔㄨ'], ['發', 'ㄈㄚ'], ['！', '']],
+};
+const TONES = 'ˊˇˋ';
+const splitZy = z => TONES.includes(z.slice(-1)) ? [z.slice(0, -1), z.slice(-1)] : [z, ''];
+// HTML version: zhuyin stacked to the right of each character, tone mark beside the last symbol.
+function zh(pairs) { return '<span class="zh">' + pairs.map(([ch, z]) => { const [sym, tone] = splitZy(z); return `<span class="zc">${ch}${z ? `<span class="zy">${[...sym].map(x => `<span>${x}</span>`).join('')}</span><span class="zt">${tone}</span>` : ''}</span>`; }).join('') + '</span>'; }
+// Canvas version. strokes: [[colour, width], …] drawn before the fill.
+function zhDraw(c, pairs, cx, y, size, fill, strokes) {
+  const zw = size * 0.46, widths = pairs.map(p => size + (p[1] ? zw : 0)), total = widths.reduce((a, b) => a + b, 0);
+  let x = cx - total / 2; c.save(); c.lineJoin = 'round'; c.textBaseline = 'alphabetic';
+  const put = (txt, px, py, font, align) => { c.font = font; c.textAlign = align; for (const [col, lw] of strokes || []) { c.strokeStyle = col; c.lineWidth = lw * (font.includes(' ' + Math.round(size) + 'px') ? 1 : 0.32); c.strokeText(txt, px, py); } c.fillStyle = fill; c.fillText(txt, px, py); };
+  pairs.forEach(([ch, z], i) => {
+    put(ch, x + size / 2, y, `900 ${Math.round(size)}px ${FONT_ZH}`, 'center');
+    if (z) { const [sym, tone] = splitZy(z), zs = size * 0.33, n = sym.length, top = y - size * 0.42 - (n * zs) / 2 + zs * 0.85; [...sym].forEach((s, k) => put(s, x + size + zs * 0.55, top + k * zs, `700 ${zs.toFixed(1)}px ${FONT_ZH}`, 'center')); if (tone) put(tone, x + size + zs * 1.12, top + (n - 1) * zs - zs * 0.1, `700 ${zs.toFixed(1)}px ${FONT_ZH}`, 'center'); }
+    x += widths[i];
+  });
+  c.restore();
+}
 function logo(c, y, s) {
-  c.save(); c.translate(W / 2, y); c.scale(s, s); c.rotate(-0.035); c.textAlign = 'center';
-  c.font = `400 92px ${FONT_D}`; c.lineJoin = 'round'; c.lineWidth = 18; c.strokeStyle = '#15131f'; c.strokeText('LUMI QUEST', 0, 0);
-  c.lineWidth = 8; c.strokeStyle = '#7048e8'; c.strokeText('LUMI QUEST', 0, 0);
-  const g = c.createLinearGradient(0, -70, 0, 0); g.addColorStop(0, '#fff9db'); g.addColorStop(1, '#ffd43b'); c.fillStyle = g; c.fillText('LUMI QUEST', 0, 0);
-  c.font = `400 25px ${FONT_D}`; c.lineWidth = 6; c.strokeStyle = '#15131f'; c.strokeText('The Lantern of Hearthome', 0, 36); c.fillStyle = '#fff'; c.fillText('The Lantern of Hearthome', 0, 36);
+  c.save(); c.translate(W / 2, y); c.scale(s, s); c.rotate(-0.025);
+  const g = c.createLinearGradient(0, -80, 0, 0); g.addColorStop(0, '#fff9db'); g.addColorStop(1, '#ffd43b');
+  zhDraw(c, ZT.title, 0, 0, 92, g, [['#15131f', 20], ['#7048e8', 9]]);
+  zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
 function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: WEAPONS[s.weapon], armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
@@ -92,7 +123,7 @@ function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;
   if (!titleLooks || (G.t | 0) % 3 === 0) titleLooks = { nora: heroFor('nora', 0), lucas: heroFor('lucas', 0) };
   if (I.state === 'wait') { sunburst(c, W / 2, 330, '#2b1d5c', '#3b2a7a', gt * 0.05); lantern(c, W / 2, 400, 1.5, true); logo(c, 150, 1); return; }
-  if (I.state === 'menu') { sunburst(c, W / 2, 620, '#f59f00', '#ffd43b', gt * 0.06); c.fillStyle = 'rgba(112,72,232,.22)'; c.fillRect(0, 0, W, H); logo(c, 112, 0.92); [90, 215, 860].forEach((x, i) => Art.lumi(c, SPECIES[STARTERS[i]], x, 520, 1.3, gt, false, i === 2)); return; }
+  if (I.state === 'menu') { sunburst(c, W / 2, 620, '#f59f00', '#ffd43b', gt * 0.06); c.fillStyle = 'rgba(112,72,232,.22)'; c.fillRect(0, 0, W, H); logo(c, 100, 0.8); [90, 215, 860].forEach((x, i) => Art.lumi(c, SPECIES[STARTERS[i]], x, 520, 1.3, gt, false, i === 2)); return; }
   // intro animation
   if (t < 3.3) {
     const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1433'); g.addColorStop(1, '#3b2a7a'); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -102,7 +133,7 @@ function drawTitle(c) {
     lantern(c, W / 2, 410, 1.7, !broke, t > 2.1);
     if (t > 1.5) { const k = clamp((t - 1.5) / 1.2, 0, 1); for (let i = 0; i < 14; i++) { const side = i % 2 ? 1 : -1; c.globalAlpha = 0.75; Art.ell(c, W / 2 + side * (620 - k * 430) + Math.sin(gt * 2 + i) * 20, 200 + (i * 53) % 330, 110, 70, i % 3 ? '#4c3a8f' : '#2b1d5c'); } c.globalAlpha = 1; Art.fog(c, { kind: 'wisp', col: '#2b1d5c', boss: true, eye: '#ff6b6b', sym: '…' }, W / 2 + 250 - k * 40, 300, 2.6 * k + 0.01, gt); }
     if (broke) { const k = (t - 2.5) / 0.8; c.fillStyle = `rgba(255,255,255,${clamp(1 - k * 1.6, 0, 1)})`; c.fillRect(0, 0, W, H); WORLD_ORDER.slice(0, 5).forEach((id, i) => { const a = -Math.PI * 0.9 + i * Math.PI * 0.2; Art.crystal(c, W / 2 + Math.cos(a) * k * 520, 330 + Math.sin(a) * k * 420, 22, WORLDS[id].crystal, gt); }); }
-    caption(c, t < 1.5 ? 'The Great Lantern lit the land with knowledge…' : t < 2.5 ? 'Then King Mumble and his Fog rolled in…' : 'The Lantern shattered into five crystals!');
+    caption(c, t < 1.5 ? ZT.cap1 : t < 2.5 ? ZT.cap2 : ZT.cap3);
   } else {
     const k = clamp((t - 3.3) / 0.5, 0, 1), e = 1 - Math.pow(1 - k, 3);
     sunburst(c, W / 2, 330, '#f76707', '#ffd43b', gt * 0.3);
@@ -110,7 +141,7 @@ function drawTitle(c) {
     Art.hero(c, -200 + e * 500, 490, 2.4, Object.assign({}, titleLooks.nora, { t: gt }));
     Art.hero(c, W + 200 - e * 500, 490, 2.4, Object.assign({}, titleLooks.lucas, { t: gt + 1 }));
     if (t > 4.2) { const z = clamp((t - 4.2) / 0.3, 0, 1); const sh = t < 4.7 ? Math.sin(gt * 80) * 5 * (1 - (t - 4.2) / 0.5) : 0; c.save(); c.translate(sh, 0); logo(c, 130, 3 - 2 * z); c.restore(); }
-    else caption(c, 'Two heroes set out to bring the light back!');
+    else caption(c, ZT.cap4);
   }
 }
 function drawCreator(c) {
@@ -121,6 +152,7 @@ function drawCreator(c) {
 }
 
 // ---------- loop ----------
+function mini2(el, draw) { const d = DPR; if (el.width !== 72 * d) { el.width = 72 * d; el.height = 72 * d; } const c = el.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 72, 72); draw(c); }
 let lastTs = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts; G.t += dt;
@@ -130,7 +162,8 @@ function frame(ts) {
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
-  else if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
+  if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
+  if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
   if (G.fade > 0) { ctx.fillStyle = `rgba(21,19,31,${G.fade})`; ctx.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
 }
@@ -159,6 +192,7 @@ window.addEventListener('keydown', ev => {
   if ((ev.key === 'Enter' || ev.key === ' ') && dlg) { advanceDialog(); ev.preventDefault(); }
 });
 window.addEventListener('keyup', ev => { if (DIRS[ev.key] && held === DIRS[ev.key]) held = null; });
+$('btnStart').innerHTML = '▶ ' + zh(ZT.start);
 $('btnStart').addEventListener('click', startIntro);
 $('btnReset').addEventListener('click', resetGate);
 $('btnBag').addEventListener('click', () => { if (!G.busy && !dlg) { Snd.play('tap'); bagPanel(); } });

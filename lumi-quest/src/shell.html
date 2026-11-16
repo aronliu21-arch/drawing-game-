@@ -3,12 +3,12 @@
     <canvas id="cv" aria-label="Lumi Quest game"></canvas>
 
     <div id="title">
-      <button id="btnStart" class="big start">▶ Tap to start</button>
+      <button id="btnStart" class="big start" aria-label="Start"></button>
       <div id="menu" hidden>
-        <p class="who">Who is playing?</p>
+        <p class="who" id="whoText"></p>
         <div id="profiles"></div>
         <div class="titlebtns">
-          <button id="btnReset" class="ghost">Reset records</button>
+          <button id="btnReset" class="ghost" aria-label="Reset records"></button>
           <button id="btnSound2" class="ghost" aria-label="Sound">🔊</button>
         </div>
       </div>
@@ -46,7 +46,7 @@
 
     <div id="question" hidden>
       <div id="qCard">
-        <div class="qhead"><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
+        <div class="qhead"><canvas id="qFace" aria-hidden="true"></canvas><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
         <div id="qBigWrap"><div id="qBig" hidden></div><div id="qSub" hidden></div></div>
         <div id="qText"></div>
         <div id="qChoices"></div>

@@ -62,7 +62,7 @@ NODE_PATH=$(npm root -g) npm run e2e   # 3 browsers play a full game over the ho
 
 ---
 
-# Lumi Quest 🏮 (in `lumi-quest/`)
+# 光靈大冒險 Lumi Quest 🏮 (in `lumi-quest/`)
 
 A single-player RPG for Nora and Lucas. Explore six lands, capture and train creatures called Lumis, and clear King Mumble's Fog. Every battle move is powered by a question, and each land has its own subject and question style:
 

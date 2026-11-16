@@ -25,12 +25,15 @@ const isEvo = l => l.lv >= 6;
 const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t }, extra || {}); }
+function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+// The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
+function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
+function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }
 
 function addXP(n) {
   S.xp += n; let up = false;
   while (S.xp >= xpNeed(S.lv)) { S.xp -= xpNeed(S.lv); S.lv++; up = true; }
-  if (up) { S.hp = maxHP(); Snd.play('level'); toast(`⭐ ${KIDS[S.kid].name} reached Level ${S.lv}! Health restored.`); burst(W / 2, 120, '#ffe066', 30); }
+  if (up) { S.hp = maxHP(); setMood('happy', 3); Snd.play('level'); toast(`⭐ ${KIDS[S.kid].name} reached Level ${S.lv}! Health restored.`); burst(W / 2, 120, '#ffe066', 30); }
   return up;
 }
 function addLumiXP(n) {
@@ -54,6 +57,7 @@ function drawParts(c) {
     c.restore();
   }
 }
+const FONT_ZH = '"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif';
 const FONT_D = '"Lilita One","Baloo 2",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif';
 
 // ---------- toast, dialog, panel ----------

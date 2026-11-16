@@ -75,7 +75,7 @@ function onStep() {
   if (e && e.type === 'gate') { G.path = []; gatePanel(); return; }
   if (G.grace > 0) G.grace--;
   const w = WORLDS[G.world];
-  if (tileAt(G.px, G.py) === '"' && w.wild.length && G.grace <= 0 && Math.random() < 0.2) { G.path = []; G.after = null; wildBattle(); }
+  if (tileAt(G.px, G.py) === '"' && w.wild.length && G.grace <= 0 && Math.random() < 0.2) { G.path = []; G.after = null; setMood('surprised', 1.5); wildBattle(); }
 }
 
 // ---------- interactions ----------
@@ -93,7 +93,7 @@ async function interact(e) {
     else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Keep training. There is always more to learn.'], e.v.name);
     else { const nx = WORLD_ORDER.find(id => !S.bosses[id]); await say([`You hold ${S.crystals.length} of 5 Knowledge Crystals.`, `Your next adventure is in ${WORLDS[nx].name}. Use the gate behind me.`], e.v.name); }
   }
-  else if (e.role === 'heal') { S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
+  else if (e.role === 'heal') { setMood('happy', 2.5); S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
   else if (e.role === 'shop') { G.busy = false; await shopPanel(); return; }
   else if (e.role === 'giver') {
     const q = S.quests[G.world];
@@ -108,7 +108,7 @@ function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) retur
 async function openChest(e, hidden) {
   G.busy = true; S.chests[e.key] = 1; const l = e.loot;
   if (hidden) e.gone = true; else e.open = true;
-  Snd.play('chest'); burst((e.x + 0.5) * TILE - G.cam.x, (e.y + 0.4) * TILE - G.cam.y, '#ffe066', 22);
+  setMood('happy', 3); Snd.play('chest'); burst((e.x + 0.5) * TILE - G.cam.x, (e.y + 0.4) * TILE - G.cam.y, '#ffe066', 22);
   if (l.gold) S.gold += l.gold; else if (l.weapon) { if (!S.weapons.includes(l.weapon)) S.weapons.push(l.weapon); } else S[l.item] += l.n;
   updateHUD(); save();
   await say((hidden ? `${KIDS[S.kid].name} searched the ground and dug up ` : `${KIDS[S.kid].name} opened the chest and found `) + lootText(l) + '!');

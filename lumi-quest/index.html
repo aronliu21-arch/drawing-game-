@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Lumi Quest</title>
+<title>光靈大冒險</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
 <style>
 /* Layout: one fixed 960x540 stage scaled to fit the screen; every overlay lives inside it. */
@@ -33,13 +33,13 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 /* title */
 #title { position: absolute; inset: 0; pointer-events: none; }
 #title > * { pointer-events: auto; }
-.start { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); font-size: 32px; animation: pulse 1.2s ease-in-out infinite; }
+.start { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); font-size: 40px; display: inline-flex; align-items: center; gap: 10px; animation: pulse 1.2s ease-in-out infinite; }
 .start:active { transform: translateX(-50%) translateY(4px); }
 @keyframes pulse { 50% { scale: 1.06; } }
-#menu { position: absolute; left: 0; right: 0; top: 178px; text-align: center; }
-.who { font: 400 26px var(--font-d); color: #fff; margin: 0 0 8px; text-shadow: 0 3px 0 var(--ink); }
+#menu { position: absolute; left: 0; right: 0; top: 168px; text-align: center; }
+.who { font: 400 38px var(--font-d); color: #fff; margin: 0 0 8px; text-shadow: 0 3px 0 var(--ink); }
 #profiles { display: flex; gap: 40px; justify-content: center; }
-.pcard { width: 220px; background: var(--panel); border: 5px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 8px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pcard { width: 250px; background: var(--panel); border: 5px solid var(--ink); border-radius: 22px; box-shadow: 0 8px 0 var(--ink); padding: 8px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pcard:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--ink); }
 .pcard b { font: 400 26px var(--font-d); color: #fff; border-radius: 12px; padding: 2px 22px; border: 3px solid var(--ink); }
 .pcard small { font-weight: 800; color: var(--muted); font-size: 14px; }
@@ -172,6 +172,18 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 #rotate { position: absolute; inset: 0; background: rgba(21, 19, 31, .92); color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 90px; z-index: 20; }
 #rotate p { font: 400 44px var(--font-d); margin: 10px 0 0; }
 @media (prefers-reduced-motion: reduce) { .start, .more { animation: none; } #qCard.shake { animation: none; } }
+
+/* Chinese with zhuyin to the right of each character */
+.zh { display: inline-flex; align-items: center; font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", "Noto Sans CJK TC", sans-serif; font-weight: 900; }
+.zc { display: inline-flex; align-items: center; line-height: 1.1; }
+.zy { display: inline-flex; flex-direction: column; justify-content: center; font-size: .38em; line-height: 1; margin-left: .1em; font-weight: 700; }
+.zy span { display: block; }
+.zt { font-size: .38em; font-weight: 700; align-self: flex-end; margin: 0 .2em .45em -.05em; min-width: .55em; }
+.pcard small .zh { font-size: 24px; color: var(--text); }
+.pcard small { display: flex; align-items: center; justify-content: center; gap: 4px; }
+#btnReset .zh { font-size: 24px; }
+#qFace { width: 72px; height: 72px; flex: none; border-radius: 50%; background: #e5dbff; border: 3px solid var(--ink); margin: -4px 0; }
+#question:not([hidden]) ~ #toast { display: none; }
 </style>
 </head>
 <body>
@@ -180,12 +192,12 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
     <canvas id="cv" aria-label="Lumi Quest game"></canvas>
 
     <div id="title">
-      <button id="btnStart" class="big start">▶ Tap to start</button>
+      <button id="btnStart" class="big start" aria-label="Start"></button>
       <div id="menu" hidden>
-        <p class="who">Who is playing?</p>
+        <p class="who" id="whoText"></p>
         <div id="profiles"></div>
         <div class="titlebtns">
-          <button id="btnReset" class="ghost">Reset records</button>
+          <button id="btnReset" class="ghost" aria-label="Reset records"></button>
           <button id="btnSound2" class="ghost" aria-label="Sound">🔊</button>
         </div>
       </div>
@@ -223,7 +235,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 
     <div id="question" hidden>
       <div id="qCard">
-        <div class="qhead"><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
+        <div class="qhead"><canvas id="qFace" aria-hidden="true"></canvas><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
         <div id="qBigWrap"><div id="qBig" hidden></div><div id="qSub" hidden></div></div>
         <div id="qText"></div>
         <div id="qChoices"></div>
@@ -906,11 +918,15 @@ const Art = (() => {
     c.strokeStyle = o.color; c.lineWidth = 5; c.beginPath(); c.moveTo(15, -40); c.lineTo(hx, hy); c.stroke();
     ell(c, hx, hy, 4.5, 4.5, '#ffd9b3', INK, 2);
     // head
-    const hy0 = -66;
-    if (nora) { c.beginPath(); c.ellipse(0, hy0 - 1, 27, 27, 0, 0, TAU); c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke(); }
-    else {
-      c.beginPath(); const n = 11;
-      for (let i = 0; i <= n * 2; i++) { const ang = Math.PI * (1.08 - i / (n * 2) * 1.16) * -1 - Math.PI * 0.0; const a2 = -Math.PI * 1.08 + (i / (n * 2)) * Math.PI * 1.16; const rad = i % 2 ? 41 + (i % 4 === 1 ? 4 : 0) : 25; c.lineTo(Math.cos(a2) * rad, hy0 + Math.sin(a2) * rad * 0.98); }
+    const hy0 = -66, mood = o.mood || 'calm';
+    if (nora) {
+      // back hair covers the top and sides only, so nothing dark shows under her chin
+      c.beginPath(); c.moveTo(-25.5, hy0 + 9); c.bezierCurveTo(-32, hy0 - 35, 32, hy0 - 35, 25.5, hy0 + 9); c.lineTo(19, hy0 + 2); c.lineTo(-19, hy0 + 2); c.closePath();
+      c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
+    } else {
+      // soft, short spikes
+      c.beginPath(); const n = 8;
+      for (let i = 0; i <= n * 2; i++) { const a2 = -Math.PI * 1.06 + (i / (n * 2)) * Math.PI * 1.12; const rad = i % 2 ? 33 + (i % 4 === 1 ? 2 : 0) : 25.5; c.lineTo(Math.cos(a2) * rad, hy0 + Math.sin(a2) * rad * 0.98); }
       c.closePath(); c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
     }
     ell(c, 0, hy0, 23, 22, '#ffd9b3', INK, 2.8);
@@ -920,24 +936,41 @@ const Art = (() => {
       c.beginPath(); c.moveTo(-24, hy0 + 2); c.bezierCurveTo(-27, hy0 - 26, 20, hy0 - 30, 24, hy0 - 2);
       c.bezierCurveTo(20, hy0 - 12, 10, hy0 - 15, 2, hy0 - 14); c.bezierCurveTo(-8, hy0 - 12, -16, hy0 - 6, -19, hy0 + 4); c.closePath();
       c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke();
-      for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 22, hy0 - 4); c.quadraticCurveTo(sx * 27, hy0 + 8, sx * 22, hy0 + 19); c.quadraticCurveTo(sx * 19.5, hy0 + 8, sx * 20, hy0 - 2); c.closePath(); c.fillStyle = '#17141c'; c.fill(); }
+      for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 22, hy0 - 4); c.quadraticCurveTo(sx * 26.5, hy0 + 4, sx * 22.5, hy0 + 11); c.quadraticCurveTo(sx * 20, hy0 + 4, sx * 20, hy0 - 2); c.closePath(); c.fillStyle = '#17141c'; c.fill(); }
       c.beginPath(); c.moveTo(-8, hy0 - 21); c.quadraticCurveTo(2, hy0 - 24, 12, hy0 - 19); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 2.6; c.stroke();
       star(c, -15, hy0 - 12, 5.5, '#ffd43b', INK, 1.2);
     } else {
-      c.beginPath(); c.moveTo(-23, hy0 - 4); c.lineTo(-17, hy0 - 16); c.lineTo(-13, hy0 - 6); c.lineTo(-7, hy0 - 19); c.lineTo(-2, hy0 - 7); c.lineTo(5, hy0 - 20); c.lineTo(9, hy0 - 7); c.lineTo(16, hy0 - 17); c.lineTo(23, hy0 - 4);
+      c.beginPath(); c.moveTo(-23, hy0 - 4); c.lineTo(-17, hy0 - 14); c.lineTo(-12, hy0 - 8); c.lineTo(-6, hy0 - 16); c.lineTo(-1, hy0 - 9); c.lineTo(6, hy0 - 16); c.lineTo(11, hy0 - 8); c.lineTo(17, hy0 - 14); c.lineTo(23, hy0 - 4);
       c.quadraticCurveTo(14, hy0 - 26, 0, hy0 - 25); c.quadraticCurveTo(-14, hy0 - 26, -23, hy0 - 4); c.closePath(); c.fillStyle = '#17141c'; c.fill();
     }
-    // face
+    // face: eyes, brows and mouth change with the mood
+    const BROW = { calm: [0, nora ? 0 : 1.2], happy: [-1, -1], determined: [-1, 3.5], hurt: [0, 3], worried: [1.5, -2.5], sad: [2, -2.5], surprised: [-3.5, -3.5], think: [0, 0] }[mood] || [0, 0];
+    const look = mood === 'think' ? -2.2 : 0, big = mood === 'surprised' ? 1.12 : 1;
+    c.lineCap = 'round';
     for (const sx of [-1, 1]) {
-      ell(c, sx * 9, hy0 + 3, 5.2, 7, nora ? '#6b3a1e' : '#17141c', INK, 1.6);
-      if (nora) ell(c, sx * 9, hy0 + 4, 2.8, 4, '#17141c');
-      ell(c, sx * 9 - 1.6, hy0 + 0.2, 2, 2.4, '#fff'); ell(c, sx * 9 + 1.8, hy0 + 5.6, 1, 1.1, '#fff');
-      c.strokeStyle = INK;
-      if (nora) { c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, hy0 - 2.6); c.quadraticCurveTo(sx * 9, hy0 - 6.5, sx * 15.4, hy0 - 2); c.stroke(); c.lineWidth = 1.5; c.beginPath(); c.moveTo(sx * 4, hy0 - 10.5); c.quadraticCurveTo(sx * 9, hy0 - 12.6, sx * 15, hy0 - 10.6); c.stroke(); ell(c, sx * 15.5, hy0 + 10, 4, 2.2, 'rgba(255,120,150,.55)'); }
-      else { c.lineWidth = 3.6; c.beginPath(); c.moveTo(sx * 15.5, hy0 - 9.5); c.lineTo(sx * 3.5, hy0 - 5); c.stroke(); }
+      const ex = sx * 9, ey = hy0 + 3;
+      if (mood === 'happy') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.arc(ex, ey + 3, 5, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
+      else if (mood === 'hurt') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.moveTo(ex - sx * 5, ey - 4); c.lineTo(ex + sx * 3, ey); c.lineTo(ex - sx * 5, ey + 4); c.stroke(); }
+      else {
+        ell(c, ex, ey, 5.2 * big, 7 * big, nora ? '#6b3a1e' : '#17141c', INK, 1.6);
+        if (nora) ell(c, ex, ey + 1 + look, 2.8, 4, '#17141c');
+        ell(c, ex - 1.6, ey - 2.8 + look, 2, 2.4, '#fff'); ell(c, ex + 1.8, ey + 2.6 + look, 1, 1.1, '#fff');
+        if (nora) { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, ey - 5.6 * big); c.quadraticCurveTo(ex, ey - 9.5 * big, sx * 15.4, ey - 5 * big); c.stroke(); }
+      }
+      const up = mood === 'think' && sx === 1 ? -3 : 0;
+      c.strokeStyle = INK; c.lineWidth = nora ? 1.7 : 3; c.beginPath(); c.moveTo(sx * 15, hy0 - 10.5 + BROW[0] + up); c.quadraticCurveTo(sx * 9.5, hy0 - 12.4 + (BROW[0] + BROW[1]) / 2 + up, sx * 4, hy0 - 10.5 + BROW[1] + up); c.stroke();
+      ell(c, sx * 15.5, hy0 + 10, 4, 2.2, nora ? 'rgba(255,120,150,.55)' : 'rgba(255,140,120,.3)');
     }
-    if (nora) { c.beginPath(); c.moveTo(-6, hy0 + 12); c.quadraticCurveTo(0, hy0 + 21, 6, hy0 + 12); c.closePath(); c.fillStyle = '#a01f3c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.8; c.stroke(); ell(c, 0, hy0 + 15.4, 2.6, 1.5, '#ff8fab'); }
-    else { rr(c, -8, hy0 + 11, 16, 7, 2.5, '#fff', INK, 2); c.beginPath(); c.moveTo(-3, hy0 + 11); c.lineTo(-3, hy0 + 18); c.moveTo(3, hy0 + 11); c.lineTo(3, hy0 + 18); c.moveTo(-8, hy0 + 14.5); c.lineTo(8, hy0 + 14.5); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); }
+    const my = hy0 + 13; c.strokeStyle = INK; c.lineWidth = 2;
+    if (mood === 'happy') { c.beginPath(); c.moveTo(-6.5, my - 1); c.quadraticCurveTo(0, my + 9, 6.5, my - 1); c.closePath(); c.fillStyle = '#a01f3c'; c.fill(); c.lineWidth = 1.8; c.stroke(); ell(c, 0, my + 2.6, 2.8, 1.5, '#ff8fab'); }
+    else if (mood === 'surprised' || mood === 'hurt') ell(c, 0, my + 1.5, mood === 'hurt' ? 3.6 : 2.8, mood === 'hurt' ? 3 : 3.6, '#a01f3c', INK, 1.8);
+    else if (mood === 'sad') { c.beginPath(); c.arc(0, my + 5.5, 5, Math.PI * 1.2, Math.PI * 1.8); c.stroke(); }
+    else if (mood === 'worried') { c.beginPath(); c.moveTo(-5, my + 2); c.quadraticCurveTo(-2.5, my - 0.5, 0, my + 2); c.quadraticCurveTo(2.5, my + 4.5, 5, my + 2); c.stroke(); }
+    else if (mood === 'determined') { c.beginPath(); c.moveTo(-4.5, my + 1.5); c.quadraticCurveTo(0, my + 3, 4.5, my + 1); c.stroke(); }
+    else if (mood === 'think') { c.beginPath(); c.moveTo(0, my + 2); c.quadraticCurveTo(3, my + 2.6, 5.5, my + 0.5); c.stroke(); }
+    else { c.beginPath(); c.arc(0, my - 2, 6, Math.PI * 0.2, Math.PI * 0.8); c.stroke(); }
+    if (mood === 'worried' || mood === 'hurt') { c.beginPath(); c.moveTo(19, hy0 - 12); c.quadraticCurveTo(23.5, hy0 - 5, 19, hy0 - 3.5); c.quadraticCurveTo(14.5, hy0 - 5, 19, hy0 - 12); c.fillStyle = '#8fd3ff'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); }
+    if (mood === 'think') { c.fillStyle = INK; c.font = '900 13px system-ui'; c.textAlign = 'center'; c.fillText('?', 27, hy0 - 22 + Math.sin(t * 4) * 1.5); }
     c.restore();
     if (o.badge) {
       const nm = nora ? 'NORA' : 'LUCAS', bc = nora ? '#7048e8' : '#f76707';
@@ -1181,12 +1214,15 @@ const isEvo = l => l.lv >= 6;
 const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t }, extra || {}); }
+function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+// The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
+function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
+function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }
 
 function addXP(n) {
   S.xp += n; let up = false;
   while (S.xp >= xpNeed(S.lv)) { S.xp -= xpNeed(S.lv); S.lv++; up = true; }
-  if (up) { S.hp = maxHP(); Snd.play('level'); toast(`⭐ ${KIDS[S.kid].name} reached Level ${S.lv}! Health restored.`); burst(W / 2, 120, '#ffe066', 30); }
+  if (up) { S.hp = maxHP(); setMood('happy', 3); Snd.play('level'); toast(`⭐ ${KIDS[S.kid].name} reached Level ${S.lv}! Health restored.`); burst(W / 2, 120, '#ffe066', 30); }
   return up;
 }
 function addLumiXP(n) {
@@ -1210,6 +1246,7 @@ function drawParts(c) {
     c.restore();
   }
 }
+const FONT_ZH = '"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif';
 const FONT_D = '"Lilita One","Baloo 2",ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif';
 
 // ---------- toast, dialog, panel ----------
@@ -1331,7 +1368,7 @@ function onStep() {
   if (e && e.type === 'gate') { G.path = []; gatePanel(); return; }
   if (G.grace > 0) G.grace--;
   const w = WORLDS[G.world];
-  if (tileAt(G.px, G.py) === '"' && w.wild.length && G.grace <= 0 && Math.random() < 0.2) { G.path = []; G.after = null; wildBattle(); }
+  if (tileAt(G.px, G.py) === '"' && w.wild.length && G.grace <= 0 && Math.random() < 0.2) { G.path = []; G.after = null; setMood('surprised', 1.5); wildBattle(); }
 }
 
 // ---------- interactions ----------
@@ -1349,7 +1386,7 @@ async function interact(e) {
     else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Keep training. There is always more to learn.'], e.v.name);
     else { const nx = WORLD_ORDER.find(id => !S.bosses[id]); await say([`You hold ${S.crystals.length} of 5 Knowledge Crystals.`, `Your next adventure is in ${WORLDS[nx].name}. Use the gate behind me.`], e.v.name); }
   }
-  else if (e.role === 'heal') { S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
+  else if (e.role === 'heal') { setMood('happy', 2.5); S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
   else if (e.role === 'shop') { G.busy = false; await shopPanel(); return; }
   else if (e.role === 'giver') {
     const q = S.quests[G.world];
@@ -1364,7 +1401,7 @@ function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) retur
 async function openChest(e, hidden) {
   G.busy = true; S.chests[e.key] = 1; const l = e.loot;
   if (hidden) e.gone = true; else e.open = true;
-  Snd.play('chest'); burst((e.x + 0.5) * TILE - G.cam.x, (e.y + 0.4) * TILE - G.cam.y, '#ffe066', 22);
+  setMood('happy', 3); Snd.play('chest'); burst((e.x + 0.5) * TILE - G.cam.x, (e.y + 0.4) * TILE - G.cam.y, '#ffe066', 22);
   if (l.gold) S.gold += l.gold; else if (l.weapon) { if (!S.weapons.includes(l.weapon)) S.weapons.push(l.weapon); } else S[l.item] += l.n;
   updateHUD(); save();
   await say((hidden ? `${KIDS[S.kid].name} searched the ground and dug up ` : `${KIDS[S.kid].name} opened the chest and found `) + lootText(l) + '!');
@@ -1525,6 +1562,7 @@ function finishQ(ok) {
   if (q.type === 'order') q.correct.forEach((idx, n) => { btns[idx].classList.add('locked'); btns[idx].dataset.n = n + 1; }); else btns[q.answer].classList.add('right');
   btns.forEach(b => { b.disabled = true; });
   $('qWhy').hidden = false; $('qWhy').textContent = (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why;
+  setMood(ok ? 'happy' : 'sad', ok ? 1.8 : 3);
   if (ok) { Snd.play('ok'); S.stats.right++; if (first) S.stats.first++; $('qMsg').textContent = first ? 'Full power!' : 'Half power'; }
   else { $('qMsg').textContent = 'The move fizzled'; if (S.read) Snd.say('The answer is ' + (q.type === 'order' ? q.why : q.choices[q.answer]) + '. ' + q.why); }
   const out = { ok, tries: QS.tries, mult: ok ? (first ? 1 : 0.5) : 0, pts: ok ? (first ? 2 : 1) : 0 };
@@ -1544,7 +1582,7 @@ async function beginBattle(e, ent) {
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
   G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0 };
-  $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
+  setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
   G.fade = 0; G.busy = false; G.B.lock = false; renderMoves();
@@ -1580,6 +1618,7 @@ async function doMove(kind) {
       const em = kind === 'skill' ? elemMult(sp.el, e.el) : 1;
       const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : lumiPower(l)) * em * r.mult * rnd(0.92, 1.08)));
       const key = kind === 'strike' ? 'hx' : 'lx';
+      setMood('determined', 1);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
       await tween(0.22, k => { B[key] = k * 300; });
       Snd.play(kind === 'strike' ? 'hit' : 'skill'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
@@ -1599,7 +1638,7 @@ async function doMove(kind) {
     }
   } else if (kind === 'potion') {
     if (!r.ok) { setLog('The potion was not opened in time.'); await wait(0.7); }
-    else { S.potion--; const heal = Math.round(maxHP() * (r.mult === 1 ? 0.6 : 0.35)); S.hp = Math.min(maxHP(), S.hp + heal); Snd.play('heal'); burst(210, 300, '#8ce99a', 18); floater(210, 220, '+' + heal, '#8ce99a'); setLog(`${n} drank a potion and healed ${heal}.`); updateHUD(); await wait(0.6); }
+    else { setMood('happy', 1.5); S.potion--; const heal = Math.round(maxHP() * (r.mult === 1 ? 0.6 : 0.35)); S.hp = Math.min(maxHP(), S.hp + heal); Snd.play('heal'); burst(210, 300, '#8ce99a', 18); floater(210, 220, '+' + heal, '#8ce99a'); setLog(`${n} drank a potion and healed ${heal}.`); updateHUD(); await wait(0.6); }
   }
   if (G.B !== B) return;
   if (e.hp <= 0) return finishBattle('win');
@@ -1607,7 +1646,7 @@ async function doMove(kind) {
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
   await tween(0.2, k => { B.ex = -k * 260; });
-  Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
+  setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
   setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`);
   await tween(0.25, k => { B.ex = -(1 - k) * 260; });
   if (S.hp <= 0) return finishBattle('lose');
@@ -1618,12 +1657,12 @@ async function finishBattle(how) {
   const B = G.B, e = B.e, n = KIDS[S.kid].name, w = WORLDS[G.world];
   $('bMoves').innerHTML = '';
   if (how === 'lose') {
-    Snd.play('lose'); setLog(`${n} is out of health…`); await wait(0.8);
+    setMood('sad', 5); Snd.play('lose'); setLog(`${n} is out of health…`); await wait(0.8);
     await tween(0.4, k => { G.fade = k; }); leaveBattle(); S.hp = maxHP(); loadWorld('hub', true); save();
     await tween(0.4, k => { G.fade = 1 - k; }); G.fade = 0;
     await say(['You ran out of health, so Elder Lumen carried you home.', 'Nothing was lost. Rest, buy a potion or better armour, and try again!'], 'Healer Rosa'); return;
   }
-  S.stats.wins++;
+  S.stats.wins++; setMood('happy', 5);
   const gold = Math.round(e.gold * (S.cls === 'ranger' ? 1.25 : 1));
   if (how === 'capture') {
     S.party.push({ sp: e.sp, lv: e.lv, xp: 0 }); setLog(`Gotcha! ${e.name} joined ${n}'s team!`); await wait(0.5);
@@ -1692,7 +1731,8 @@ G.intro = { state: 'wait', t: 0 };
 
 // ---------- title ----------
 function profileCards() {
-  $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `Level ${s.lv} · ${s.crystals.length}/5 crystals${s.won ? ' · 🏆' : ''}` : 'New adventure'}</small></button>`; }).join('');
+  $('whoText').innerHTML = zh(ZT.who); $('btnReset').innerHTML = zh(ZT.reset);
+  $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `${zh(ZT.level)} ${s.lv} · ${zh(ZT.crystal)} ${s.crystals.length}/5${s.won ? ' 🏆' : ''}` : zh(ZT.fresh)}</small></button>`; }).join('');
   drawMinis($('profiles'));
   $('profiles').querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => pickKid(b.dataset.kid)));
 }
@@ -1765,13 +1805,43 @@ function lantern(c, x, y, s, lit, crack) {
   if (crack) { c.strokeStyle = '#15131f'; c.lineWidth = 3; c.beginPath(); c.moveTo(-10, -70); c.lineTo(4, -48); c.lineTo(-6, -34); c.lineTo(8, -10); c.stroke(); }
   c.restore();
 }
-function caption(c, text) { c.font = `400 26px ${FONT_D}`; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = '#15131f'; c.strokeText(text, W / 2, 500); c.fillStyle = '#fff'; c.fillText(text, W / 2, 500); }
+function caption(c, pairs) { zhDraw(c, pairs, W / 2, 506, 34, '#fff', [['#15131f', 7]]); }
+// ---------- Chinese text with zhuyin beside each character ----------
+const ZT = {
+  title: [['光', 'ㄍㄨㄤ'], ['靈', 'ㄌㄧㄥˊ'], ['大', 'ㄉㄚˋ'], ['冒', 'ㄇㄠˋ'], ['險', 'ㄒㄧㄢˇ']],
+  sub: [['找', 'ㄓㄠˇ'], ['回', 'ㄏㄨㄟˊ'], ['知', 'ㄓ'], ['識', 'ㄕˋ'], ['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ']],
+  start: [['開', 'ㄎㄞ'], ['始', 'ㄕˇ']],
+  who: [['誰', 'ㄕㄟˊ'], ['要', 'ㄧㄠˋ'], ['玩', 'ㄨㄢˊ'], ['？', '']],
+  fresh: [['新', 'ㄒㄧㄣ'], ['冒', 'ㄇㄠˋ'], ['險', 'ㄒㄧㄢˇ']],
+  level: [['等', 'ㄉㄥˇ'], ['級', 'ㄐㄧˊ']],
+  crystal: [['水', 'ㄕㄨㄟˇ'], ['晶', 'ㄐㄧㄥ']],
+  reset: [['重', 'ㄔㄨㄥˊ'], ['設', 'ㄕㄜˋ'], ['紀', 'ㄐㄧˋ'], ['錄', 'ㄌㄨˋ']],
+  cap1: [['很', 'ㄏㄣˇ'], ['久', 'ㄐㄧㄡˇ'], ['以', 'ㄧˇ'], ['前', 'ㄑㄧㄢˊ'], ['，', ''], ['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ'], ['照', 'ㄓㄠˋ'], ['亮', 'ㄌㄧㄤˋ'], ['大', 'ㄉㄚˋ'], ['地', 'ㄉㄧˋ']],
+  cap2: [['迷', 'ㄇㄧˊ'], ['霧', 'ㄨˋ'], ['大', 'ㄉㄚˋ'], ['王', 'ㄨㄤˊ'], ['出', 'ㄔㄨ'], ['現', 'ㄒㄧㄢˋ'], ['！', '']],
+  cap3: [['神', 'ㄕㄣˊ'], ['燈', 'ㄉㄥ'], ['碎', 'ㄙㄨㄟˋ'], ['成', 'ㄔㄥˊ'], ['五', 'ㄨˇ'], ['顆', 'ㄎㄜ'], ['水', 'ㄕㄨㄟˇ'], ['晶', 'ㄐㄧㄥ'], ['！', '']],
+  cap4: [['兩', 'ㄌㄧㄤˇ'], ['位', 'ㄨㄟˋ'], ['小', 'ㄒㄧㄠˇ'], ['英', 'ㄧㄥ'], ['雄', 'ㄒㄩㄥˊ'], ['出', 'ㄔㄨ'], ['發', 'ㄈㄚ'], ['！', '']],
+};
+const TONES = 'ˊˇˋ';
+const splitZy = z => TONES.includes(z.slice(-1)) ? [z.slice(0, -1), z.slice(-1)] : [z, ''];
+// HTML version: zhuyin stacked to the right of each character, tone mark beside the last symbol.
+function zh(pairs) { return '<span class="zh">' + pairs.map(([ch, z]) => { const [sym, tone] = splitZy(z); return `<span class="zc">${ch}${z ? `<span class="zy">${[...sym].map(x => `<span>${x}</span>`).join('')}</span><span class="zt">${tone}</span>` : ''}</span>`; }).join('') + '</span>'; }
+// Canvas version. strokes: [[colour, width], …] drawn before the fill.
+function zhDraw(c, pairs, cx, y, size, fill, strokes) {
+  const zw = size * 0.46, widths = pairs.map(p => size + (p[1] ? zw : 0)), total = widths.reduce((a, b) => a + b, 0);
+  let x = cx - total / 2; c.save(); c.lineJoin = 'round'; c.textBaseline = 'alphabetic';
+  const put = (txt, px, py, font, align) => { c.font = font; c.textAlign = align; for (const [col, lw] of strokes || []) { c.strokeStyle = col; c.lineWidth = lw * (font.includes(' ' + Math.round(size) + 'px') ? 1 : 0.32); c.strokeText(txt, px, py); } c.fillStyle = fill; c.fillText(txt, px, py); };
+  pairs.forEach(([ch, z], i) => {
+    put(ch, x + size / 2, y, `900 ${Math.round(size)}px ${FONT_ZH}`, 'center');
+    if (z) { const [sym, tone] = splitZy(z), zs = size * 0.33, n = sym.length, top = y - size * 0.42 - (n * zs) / 2 + zs * 0.85; [...sym].forEach((s, k) => put(s, x + size + zs * 0.55, top + k * zs, `700 ${zs.toFixed(1)}px ${FONT_ZH}`, 'center')); if (tone) put(tone, x + size + zs * 1.12, top + (n - 1) * zs - zs * 0.1, `700 ${zs.toFixed(1)}px ${FONT_ZH}`, 'center'); }
+    x += widths[i];
+  });
+  c.restore();
+}
 function logo(c, y, s) {
-  c.save(); c.translate(W / 2, y); c.scale(s, s); c.rotate(-0.035); c.textAlign = 'center';
-  c.font = `400 92px ${FONT_D}`; c.lineJoin = 'round'; c.lineWidth = 18; c.strokeStyle = '#15131f'; c.strokeText('LUMI QUEST', 0, 0);
-  c.lineWidth = 8; c.strokeStyle = '#7048e8'; c.strokeText('LUMI QUEST', 0, 0);
-  const g = c.createLinearGradient(0, -70, 0, 0); g.addColorStop(0, '#fff9db'); g.addColorStop(1, '#ffd43b'); c.fillStyle = g; c.fillText('LUMI QUEST', 0, 0);
-  c.font = `400 25px ${FONT_D}`; c.lineWidth = 6; c.strokeStyle = '#15131f'; c.strokeText('The Lantern of Hearthome', 0, 36); c.fillStyle = '#fff'; c.fillText('The Lantern of Hearthome', 0, 36);
+  c.save(); c.translate(W / 2, y); c.scale(s, s); c.rotate(-0.025);
+  const g = c.createLinearGradient(0, -80, 0, 0); g.addColorStop(0, '#fff9db'); g.addColorStop(1, '#ffd43b');
+  zhDraw(c, ZT.title, 0, 0, 92, g, [['#15131f', 20], ['#7048e8', 9]]);
+  zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
 function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: WEAPONS[s.weapon], armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
@@ -1780,7 +1850,7 @@ function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;
   if (!titleLooks || (G.t | 0) % 3 === 0) titleLooks = { nora: heroFor('nora', 0), lucas: heroFor('lucas', 0) };
   if (I.state === 'wait') { sunburst(c, W / 2, 330, '#2b1d5c', '#3b2a7a', gt * 0.05); lantern(c, W / 2, 400, 1.5, true); logo(c, 150, 1); return; }
-  if (I.state === 'menu') { sunburst(c, W / 2, 620, '#f59f00', '#ffd43b', gt * 0.06); c.fillStyle = 'rgba(112,72,232,.22)'; c.fillRect(0, 0, W, H); logo(c, 112, 0.92); [90, 215, 860].forEach((x, i) => Art.lumi(c, SPECIES[STARTERS[i]], x, 520, 1.3, gt, false, i === 2)); return; }
+  if (I.state === 'menu') { sunburst(c, W / 2, 620, '#f59f00', '#ffd43b', gt * 0.06); c.fillStyle = 'rgba(112,72,232,.22)'; c.fillRect(0, 0, W, H); logo(c, 100, 0.8); [90, 215, 860].forEach((x, i) => Art.lumi(c, SPECIES[STARTERS[i]], x, 520, 1.3, gt, false, i === 2)); return; }
   // intro animation
   if (t < 3.3) {
     const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1433'); g.addColorStop(1, '#3b2a7a'); c.fillStyle = g; c.fillRect(0, 0, W, H);
@@ -1790,7 +1860,7 @@ function drawTitle(c) {
     lantern(c, W / 2, 410, 1.7, !broke, t > 2.1);
     if (t > 1.5) { const k = clamp((t - 1.5) / 1.2, 0, 1); for (let i = 0; i < 14; i++) { const side = i % 2 ? 1 : -1; c.globalAlpha = 0.75; Art.ell(c, W / 2 + side * (620 - k * 430) + Math.sin(gt * 2 + i) * 20, 200 + (i * 53) % 330, 110, 70, i % 3 ? '#4c3a8f' : '#2b1d5c'); } c.globalAlpha = 1; Art.fog(c, { kind: 'wisp', col: '#2b1d5c', boss: true, eye: '#ff6b6b', sym: '…' }, W / 2 + 250 - k * 40, 300, 2.6 * k + 0.01, gt); }
     if (broke) { const k = (t - 2.5) / 0.8; c.fillStyle = `rgba(255,255,255,${clamp(1 - k * 1.6, 0, 1)})`; c.fillRect(0, 0, W, H); WORLD_ORDER.slice(0, 5).forEach((id, i) => { const a = -Math.PI * 0.9 + i * Math.PI * 0.2; Art.crystal(c, W / 2 + Math.cos(a) * k * 520, 330 + Math.sin(a) * k * 420, 22, WORLDS[id].crystal, gt); }); }
-    caption(c, t < 1.5 ? 'The Great Lantern lit the land with knowledge…' : t < 2.5 ? 'Then King Mumble and his Fog rolled in…' : 'The Lantern shattered into five crystals!');
+    caption(c, t < 1.5 ? ZT.cap1 : t < 2.5 ? ZT.cap2 : ZT.cap3);
   } else {
     const k = clamp((t - 3.3) / 0.5, 0, 1), e = 1 - Math.pow(1 - k, 3);
     sunburst(c, W / 2, 330, '#f76707', '#ffd43b', gt * 0.3);
@@ -1798,7 +1868,7 @@ function drawTitle(c) {
     Art.hero(c, -200 + e * 500, 490, 2.4, Object.assign({}, titleLooks.nora, { t: gt }));
     Art.hero(c, W + 200 - e * 500, 490, 2.4, Object.assign({}, titleLooks.lucas, { t: gt + 1 }));
     if (t > 4.2) { const z = clamp((t - 4.2) / 0.3, 0, 1); const sh = t < 4.7 ? Math.sin(gt * 80) * 5 * (1 - (t - 4.2) / 0.5) : 0; c.save(); c.translate(sh, 0); logo(c, 130, 3 - 2 * z); c.restore(); }
-    else caption(c, 'Two heroes set out to bring the light back!');
+    else caption(c, ZT.cap4);
   }
 }
 function drawCreator(c) {
@@ -1809,6 +1879,7 @@ function drawCreator(c) {
 }
 
 // ---------- loop ----------
+function mini2(el, draw) { const d = DPR; if (el.width !== 72 * d) { el.width = 72 * d; el.height = 72 * d; } const c = el.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 72, 72); draw(c); }
 let lastTs = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts; G.t += dt;
@@ -1818,7 +1889,8 @@ function frame(ts) {
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
-  else if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
+  if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
+  if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
   if (G.fade > 0) { ctx.fillStyle = `rgba(21,19,31,${G.fade})`; ctx.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
 }
@@ -1847,6 +1919,7 @@ window.addEventListener('keydown', ev => {
   if ((ev.key === 'Enter' || ev.key === ' ') && dlg) { advanceDialog(); ev.preventDefault(); }
 });
 window.addEventListener('keyup', ev => { if (DIRS[ev.key] && held === DIRS[ev.key]) held = null; });
+$('btnStart').innerHTML = '▶ ' + zh(ZT.start);
 $('btnStart').addEventListener('click', startIntro);
 $('btnReset').addEventListener('click', resetGate);
 $('btnBag').addEventListener('click', () => { if (!G.busy && !dlg) { Snd.play('tap'); bagPanel(); } });

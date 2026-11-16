@@ -40,6 +40,7 @@ function finishQ(ok) {
   if (q.type === 'order') q.correct.forEach((idx, n) => { btns[idx].classList.add('locked'); btns[idx].dataset.n = n + 1; }); else btns[q.answer].classList.add('right');
   btns.forEach(b => { b.disabled = true; });
   $('qWhy').hidden = false; $('qWhy').textContent = (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why;
+  setMood(ok ? 'happy' : 'sad', ok ? 1.8 : 3);
   if (ok) { Snd.play('ok'); S.stats.right++; if (first) S.stats.first++; $('qMsg').textContent = first ? 'Full power!' : 'Half power'; }
   else { $('qMsg').textContent = 'The move fizzled'; if (S.read) Snd.say('The answer is ' + (q.type === 'order' ? q.why : q.choices[q.answer]) + '. ' + q.why); }
   const out = { ok, tries: QS.tries, mult: ok ? (first ? 1 : 0.5) : 0, pts: ok ? (first ? 2 : 1) : 0 };
@@ -59,7 +60,7 @@ async function beginBattle(e, ent) {
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
   G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0 };
-  $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
+  setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
   G.fade = 0; G.busy = false; G.B.lock = false; renderMoves();
@@ -95,6 +96,7 @@ async function doMove(kind) {
       const em = kind === 'skill' ? elemMult(sp.el, e.el) : 1;
       const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : lumiPower(l)) * em * r.mult * rnd(0.92, 1.08)));
       const key = kind === 'strike' ? 'hx' : 'lx';
+      setMood('determined', 1);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
       await tween(0.22, k => { B[key] = k * 300; });
       Snd.play(kind === 'strike' ? 'hit' : 'skill'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
@@ -114,7 +116,7 @@ async function doMove(kind) {
     }
   } else if (kind === 'potion') {
     if (!r.ok) { setLog('The potion was not opened in time.'); await wait(0.7); }
-    else { S.potion--; const heal = Math.round(maxHP() * (r.mult === 1 ? 0.6 : 0.35)); S.hp = Math.min(maxHP(), S.hp + heal); Snd.play('heal'); burst(210, 300, '#8ce99a', 18); floater(210, 220, '+' + heal, '#8ce99a'); setLog(`${n} drank a potion and healed ${heal}.`); updateHUD(); await wait(0.6); }
+    else { setMood('happy', 1.5); S.potion--; const heal = Math.round(maxHP() * (r.mult === 1 ? 0.6 : 0.35)); S.hp = Math.min(maxHP(), S.hp + heal); Snd.play('heal'); burst(210, 300, '#8ce99a', 18); floater(210, 220, '+' + heal, '#8ce99a'); setLog(`${n} drank a potion and healed ${heal}.`); updateHUD(); await wait(0.6); }
   }
   if (G.B !== B) return;
   if (e.hp <= 0) return finishBattle('win');
@@ -122,7 +124,7 @@ async function doMove(kind) {
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
   await tween(0.2, k => { B.ex = -k * 260; });
-  Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
+  setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
   setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`);
   await tween(0.25, k => { B.ex = -(1 - k) * 260; });
   if (S.hp <= 0) return finishBattle('lose');
@@ -133,12 +135,12 @@ async function finishBattle(how) {
   const B = G.B, e = B.e, n = KIDS[S.kid].name, w = WORLDS[G.world];
   $('bMoves').innerHTML = '';
   if (how === 'lose') {
-    Snd.play('lose'); setLog(`${n} is out of health…`); await wait(0.8);
+    setMood('sad', 5); Snd.play('lose'); setLog(`${n} is out of health…`); await wait(0.8);
     await tween(0.4, k => { G.fade = k; }); leaveBattle(); S.hp = maxHP(); loadWorld('hub', true); save();
     await tween(0.4, k => { G.fade = 1 - k; }); G.fade = 0;
     await say(['You ran out of health, so Elder Lumen carried you home.', 'Nothing was lost. Rest, buy a potion or better armour, and try again!'], 'Healer Rosa'); return;
   }
-  S.stats.wins++;
+  S.stats.wins++; setMood('happy', 5);
   const gold = Math.round(e.gold * (S.cls === 'ranger' ? 1.25 : 1));
   if (how === 'capture') {
     S.party.push({ sp: e.sp, lv: e.lv, xp: 0 }); setLog(`Gotcha! ${e.name} joined ${n}'s team!`); await wait(0.5);
