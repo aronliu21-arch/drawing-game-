@@ -17,7 +17,7 @@ function loadWorld(id, quiet) {
       else if (ch === 'I') { G.ents.push({ type: 'npc', role: 'heal', x, y, solid: true, v: { name: 'Healer Rosa', col: '#f783ac', hair: '#862e9c', hat: 'heal', ph: 2, mark: '💗' } }); t = '.'; }
       else if (ch === 'L') { G.ents.push({ type: 'npc', role: 'elder', x, y, solid: true, v: { name: 'Elder Lumen', col: '#7048e8', hair: '#adb5bd', hat: 'elder', ph: 3 } }); t = '.'; }
       else if (ch === 'E') { const f = w.fogs[fi++ % w.fogs.length]; G.ents.push({ type: 'fog', x, y, solid: true, def: Object.assign({ ph: fi * 1.7 }, f) }); t = '.'; }
-      else if (ch === 'B') { if (!S.bosses[id]) G.ents.push({ type: 'boss', x, y, solid: true, def: Object.assign({ boss: true, ph: 0 }, w.boss) }); t = '.'; }
+      else if (ch === 'B') { if (S.bosses[id] && LORE[id].was) G.ents.push(restoredNpc(id, x, y)); if (!S.bosses[id]) G.ents.push({ type: 'boss', x, y, solid: true, def: Object.assign({ boss: true, ph: 0 }, w.boss) }); t = '.'; }
       else if (ch === 'F') { if (!S.bosses[id] && q.kills < 3) G.ents.push({ type: 'wall', x, y, solid: true }); t = '.'; }
       out.push(t);
     });
@@ -28,6 +28,8 @@ function loadWorld(id, quiet) {
   if (!quiet) toast(`${w.icon || '🏡'} ${w.name}` + (w.subject !== 'mix' ? ` · ${Q.SUBJECTS[w.subject].name}` : ''));
   snapCam();
 }
+// After a boss is beaten, the person the Fog had changed stands in its place.
+function restoredNpc(id, x, y) { const L = LORE[id]; return { type: 'npc', role: 'chat', x, y, solid: true, li: 0, v: { name: L.was, col: WORLDS[id].boss.col, hair: '#adb5bd', ph: 4, lines: [`I keep thinking about that boy. ${L.memory[1]}`, 'Thank you for clearing the Fog from my head.'] } }; }
 const tileAt = (x, y) => (G.grid[y] || [])[x];
 const entAt = (x, y) => G.ents.find(e => e.x === x && e.y === y && !e.gone);
 function solidAt(x, y) { const t = tileAt(x, y); if (!t || SOLID_TILES.includes(t)) return true; const e = entAt(x, y); return !!(e && e.solid); }
@@ -87,10 +89,16 @@ async function interact(e) {
   if (e.type !== 'npc') return;
   const w = WORLDS[G.world], n = KIDS[S.kid].name;
   G.busy = true;
-  if (e.role === 'chat') { await say(e.v.lines[e.li++ % e.v.lines.length], e.v.name); }
+  if (e.role === 'chat') {
+    const nw = (VILLAGER_NEWS[e.v.name] || []).find(([id]) => S.bosses[id] && !S.news[e.v.name + id]);
+    if (nw) { S.news[e.v.name + nw[0]] = 1; save(); setMood('happy', 3); await say(nw[1], e.v.name); }
+    else if (S.bosses[G.world] && VILLAGER_SAVED[e.v.name]) await say(VILLAGER_SAVED[e.v.name], e.v.name);
+    else await say(e.v.lines[e.li++ % e.v.lines.length], e.v.name);
+  }
   else if (e.role === 'elder') {
     if (!S.metElder) { await say(STORY.elderFirst(n), e.v.name); S.metElder = true; save(); }
-    else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Keep training. There is always more to learn.'], e.v.name);
+    else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Wick is my student again. He gets things wrong every day now, and laughs about it.'], e.v.name);
+    else if (S.crystals.length === 5 && !S.elderTold) { setMood('sad', 6); await say(ELDER_CONFESS, e.v.name); S.elderTold = true; save(); }
     else { const nx = WORLD_ORDER.find(id => !S.bosses[id]); await say([`You hold ${S.crystals.length} of 5 Knowledge Crystals.`, `Your next adventure is in ${WORLDS[nx].name}. Use the gate behind me.`], e.v.name); }
   }
   else if (e.role === 'heal') { setMood('happy', 2.5); S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
@@ -184,8 +192,10 @@ function questPanel() {
   if (G.world === 'hub') { const nx = WORLD_ORDER.find(id => !S.bosses[id]); h += nx ? `<p><b>Next:</b> step through the gate to ${WORLDS[nx].name} (${WORLDS[nx].blurb}).</p>` : '<p>The Great Lantern is whole again. You saved Hearthome!</p>'; }
   else if (S.bosses[G.world]) h += `<p>✅ ${w.name} is saved.</p>`;
   else h += `<p><b>${w.name}:</b> ${w.problem}</p><p>${q.kills >= 3 ? '✅' : '⬜'} Defeat 3 Fog creatures (${Math.min(3, q.kills || 0)}/3)<br>⬜ Defeat ${w.boss.name}</p>`;
-  h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p><label class="chk"><input type="checkbox" id="optRead" ${S.read ? 'checked' : ''}> Read questions aloud</label>`;
-  const p = openPanel(h); $('optRead').onchange = e => { S.read = e.target.checked; save(); }; return p;
+  h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p>`;
+  const mem = WORLD_ORDER.slice(0, 5).filter(id => S.bosses[id]).map(id => LORE[id].memory);
+  h += '<h3 class="memh">Memories of the boy in the fog</h3>' + (mem.length ? '<ol class="mems">' + mem.map(m => `<li><b>${m[0]}</b> ${m[1]}</li>`).join('') + '</ol>' : '<p class="hint">Beat a Fog boss to find the first memory.</p>');
+  return openPanel(h);
 }
 
 // ---------- drawing ----------
@@ -209,7 +219,7 @@ function drawWorld(c) {
     else if (e.type === 'hidden') list.push([py, () => Art.sparkle(c, fx + Math.sin(e.ph * 9) * 8, py + 26, t, e.ph)]);
     else if (e.type === 'gate') list.push([py + 2, () => Art.gate(c, px, py, TILE, t, G.world === 'hub' ? '#9775fa' : w.crystal)]);
     else if (e.type === 'wall') list.push([fy, () => Art.fogWall(c, px, py, TILE, t)]);
-    else if (e.type === 'npc') { const q = S.quests[G.world]; const v = e.role === 'giver' ? Object.assign({}, e.v, { mark: S.bosses[G.world] ? '' : q.accepted ? '…' : '!', sad: !S.bosses[G.world] }) : e.role === 'elder' && !S.metElder ? Object.assign({}, e.v, { mark: '!' }) : e.v; list.push([fy, () => Art.villager(c, v, fx, fy, 0.9, t)]); }
+    else if (e.type === 'npc') { const q = S.quests[G.world]; const v = e.role === 'giver' ? Object.assign({}, e.v, { mark: S.bosses[G.world] ? '' : q.accepted ? '…' : '!', sad: !S.bosses[G.world] }) : e.role === 'elder' && (!S.metElder || (S.crystals.length === 5 && !S.elderTold && !S.won)) ? Object.assign({}, e.v, { mark: '!' }) : e.v; list.push([fy, () => Art.villager(c, v, fx, fy, 0.9, t)]); }
     else if (e.type === 'fog') list.push([fy, () => Art.fog(c, e.def, fx, fy, 0.8, t)]);
     else if (e.type === 'boss') list.push([fy, () => Art.fog(c, e.def, fx, fy, 0.82, t)]);
   }

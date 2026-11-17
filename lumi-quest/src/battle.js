@@ -6,16 +6,15 @@ function askQuestion(subject) {
     QS = { q, tries: 0, res, seq: [], done: false };
     const sub = Q.SUBJECTS[q.subject];
     $('qStyle').textContent = `${sub.style} · ${sub.name}`;
-    $('qText').textContent = q.q; $('qWhy').hidden = true; $('qNext').hidden = true; $('qMsg').textContent = q.type === 'order' ? 'Tap them one by one' : '';
+    wordify($('qText'), q.q); $('qWhy').hidden = true; $('qNext').hidden = true; $('qMsg').textContent = q.type === 'order' ? 'Tap them one by one' : 'Tap a word to hear it';
     $('qBig').hidden = !q.big; $('qBig').textContent = q.big || ''; $('qBig').className = (q.bigSmall ? 'small ' : '') + (q.sub ? 'hasSub' : ''); $('qSub').hidden = !q.sub; $('qSub').textContent = q.sub || '';
     const box = $('qChoices'); box.innerHTML = ''; box.className = q.type + (q.zh ? ' zh' : '') + (q.emoji ? ' emoji' : ''); box.style.gridTemplateColumns = q.type === 'order' ? `repeat(${q.items.length}, 1fr)` : '';
     const items = q.type === 'order' ? q.items : q.choices;
-    items.forEach((txt, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = q.type === 'tf' ? (i === 0 ? '✅ Fact' : '❌ Fib') : txt; b.addEventListener('click', () => pickAnswer(i)); box.appendChild(b); });
+    items.forEach((txt, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = q.type === 'tf' ? (i === 0 ? '✅ Fact' : '❌ Fib') : txt; if (q.type === 'mc' && !q.zh && !q.emoji && /[A-Za-z]{3}/.test(txt)) { const chip = document.createElement('span'); chip.className = 'sayChip'; chip.dataset.say = txt; chip.textContent = '🔊'; chip.setAttribute('aria-label', 'Hear this answer'); b.appendChild(chip); b.classList.add('hasChip'); }
+      b.addEventListener('click', () => pickAnswer(i)); box.appendChild(b); });
     drawTries(); $('question').hidden = false;
-    if (S.read) readQuestion();
   });
 }
-function readQuestion() { const q = QS.q; Snd.say(q.q + (q.type === 'tf' ? ' Fact, or fib?' : '')); }
 function drawTries() { $('qTries').textContent = QS.tries === 0 ? '● ●' : '● ○'; }
 function pickAnswer(i) {
   if (!QS || QS.done) return; const q = QS.q, btns = [...$('qChoices').children];
@@ -39,22 +38,25 @@ function finishQ(ok) {
   QS.done = true; const q = QS.q, btns = [...$('qChoices').children], first = ok && QS.tries === 0;
   if (q.type === 'order') q.correct.forEach((idx, n) => { btns[idx].classList.add('locked'); btns[idx].dataset.n = n + 1; }); else btns[q.answer].classList.add('right');
   btns.forEach(b => { b.disabled = true; });
-  $('qWhy').hidden = false; $('qWhy').textContent = (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why;
+  $('qWhy').hidden = false; wordify($('qWhy'), (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why);
   setMood(ok ? 'happy' : 'sad', ok ? 1.8 : 3);
   if (ok) { Snd.play('ok'); S.stats.right++; if (first) S.stats.first++; $('qMsg').textContent = first ? 'Full power!' : 'Half power'; }
-  else { $('qMsg').textContent = 'The move fizzled'; if (S.read) Snd.say('The answer is ' + (q.type === 'order' ? q.why : q.choices[q.answer]) + '. ' + q.why); }
+  else { $('qMsg').textContent = 'The move fizzled'; }
   const out = { ok, tries: QS.tries, mult: ok ? (first ? 1 : 0.5) : 0, pts: ok ? (first ? 2 : 1) : 0 };
   const close = () => { $('question').hidden = true; const r = QS.res; QS = null; addXP(out.pts * 2); save(); updateHUD(); r(out); };
   if (ok) setTimeout(close, G.fast ? 0 : 1500); else { $('qNext').hidden = false; $('qNext').onclick = () => { Snd.play('tap'); close(); }; }
 }
-$('qSay').addEventListener('click', () => { if (QS) readQuestion(); });
 
 // ---------- battle ----------
 const worldIndex = () => Math.max(1, WORLD_ORDER.indexOf(G.world) + 1);
 function makeFog(def) { const wi = worldIndex(), boss = !!def.boss; const hp = Math.round((22 + 17 * wi) * (boss ? 2.5 : 1)); return Object.assign({}, def, { hp, max: hp, atk: 3 + 2.5 * wi + (boss ? 2 : 0), xp: (10 + 6 * wi) * (boss ? 3 : 1), gold: (8 + 5 * wi) * (boss ? 4 : 1) }); }
 function makeWild() { const w = WORLDS[G.world], sp = w.wild[Math.floor(Math.random() * w.wild.length)], wi = G.world === 'hub' ? 0.6 : worldIndex(); const hp = Math.round(16 + 9 * wi); return { wild: true, sp, name: SPECIES[sp].name, el: SPECIES[sp].el, lv: w.wildLv, hp, max: hp, atk: 3 + 2.2 * wi, xp: Math.round(8 + 5 * wi), gold: 0 }; }
 function wildBattle() { beginBattle(makeWild(), null); }
-function startBattle(ent) { beginBattle(makeFog(ent.def), ent); }
+async function startBattle(ent) {
+  // The first time you meet a boss, it speaks before the fight.
+  if (ent.type === 'boss' && !S.met[G.world]) { G.busy = true; setMood('surprised', 2.5); await say(LORE[G.world].intro, ent.def.name); S.met[G.world] = 1; save(); G.busy = false; }
+  beginBattle(makeFog(ent.def), ent);
+}
 async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
@@ -120,6 +122,7 @@ async function doMove(kind) {
   }
   if (G.B !== B) return;
   if (e.hp <= 0) return finishBattle('win');
+  if (e.boss && !B.half && e.hp <= e.max / 2) { B.half = true; await say(LORE[G.world].half, e.name); }
   // enemy turn
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
@@ -162,9 +165,17 @@ async function bossWon() {
   const w = WORLDS[G.world], n = KIDS[S.kid].name, id = G.world, final = id === 'w6';
   S.bosses[id] = 1; if (!final) S.crystals.push(id); else S.won = true; S.hp = maxHP();
   G.ents.filter(x => x.type === 'wall').forEach(x => { x.gone = true; });
+  const bossEnt = G.ents.find(x => x.type === 'boss'); if (bossEnt && LORE[id].was) G.ents.push(restoredNpc(id, bossEnt.x, bossEnt.y));
   leaveBattle(); Snd.play('level'); burst(W / 2, H / 2, w.crystal, 50);
-  if (final) await say(['King Mumble melts away. The Fog lifts from every land!', `The five crystals fly together. The Great Lantern of Hearthome shines again.`, `${n}, you are the Hero of Hearthome!`]);
-  else await say([`${w.boss.name} is defeated! The ${w.name} Knowledge Crystal is yours.`, `${w.name} remembers everything again. ${S.crystals.length} of 5 crystals found.`, S.crystals.length === 5 ? 'The way to the Fog Citadel is open. King Mumble awaits!' : `A new land has opened at the Teleport Gate: ${WORLDS[WORLD_ORDER[WORLD_ORDER.indexOf(id) + 1]].name}.`]);
+  if (final) await ending();
+  else {
+    const L = LORE[id];
+    await say(`The Fog pours out of ${w.boss.name} like steam, and someone much smaller is left standing there.`);
+    await say(L.after, L.was);
+    await say([`The ${w.name} Knowledge Crystal is yours! ${S.crystals.length} of 5 found.`, `Memory found: "${L.memory[0]}". You can read it again in your Quest log.`]);
+    setMood('worried', 4); await say(L.voice, 'A voice in the fog');
+    await say(S.crystals.length === 5 ? 'The way to the Fog Citadel is open. But first, Elder Lumen wants to talk to you in Hearthome.' : `A new land has opened at the Teleport Gate: ${WORLDS[WORLD_ORDER[WORLD_ORDER.indexOf(id) + 1]].name}.`);
+  }
   save(); G.breakOn = true;
   await openPanel(`<div class="break"><div class="bigc" style="color:${w.crystal}">◆</div><h2>Great practice! Time for a break</h2><p>${final ? 'You finished the whole adventure.' : 'Your adventure is saved. The next land will be waiting.'}</p><p class="tip">💡 ${w.tip}</p><button id="btnFinish" class="big">Finish for now</button></div>`, { noClose: true, cls: 'center' });
 }
@@ -201,4 +212,24 @@ function plate(c, x, y, name, hp, max, el, col, mine) {
   c.textAlign = 'right'; c.font = '700 13px system-ui'; c.fillStyle = '#ced4da'; c.fillText(`${Math.max(0, Math.ceil(hp))} / ${max}`, x + 372, y + 28);
   Art.rr(c, x + 12, y + 39, 360, 11, 5.5, '#343a40'); const f = clamp(hp / max, 0, 1); if (f > 0) Art.rr(c, x + 12, y + 39, Math.max(11, 360 * f), 11, 5.5, f > 0.5 ? '#51cf66' : f > 0.25 ? '#fcc419' : '#ff6b6b');
   if (mine) { c.textAlign = 'left'; c.font = '700 11px system-ui'; }
+}
+
+// The ending: the king turns back into a boy, and the Lantern is relit.
+async function ending() {
+  const n = KIDS[S.kid].name;
+  G.mode = 'ending'; G.end = { scene: 0, k: 0 }; G.parts = []; showHUD(false);
+  await say('The Fog thins. The great king shrinks, smaller and smaller, until only a boy-sized wisp of fog is left.');
+  await tween(1.8, k => { G.end.k = k; });
+  setMood('surprised', 3); await say('"I got it wrong," he whispers. "In front of everyone."', 'Wick');
+  setMood('happy', 4); await say(`"I got lots wrong on the way here. Then I tried again. That is how I got here."`, n);
+  G.end.scene = 1; Snd.play('level'); burst(W / 2, 150, '#ffe066', 40);
+  await say('"Wick, I am sorry. I should have told you that night: a wrong answer is not the end. It is the start."', 'Elder Lumen');
+  await say('Wick takes a deep breath and says it out loud, for everyone to hear: "Can I try again?"');
+  G.end.scene = 2; Snd.play('win'); burst(W / 2, 150, '#fff9db', 60); setMood('happy', 30);
+  await say(['The five crystals fly together. The Great Lantern blazes!', 'All across the land the Fog lifts, and new Lumis leap from the Lantern like sparks.']);
+  G.end.scene = 3; Snd.play('capture');
+  if (!S.party.some(l => l.sp === 'echo')) S.party.push({ sp: 'echo', lv: 10, xp: 0 });
+  await say('"This one is called Echo," says Wick. "It is not afraid to answer out loud. I think it wants to go with you."', 'Wick');
+  await say([`Echo joined ${n}'s team!`, `${n}, Hero of Hearthome! The Lantern is safe, and nobody here is afraid of a wrong answer any more.`]);
+  G.mode = 'world'; G.end = null; G.parts = [];
 }

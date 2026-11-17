@@ -95,8 +95,9 @@ const Snd = (() => {
   function setMuted(m) { muted = m; try { localStorage.setItem('lumiquest.mute', m ? '1' : '0'); } catch (e) { } if (master) master.gain.value = m ? 0 : 0.5; if (m && window.speechSynthesis) speechSynthesis.cancel(); }
   function play(name) { if (ac && !muted && sfx[name]) sfx[name](); }
   function say(text) {
-    if (muted || !window.speechSynthesis) return;
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/[❓▶]/g, '')); u.rate = 0.92; u.pitch = 1.1; speechSynthesis.speak(u); } catch (e) { }
+    // Only ever called from a tap on a word, so it works even when music and effects are muted.
+    if (!window.speechSynthesis) return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.8; u.pitch = 1.05; speechSynthesis.speak(u); } catch (e) { }
   }
   return { init, play, setMusic, duck, setMuted, say, isMuted: () => muted, track: () => curName };
 })();

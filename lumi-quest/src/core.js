@@ -10,7 +10,7 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
 function save() { if (!S) return; try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } }
 function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } }
@@ -65,12 +65,27 @@ let toastQ = [], toastBusy = false;
 function toast(msg) { toastQ.push(msg); if (!toastBusy) nextToast(); }
 function nextToast() { const el = $('toast'); if (!toastQ.length) { toastBusy = false; el.classList.remove('show'); return; } toastBusy = true; el.textContent = toastQ.shift(); el.classList.add('show'); setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 220); }, G.fast ? 60 : 1900); }
 
+// Tap any word to hear it. Each word becomes its own span; symbols are spoken by name.
+const SPOKEN = { '+': 'plus', '−': 'minus', '-': 'minus', '×': 'times', '÷': 'divided by', '=': 'equals', '?': 'what number' };
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function wordify(el, text) {
+  el.innerHTML = String(text).split(' ').map(tok => {
+    const core = tok.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+    const sayIt = /[\p{L}\p{N}]/u.test(core) ? core : SPOKEN[tok];
+    return sayIt ? `<span class="word" data-say="${esc(sayIt)}">${esc(tok)}</span>` : esc(tok);
+  }).join(' ');
+}
+document.addEventListener('click', ev => {
+  const w = ev.target.closest && ev.target.closest('[data-say]'); if (!w) return;
+  ev.stopPropagation(); ev.preventDefault(); Snd.init(); Snd.say(w.dataset.say);
+  w.classList.add('said'); setTimeout(() => w.classList.remove('said'), 700);
+}, true);
 let dlg = null;
 function say(lines, who) {
   if (typeof lines === 'string') lines = [lines];
   return new Promise(res => { dlg = { lines: lines.slice(), who, res }; $('dialog').hidden = false; showLine(); });
 }
-function showLine() { $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; $('dlgText').textContent = dlg.lines[0]; if (S && S.read) Snd.say(dlg.lines[0]); }
+function showLine() { $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]); }
 function advanceDialog() { if (!dlg) return; Snd.play('tap'); dlg.lines.shift(); if (dlg.lines.length) showLine(); else { const r = dlg.res; dlg = null; $('dialog').hidden = true; r(); } }
 $('dialog').addEventListener('click', advanceDialog);
 

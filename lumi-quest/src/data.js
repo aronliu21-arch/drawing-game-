@@ -16,6 +16,7 @@ const SPECIES = {
   sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes', skill: 'Sand Blaze' },
   bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)', skill: 'Bamboo Bash' },
   lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings', skill: 'Lantern Flash' },
+  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow', skill: 'Brave Voice' },
 };
 Object.values(SPECIES).forEach((s, i) => { s.ph = i * 1.3; });
 const STARTERS = ['emberpup', 'sproutle', 'bubblit'];
@@ -257,10 +258,11 @@ const WORLD_ORDER = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'];
 const STORY = {
   intro: [
     'Long ago, the Great Lantern of Hearthome lit the whole land with knowledge.',
-    'Then King Mumble and his Fog rolled in. The Lantern shattered into five Knowledge Crystals.',
-    'Wherever the Fog went, villagers forgot how to count, to read maps, to tell fact from fib.',
-    'Only a hero who answers bravely can clear the Fog. Lumis, the little creatures of light, will help.',
+    'Each time someone learned something new, a spark leapt from the Lantern and became a Lumi, a little creature of light.',
+    'Then one night a cold Fog rolled in. The Lantern shattered into five Knowledge Crystals, and the Lumis scattered into the tall grass.',
+    'Wherever the Fog went, people forgot: how to count, how to read a map, how to tell fact from fib.',
+    'The Fog has a king. Nobody remembers his real name any more. They call him King Mumble.',
   ],
-  elderFirst: n => [`${n}! You have come at last. I am Elder Lumen.`, 'Each Knowledge Crystal is guarded by a Fog boss in a different land.', 'Answer questions to power every move. Capture wild Lumis and train them.', 'Step through the gate behind me when you are ready. Start with Numberwood.'],
+  elderFirst: n => [`${n}! You have come at last. I am Elder Lumen, keeper of the Lantern.`, 'The Fog cannot stand a brave answer. Even a wrong one makes it shiver, because trying is how we learn.', 'Five Fog bosses guard the crystals. They were not always monsters. The Fog changed them.', 'Answer questions to power every move. Catch wild Lumis and train them.', 'Step through the gate behind me, and start with Numberwood. And if you meet the king… be kind.'],
 };
 if (typeof module !== 'undefined') module.exports = { WORLDS, SPECIES };

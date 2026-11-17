@@ -76,10 +76,10 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .stat { background: rgba(21, 19, 31, .8); color: #fff; border: 2px solid rgba(255, 255, 255, .35); border-radius: 14px; padding: 0 12px; height: 52px; display: flex; align-items: center; gap: 5px; font-weight: 900; font-size: 17px; font-variant-numeric: tabular-nums; }
 
 /* dialog */
-#dialog { position: absolute; left: 30px; right: 30px; bottom: 18px; min-height: 96px; background: var(--panel); border: 5px solid var(--ink); border-radius: 20px; box-shadow: 0 6px 0 var(--ink); padding: 18px 54px 16px 24px; cursor: pointer; z-index: 6; }
+#dialog { position: absolute; left: 30px; right: 30px; bottom: 18px; min-height: 96px; background: var(--panel); border: 5px solid var(--ink); border-radius: 20px; box-shadow: 0 6px 0 var(--ink); padding: 18px 86px 16px 24px; cursor: pointer; z-index: 6; }
 #dlgWho { position: absolute; top: -20px; left: 22px; background: var(--violet); color: #fff; font: 400 18px var(--font-d); padding: 3px 16px; border-radius: 12px; border: 3px solid var(--ink); }
 #dlgText { margin: 0; font-size: 23px; font-weight: 700; line-height: 1.3; }
-.more { position: absolute; right: 20px; bottom: 12px; font-size: 22px; color: var(--violet); animation: bob .8s ease-in-out infinite; }
+.more { position: absolute; right: 12px; bottom: 12px; width: 60px; height: 60px; border-radius: 50%; background: var(--gold); border: 4px solid var(--ink); box-shadow: 0 4px 0 var(--ink); font-size: 24px; color: var(--ink); }
 @keyframes bob { 50% { translate: 0 5px; } }
 
 /* panel */
@@ -184,6 +184,17 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 #btnReset .zh { font-size: 24px; }
 #qFace { width: 72px; height: 72px; flex: none; border-radius: 50%; background: #e5dbff; border: 3px solid var(--ink); margin: -4px 0; }
 #question:not([hidden]) ~ #toast { display: none; }
+
+/* tap-a-word pronunciation */
+.word { cursor: pointer; border-radius: 7px; padding: 1px 2px; margin: -1px -2px; transition: background .15s; }
+.word.said { background: var(--gold); }
+#dlgText .word, #qText .word { text-decoration: underline dotted rgba(112, 72, 232, .35); text-underline-offset: 5px; }
+.choice.hasChip { padding-right: 58px; }
+.sayChip { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 46px; height: 46px; border-radius: 50%; background: #e5dbff; border: 2px solid var(--ink); font-size: 20px; line-height: 42px; text-align: center; }
+.sayChip.said { background: var(--gold); }
+.memh { color: var(--violet); margin-top: 12px; }
+.mems { margin: 4px 0 0; padding-left: 22px; font-size: 16px; font-weight: 600; line-height: 1.35; }
+.mems b { color: var(--violet); }
 </style>
 </head>
 <body>
@@ -235,7 +246,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 
     <div id="question" hidden>
       <div id="qCard">
-        <div class="qhead"><canvas id="qFace" aria-hidden="true"></canvas><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span><button id="qSay" aria-label="Read aloud">🔊</button></div>
+        <div class="qhead"><canvas id="qFace" aria-hidden="true"></canvas><span id="qStyle"></span><span id="qMsg"></span><span id="qTries"></span></div>
         <div id="qBigWrap"><div id="qBig" hidden></div><div id="qSub" hidden></div></div>
         <div id="qText"></div>
         <div id="qChoices"></div>
@@ -244,7 +255,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
       </div>
     </div>
 
-    <div id="dialog" hidden><b id="dlgWho"></b><p id="dlgText"></p><span class="more">▶</span></div>
+    <div id="dialog" hidden><b id="dlgWho"></b><p id="dlgText"></p><button id="dlgNext" class="more" aria-label="Next">▶</button></div>
     <div id="panel" hidden><div id="panelCard"><button id="panelClose" aria-label="Close">✕</button><div id="panelBody"></div></div></div>
     <div id="toast"></div>
     <div id="rotate" hidden><div>📱↻<p>Turn your phone sideways</p></div></div>
@@ -565,6 +576,7 @@ const SPECIES = {
   sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes', skill: 'Sand Blaze' },
   bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)', skill: 'Bamboo Bash' },
   lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings', skill: 'Lantern Flash' },
+  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow', skill: 'Brave Voice' },
 };
 Object.values(SPECIES).forEach((s, i) => { s.ph = i * 1.3; });
 const STARTERS = ['emberpup', 'sproutle', 'bubblit'];
@@ -806,13 +818,75 @@ const WORLD_ORDER = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6'];
 const STORY = {
   intro: [
     'Long ago, the Great Lantern of Hearthome lit the whole land with knowledge.',
-    'Then King Mumble and his Fog rolled in. The Lantern shattered into five Knowledge Crystals.',
-    'Wherever the Fog went, villagers forgot how to count, to read maps, to tell fact from fib.',
-    'Only a hero who answers bravely can clear the Fog. Lumis, the little creatures of light, will help.',
+    'Each time someone learned something new, a spark leapt from the Lantern and became a Lumi, a little creature of light.',
+    'Then one night a cold Fog rolled in. The Lantern shattered into five Knowledge Crystals, and the Lumis scattered into the tall grass.',
+    'Wherever the Fog went, people forgot: how to count, how to read a map, how to tell fact from fib.',
+    'The Fog has a king. Nobody remembers his real name any more. They call him King Mumble.',
   ],
-  elderFirst: n => [`${n}! You have come at last. I am Elder Lumen.`, 'Each Knowledge Crystal is guarded by a Fog boss in a different land.', 'Answer questions to power every move. Capture wild Lumis and train them.', 'Step through the gate behind me when you are ready. Start with Numberwood.'],
+  elderFirst: n => [`${n}! You have come at last. I am Elder Lumen, keeper of the Lantern.`, 'The Fog cannot stand a brave answer. Even a wrong one makes it shiver, because trying is how we learn.', 'Five Fog bosses guard the crystals. They were not always monsters. The Fog changed them.', 'Answer questions to power every move. Catch wild Lumis and train them.', 'Step through the gate behind me, and start with Numberwood. And if you meet the king… be kind.'],
 };
 if (typeof module !== 'undefined') module.exports = { WORLDS, SPECIES };
+
+// The deeper story: who each boss used to be, the memories they return, and King Mumble's past.
+const LORE = {
+  w1: {
+    intro: ['Who goes there? One hero? Two? Seven? I… I cannot count you!', 'King Mumble says numbers only cause trouble. No more counting!'],
+    half: 'Stop getting them right! It makes my head feel… clear…',
+    was: 'Old Tally',
+    after: ['One, two, three… I can count again! I am Old Tally. I count every tree in Numberwood.', 'The Fog turned me into Count Muddle. Thank you for setting me free.', 'I remember something. Long ago a boy came to count fireflies with me. He counted out loud, so proud of every number.'],
+    memory: ['The Firefly Counter', 'A boy used to count fireflies in Numberwood, out loud and proud.'],
+    voice: 'So you can count. Counting leads to mistakes. Mistakes lead to laughing. You will see.',
+  },
+  w2: {
+    intro: ['Arr! The sea is made of lemonade, and crabs can sing opera!', 'King Mumble says if nothing is true, then nobody can ever be wrong!'],
+    half: 'Is… is the sea really salty? I used to know that…',
+    was: 'Captain Marlow',
+    after: ['Blow me down, my head is clear! I am Captain Marlow. I tell true tales of the sea.', 'I remember a boy who loved my stories. He asked "How do we know?" about everything.', 'One day he stopped asking. He said questions only made people laugh at him.'],
+    memory: ['The Boy Who Asked', 'He asked "How do we know?" about everything, until one day he stopped.'],
+    voice: 'I asked questions once. It only got me laughed at. Stop asking.',
+  },
+  w3: {
+    intro: ['There is no north. There is no south. There is only Nowhere!', 'King Mumble says a blank map can never be wrong.'],
+    half: 'That mountain… it has a name. I drew it once…',
+    was: 'Mapmaker Marta',
+    after: ['My maps! The lines are coming back! I am Marta. I drew every path in these peaks.', 'I remember now. A boy asked me for a map to the Lantern Festival. He was going to answer the Great Question on stage.', 'He was so excited. I never saw him smile like that again.'],
+    memory: ['The Road to the Festival', 'He walked to the Lantern Festival to answer the Great Question on stage.'],
+    voice: 'Do not go looking for that day. Leave it in the fog.',
+  },
+  w4: {
+    intro: ['Tick-tock, tock-tick, tick-tick-tock! Nothing comes next any more!', 'King Mumble says if there is no order, nobody can get things out of order.'],
+    half: 'One, then two, then… three! Oh! That is what comes next!',
+    was: 'Old Tick',
+    after: ['Tick, tock, tick, tock. In order at last! I am Old Tick. I wind the Great Clock.', 'The clock remembers everything. On Festival night the boy gave his answer, and it was wrong.', 'The whole crowd laughed. His teacher said nothing. The boy ran out into the night, and the first fog rolled in behind him.'],
+    memory: ['The Wrong Answer', 'His answer was wrong. The crowd laughed, his teacher said nothing, and he ran into the night.'],
+    voice: 'Now you know. They LAUGHED. I will never let anyone laugh at an answer again.',
+  },
+  w5: {
+    intro: ['Every word is a smudge. Every wish is a blot. Reading is over!', 'King Mumble says if nobody can read, nobody can read it wrong.'],
+    half: 'That stroke… I taught that stroke to a hundred children…',
+    was: 'Brushmaster Lan',
+    after: ['The ink is clear again. I am Brushmaster Lan. I paint the wishes on every lantern.', 'I found the boy\'s festival lantern, hidden all these years. His wish says: "I wish I was never wrong."', 'And I remember his name. It was never Mumble. That is only how he spoke after that night, so quietly that nobody could hear a mistake. His name is Wick.'],
+    memory: ['The Hidden Wish', 'His lantern wish said "I wish I was never wrong." His real name is Wick.'],
+    voice: 'Wick is gone. There is only King Mumble. Come to my Citadel, and I will prove that knowing things only hurts.',
+  },
+  w6: {
+    intro: ['…so you came. Speak up? No. If I speak quietly, nobody hears when I am wrong.', 'I will ask you everything. Numbers, facts, maps, patterns, words. You WILL get one wrong. Then you will understand.'],
+    half: 'You got some wrong on the way here… and you just tried again? Why are you not afraid?',
+  },
+};
+const ELDER_CONFESS = ['So. You know about Wick.', 'I was his teacher. When the crowd laughed, I should have stood up and said: a wrong answer is the bravest kind. I said nothing.', 'The Fog is my mistake as much as his. Please, bring him home.'];
+// One-time news lines from the Hearthome villagers as each land is saved.
+const VILLAGER_NEWS = {
+  'Baker Pim': [['w1', 'Two cups of flour, not twenty! Numberwood is counting again, and so am I. Have a bun!'], ['w3', 'A climber from Atlas Peaks found her way here with a real map. She bought six loaves!'], ['w5', 'Lantern Isle sent us festival lanterns. I can read every wish on them.']],
+  'Farmer Jo': [['w2', 'Sailors say Coral Cove tells true stories again. No more singing crabs.'], ['w4', 'Hear that? The Great Clock in the canyon is ticking in order. My hens are laying on time again.']],
+};
+const VILLAGER_SAVED = {
+  'Little Fen': 'Twelve acorns! I counted them all by myself. Old Tally checked.',
+  'Diver Lin': 'A whale is a mammal. I looked it up, and Captain Marlow agreed!',
+  'Climber Bo': 'My compass points north again. Marta is drawing new maps for everyone.',
+  'Gear Boy Ozzy': 'Red, blue, red, blue, RED! Old Tick let me wind the clock today.',
+  'Lantern Kid Yu': 'I wrote my wish on a lantern: I wish to learn one new word every day.',
+};
 
 // All art is drawn with canvas. No image files.
 const Art = (() => {
@@ -1215,8 +1289,9 @@ const Snd = (() => {
   function setMuted(m) { muted = m; try { localStorage.setItem('lumiquest.mute', m ? '1' : '0'); } catch (e) { } if (master) master.gain.value = m ? 0 : 0.5; if (m && window.speechSynthesis) speechSynthesis.cancel(); }
   function play(name) { if (ac && !muted && sfx[name]) sfx[name](); }
   function say(text) {
-    if (muted || !window.speechSynthesis) return;
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text.replace(/[❓▶]/g, '')); u.rate = 0.92; u.pitch = 1.1; speechSynthesis.speak(u); } catch (e) { }
+    // Only ever called from a tap on a word, so it works even when music and effects are muted.
+    if (!window.speechSynthesis) return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.8; u.pitch = 1.05; speechSynthesis.speak(u); } catch (e) { }
   }
   return { init, play, setMusic, duck, setMuted, say, isMuted: () => muted, track: () => curName };
 })();
@@ -1233,7 +1308,7 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
 function save() { if (!S) return; try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } }
 function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } }
@@ -1288,12 +1363,27 @@ let toastQ = [], toastBusy = false;
 function toast(msg) { toastQ.push(msg); if (!toastBusy) nextToast(); }
 function nextToast() { const el = $('toast'); if (!toastQ.length) { toastBusy = false; el.classList.remove('show'); return; } toastBusy = true; el.textContent = toastQ.shift(); el.classList.add('show'); setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 220); }, G.fast ? 60 : 1900); }
 
+// Tap any word to hear it. Each word becomes its own span; symbols are spoken by name.
+const SPOKEN = { '+': 'plus', '−': 'minus', '-': 'minus', '×': 'times', '÷': 'divided by', '=': 'equals', '?': 'what number' };
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function wordify(el, text) {
+  el.innerHTML = String(text).split(' ').map(tok => {
+    const core = tok.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+    const sayIt = /[\p{L}\p{N}]/u.test(core) ? core : SPOKEN[tok];
+    return sayIt ? `<span class="word" data-say="${esc(sayIt)}">${esc(tok)}</span>` : esc(tok);
+  }).join(' ');
+}
+document.addEventListener('click', ev => {
+  const w = ev.target.closest && ev.target.closest('[data-say]'); if (!w) return;
+  ev.stopPropagation(); ev.preventDefault(); Snd.init(); Snd.say(w.dataset.say);
+  w.classList.add('said'); setTimeout(() => w.classList.remove('said'), 700);
+}, true);
 let dlg = null;
 function say(lines, who) {
   if (typeof lines === 'string') lines = [lines];
   return new Promise(res => { dlg = { lines: lines.slice(), who, res }; $('dialog').hidden = false; showLine(); });
 }
-function showLine() { $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; $('dlgText').textContent = dlg.lines[0]; if (S && S.read) Snd.say(dlg.lines[0]); }
+function showLine() { $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]); }
 function advanceDialog() { if (!dlg) return; Snd.play('tap'); dlg.lines.shift(); if (dlg.lines.length) showLine(); else { const r = dlg.res; dlg = null; $('dialog').hidden = true; r(); } }
 $('dialog').addEventListener('click', advanceDialog);
 
@@ -1344,7 +1434,7 @@ function loadWorld(id, quiet) {
       else if (ch === 'I') { G.ents.push({ type: 'npc', role: 'heal', x, y, solid: true, v: { name: 'Healer Rosa', col: '#f783ac', hair: '#862e9c', hat: 'heal', ph: 2, mark: '💗' } }); t = '.'; }
       else if (ch === 'L') { G.ents.push({ type: 'npc', role: 'elder', x, y, solid: true, v: { name: 'Elder Lumen', col: '#7048e8', hair: '#adb5bd', hat: 'elder', ph: 3 } }); t = '.'; }
       else if (ch === 'E') { const f = w.fogs[fi++ % w.fogs.length]; G.ents.push({ type: 'fog', x, y, solid: true, def: Object.assign({ ph: fi * 1.7 }, f) }); t = '.'; }
-      else if (ch === 'B') { if (!S.bosses[id]) G.ents.push({ type: 'boss', x, y, solid: true, def: Object.assign({ boss: true, ph: 0 }, w.boss) }); t = '.'; }
+      else if (ch === 'B') { if (S.bosses[id] && LORE[id].was) G.ents.push(restoredNpc(id, x, y)); if (!S.bosses[id]) G.ents.push({ type: 'boss', x, y, solid: true, def: Object.assign({ boss: true, ph: 0 }, w.boss) }); t = '.'; }
       else if (ch === 'F') { if (!S.bosses[id] && q.kills < 3) G.ents.push({ type: 'wall', x, y, solid: true }); t = '.'; }
       out.push(t);
     });
@@ -1355,6 +1445,8 @@ function loadWorld(id, quiet) {
   if (!quiet) toast(`${w.icon || '🏡'} ${w.name}` + (w.subject !== 'mix' ? ` · ${Q.SUBJECTS[w.subject].name}` : ''));
   snapCam();
 }
+// After a boss is beaten, the person the Fog had changed stands in its place.
+function restoredNpc(id, x, y) { const L = LORE[id]; return { type: 'npc', role: 'chat', x, y, solid: true, li: 0, v: { name: L.was, col: WORLDS[id].boss.col, hair: '#adb5bd', ph: 4, lines: [`I keep thinking about that boy. ${L.memory[1]}`, 'Thank you for clearing the Fog from my head.'] } }; }
 const tileAt = (x, y) => (G.grid[y] || [])[x];
 const entAt = (x, y) => G.ents.find(e => e.x === x && e.y === y && !e.gone);
 function solidAt(x, y) { const t = tileAt(x, y); if (!t || SOLID_TILES.includes(t)) return true; const e = entAt(x, y); return !!(e && e.solid); }
@@ -1414,10 +1506,16 @@ async function interact(e) {
   if (e.type !== 'npc') return;
   const w = WORLDS[G.world], n = KIDS[S.kid].name;
   G.busy = true;
-  if (e.role === 'chat') { await say(e.v.lines[e.li++ % e.v.lines.length], e.v.name); }
+  if (e.role === 'chat') {
+    const nw = (VILLAGER_NEWS[e.v.name] || []).find(([id]) => S.bosses[id] && !S.news[e.v.name + id]);
+    if (nw) { S.news[e.v.name + nw[0]] = 1; save(); setMood('happy', 3); await say(nw[1], e.v.name); }
+    else if (S.bosses[G.world] && VILLAGER_SAVED[e.v.name]) await say(VILLAGER_SAVED[e.v.name], e.v.name);
+    else await say(e.v.lines[e.li++ % e.v.lines.length], e.v.name);
+  }
   else if (e.role === 'elder') {
     if (!S.metElder) { await say(STORY.elderFirst(n), e.v.name); S.metElder = true; save(); }
-    else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Keep training. There is always more to learn.'], e.v.name);
+    else if (S.won) await say([`The Great Lantern shines again, thanks to you, ${n}.`, 'Wick is my student again. He gets things wrong every day now, and laughs about it.'], e.v.name);
+    else if (S.crystals.length === 5 && !S.elderTold) { setMood('sad', 6); await say(ELDER_CONFESS, e.v.name); S.elderTold = true; save(); }
     else { const nx = WORLD_ORDER.find(id => !S.bosses[id]); await say([`You hold ${S.crystals.length} of 5 Knowledge Crystals.`, `Your next adventure is in ${WORLDS[nx].name}. Use the gate behind me.`], e.v.name); }
   }
   else if (e.role === 'heal') { setMood('happy', 2.5); S.hp = maxHP(); Snd.play('heal'); burst(W / 2, H / 2, '#ff8fab', 20); updateHUD(); save(); await say('There you go, all better! Your health is full.', e.v.name); }
@@ -1511,8 +1609,10 @@ function questPanel() {
   if (G.world === 'hub') { const nx = WORLD_ORDER.find(id => !S.bosses[id]); h += nx ? `<p><b>Next:</b> step through the gate to ${WORLDS[nx].name} (${WORLDS[nx].blurb}).</p>` : '<p>The Great Lantern is whole again. You saved Hearthome!</p>'; }
   else if (S.bosses[G.world]) h += `<p>✅ ${w.name} is saved.</p>`;
   else h += `<p><b>${w.name}:</b> ${w.problem}</p><p>${q.kills >= 3 ? '✅' : '⬜'} Defeat 3 Fog creatures (${Math.min(3, q.kills || 0)}/3)<br>⬜ Defeat ${w.boss.name}</p>`;
-  h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p><label class="chk"><input type="checkbox" id="optRead" ${S.read ? 'checked' : ''}> Read questions aloud</label>`;
-  const p = openPanel(h); $('optRead').onchange = e => { S.read = e.target.checked; save(); }; return p;
+  h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p>`;
+  const mem = WORLD_ORDER.slice(0, 5).filter(id => S.bosses[id]).map(id => LORE[id].memory);
+  h += '<h3 class="memh">Memories of the boy in the fog</h3>' + (mem.length ? '<ol class="mems">' + mem.map(m => `<li><b>${m[0]}</b> ${m[1]}</li>`).join('') + '</ol>' : '<p class="hint">Beat a Fog boss to find the first memory.</p>');
+  return openPanel(h);
 }
 
 // ---------- drawing ----------
@@ -1536,7 +1636,7 @@ function drawWorld(c) {
     else if (e.type === 'hidden') list.push([py, () => Art.sparkle(c, fx + Math.sin(e.ph * 9) * 8, py + 26, t, e.ph)]);
     else if (e.type === 'gate') list.push([py + 2, () => Art.gate(c, px, py, TILE, t, G.world === 'hub' ? '#9775fa' : w.crystal)]);
     else if (e.type === 'wall') list.push([fy, () => Art.fogWall(c, px, py, TILE, t)]);
-    else if (e.type === 'npc') { const q = S.quests[G.world]; const v = e.role === 'giver' ? Object.assign({}, e.v, { mark: S.bosses[G.world] ? '' : q.accepted ? '…' : '!', sad: !S.bosses[G.world] }) : e.role === 'elder' && !S.metElder ? Object.assign({}, e.v, { mark: '!' }) : e.v; list.push([fy, () => Art.villager(c, v, fx, fy, 0.9, t)]); }
+    else if (e.type === 'npc') { const q = S.quests[G.world]; const v = e.role === 'giver' ? Object.assign({}, e.v, { mark: S.bosses[G.world] ? '' : q.accepted ? '…' : '!', sad: !S.bosses[G.world] }) : e.role === 'elder' && (!S.metElder || (S.crystals.length === 5 && !S.elderTold && !S.won)) ? Object.assign({}, e.v, { mark: '!' }) : e.v; list.push([fy, () => Art.villager(c, v, fx, fy, 0.9, t)]); }
     else if (e.type === 'fog') list.push([fy, () => Art.fog(c, e.def, fx, fy, 0.8, t)]);
     else if (e.type === 'boss') list.push([fy, () => Art.fog(c, e.def, fx, fy, 0.82, t)]);
   }
@@ -1562,16 +1662,15 @@ function askQuestion(subject) {
     QS = { q, tries: 0, res, seq: [], done: false };
     const sub = Q.SUBJECTS[q.subject];
     $('qStyle').textContent = `${sub.style} · ${sub.name}`;
-    $('qText').textContent = q.q; $('qWhy').hidden = true; $('qNext').hidden = true; $('qMsg').textContent = q.type === 'order' ? 'Tap them one by one' : '';
+    wordify($('qText'), q.q); $('qWhy').hidden = true; $('qNext').hidden = true; $('qMsg').textContent = q.type === 'order' ? 'Tap them one by one' : 'Tap a word to hear it';
     $('qBig').hidden = !q.big; $('qBig').textContent = q.big || ''; $('qBig').className = (q.bigSmall ? 'small ' : '') + (q.sub ? 'hasSub' : ''); $('qSub').hidden = !q.sub; $('qSub').textContent = q.sub || '';
     const box = $('qChoices'); box.innerHTML = ''; box.className = q.type + (q.zh ? ' zh' : '') + (q.emoji ? ' emoji' : ''); box.style.gridTemplateColumns = q.type === 'order' ? `repeat(${q.items.length}, 1fr)` : '';
     const items = q.type === 'order' ? q.items : q.choices;
-    items.forEach((txt, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = q.type === 'tf' ? (i === 0 ? '✅ Fact' : '❌ Fib') : txt; b.addEventListener('click', () => pickAnswer(i)); box.appendChild(b); });
+    items.forEach((txt, i) => { const b = document.createElement('button'); b.className = 'choice'; b.textContent = q.type === 'tf' ? (i === 0 ? '✅ Fact' : '❌ Fib') : txt; if (q.type === 'mc' && !q.zh && !q.emoji && /[A-Za-z]{3}/.test(txt)) { const chip = document.createElement('span'); chip.className = 'sayChip'; chip.dataset.say = txt; chip.textContent = '🔊'; chip.setAttribute('aria-label', 'Hear this answer'); b.appendChild(chip); b.classList.add('hasChip'); }
+      b.addEventListener('click', () => pickAnswer(i)); box.appendChild(b); });
     drawTries(); $('question').hidden = false;
-    if (S.read) readQuestion();
   });
 }
-function readQuestion() { const q = QS.q; Snd.say(q.q + (q.type === 'tf' ? ' Fact, or fib?' : '')); }
 function drawTries() { $('qTries').textContent = QS.tries === 0 ? '● ●' : '● ○'; }
 function pickAnswer(i) {
   if (!QS || QS.done) return; const q = QS.q, btns = [...$('qChoices').children];
@@ -1595,22 +1694,25 @@ function finishQ(ok) {
   QS.done = true; const q = QS.q, btns = [...$('qChoices').children], first = ok && QS.tries === 0;
   if (q.type === 'order') q.correct.forEach((idx, n) => { btns[idx].classList.add('locked'); btns[idx].dataset.n = n + 1; }); else btns[q.answer].classList.add('right');
   btns.forEach(b => { b.disabled = true; });
-  $('qWhy').hidden = false; $('qWhy').textContent = (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why;
+  $('qWhy').hidden = false; wordify($('qWhy'), (ok ? (first ? '⭐ Perfect! ' : '👍 Got it! ') : 'The answer: ' + (q.type === 'order' ? '' : q.choices[q.answer] + '. ')) + q.why);
   setMood(ok ? 'happy' : 'sad', ok ? 1.8 : 3);
   if (ok) { Snd.play('ok'); S.stats.right++; if (first) S.stats.first++; $('qMsg').textContent = first ? 'Full power!' : 'Half power'; }
-  else { $('qMsg').textContent = 'The move fizzled'; if (S.read) Snd.say('The answer is ' + (q.type === 'order' ? q.why : q.choices[q.answer]) + '. ' + q.why); }
+  else { $('qMsg').textContent = 'The move fizzled'; }
   const out = { ok, tries: QS.tries, mult: ok ? (first ? 1 : 0.5) : 0, pts: ok ? (first ? 2 : 1) : 0 };
   const close = () => { $('question').hidden = true; const r = QS.res; QS = null; addXP(out.pts * 2); save(); updateHUD(); r(out); };
   if (ok) setTimeout(close, G.fast ? 0 : 1500); else { $('qNext').hidden = false; $('qNext').onclick = () => { Snd.play('tap'); close(); }; }
 }
-$('qSay').addEventListener('click', () => { if (QS) readQuestion(); });
 
 // ---------- battle ----------
 const worldIndex = () => Math.max(1, WORLD_ORDER.indexOf(G.world) + 1);
 function makeFog(def) { const wi = worldIndex(), boss = !!def.boss; const hp = Math.round((22 + 17 * wi) * (boss ? 2.5 : 1)); return Object.assign({}, def, { hp, max: hp, atk: 3 + 2.5 * wi + (boss ? 2 : 0), xp: (10 + 6 * wi) * (boss ? 3 : 1), gold: (8 + 5 * wi) * (boss ? 4 : 1) }); }
 function makeWild() { const w = WORLDS[G.world], sp = w.wild[Math.floor(Math.random() * w.wild.length)], wi = G.world === 'hub' ? 0.6 : worldIndex(); const hp = Math.round(16 + 9 * wi); return { wild: true, sp, name: SPECIES[sp].name, el: SPECIES[sp].el, lv: w.wildLv, hp, max: hp, atk: 3 + 2.2 * wi, xp: Math.round(8 + 5 * wi), gold: 0 }; }
 function wildBattle() { beginBattle(makeWild(), null); }
-function startBattle(ent) { beginBattle(makeFog(ent.def), ent); }
+async function startBattle(ent) {
+  // The first time you meet a boss, it speaks before the fight.
+  if (ent.type === 'boss' && !S.met[G.world]) { G.busy = true; setMood('surprised', 2.5); await say(LORE[G.world].intro, ent.def.name); S.met[G.world] = 1; save(); G.busy = false; }
+  beginBattle(makeFog(ent.def), ent);
+}
 async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
@@ -1676,6 +1778,7 @@ async function doMove(kind) {
   }
   if (G.B !== B) return;
   if (e.hp <= 0) return finishBattle('win');
+  if (e.boss && !B.half && e.hp <= e.max / 2) { B.half = true; await say(LORE[G.world].half, e.name); }
   // enemy turn
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
@@ -1718,9 +1821,17 @@ async function bossWon() {
   const w = WORLDS[G.world], n = KIDS[S.kid].name, id = G.world, final = id === 'w6';
   S.bosses[id] = 1; if (!final) S.crystals.push(id); else S.won = true; S.hp = maxHP();
   G.ents.filter(x => x.type === 'wall').forEach(x => { x.gone = true; });
+  const bossEnt = G.ents.find(x => x.type === 'boss'); if (bossEnt && LORE[id].was) G.ents.push(restoredNpc(id, bossEnt.x, bossEnt.y));
   leaveBattle(); Snd.play('level'); burst(W / 2, H / 2, w.crystal, 50);
-  if (final) await say(['King Mumble melts away. The Fog lifts from every land!', `The five crystals fly together. The Great Lantern of Hearthome shines again.`, `${n}, you are the Hero of Hearthome!`]);
-  else await say([`${w.boss.name} is defeated! The ${w.name} Knowledge Crystal is yours.`, `${w.name} remembers everything again. ${S.crystals.length} of 5 crystals found.`, S.crystals.length === 5 ? 'The way to the Fog Citadel is open. King Mumble awaits!' : `A new land has opened at the Teleport Gate: ${WORLDS[WORLD_ORDER[WORLD_ORDER.indexOf(id) + 1]].name}.`]);
+  if (final) await ending();
+  else {
+    const L = LORE[id];
+    await say(`The Fog pours out of ${w.boss.name} like steam, and someone much smaller is left standing there.`);
+    await say(L.after, L.was);
+    await say([`The ${w.name} Knowledge Crystal is yours! ${S.crystals.length} of 5 found.`, `Memory found: "${L.memory[0]}". You can read it again in your Quest log.`]);
+    setMood('worried', 4); await say(L.voice, 'A voice in the fog');
+    await say(S.crystals.length === 5 ? 'The way to the Fog Citadel is open. But first, Elder Lumen wants to talk to you in Hearthome.' : `A new land has opened at the Teleport Gate: ${WORLDS[WORLD_ORDER[WORLD_ORDER.indexOf(id) + 1]].name}.`);
+  }
   save(); G.breakOn = true;
   await openPanel(`<div class="break"><div class="bigc" style="color:${w.crystal}">◆</div><h2>Great practice! Time for a break</h2><p>${final ? 'You finished the whole adventure.' : 'Your adventure is saved. The next land will be waiting.'}</p><p class="tip">💡 ${w.tip}</p><button id="btnFinish" class="big">Finish for now</button></div>`, { noClose: true, cls: 'center' });
 }
@@ -1757,6 +1868,26 @@ function plate(c, x, y, name, hp, max, el, col, mine) {
   c.textAlign = 'right'; c.font = '700 13px system-ui'; c.fillStyle = '#ced4da'; c.fillText(`${Math.max(0, Math.ceil(hp))} / ${max}`, x + 372, y + 28);
   Art.rr(c, x + 12, y + 39, 360, 11, 5.5, '#343a40'); const f = clamp(hp / max, 0, 1); if (f > 0) Art.rr(c, x + 12, y + 39, Math.max(11, 360 * f), 11, 5.5, f > 0.5 ? '#51cf66' : f > 0.25 ? '#fcc419' : '#ff6b6b');
   if (mine) { c.textAlign = 'left'; c.font = '700 11px system-ui'; }
+}
+
+// The ending: the king turns back into a boy, and the Lantern is relit.
+async function ending() {
+  const n = KIDS[S.kid].name;
+  G.mode = 'ending'; G.end = { scene: 0, k: 0 }; G.parts = []; showHUD(false);
+  await say('The Fog thins. The great king shrinks, smaller and smaller, until only a boy-sized wisp of fog is left.');
+  await tween(1.8, k => { G.end.k = k; });
+  setMood('surprised', 3); await say('"I got it wrong," he whispers. "In front of everyone."', 'Wick');
+  setMood('happy', 4); await say(`"I got lots wrong on the way here. Then I tried again. That is how I got here."`, n);
+  G.end.scene = 1; Snd.play('level'); burst(W / 2, 150, '#ffe066', 40);
+  await say('"Wick, I am sorry. I should have told you that night: a wrong answer is not the end. It is the start."', 'Elder Lumen');
+  await say('Wick takes a deep breath and says it out loud, for everyone to hear: "Can I try again?"');
+  G.end.scene = 2; Snd.play('win'); burst(W / 2, 150, '#fff9db', 60); setMood('happy', 30);
+  await say(['The five crystals fly together. The Great Lantern blazes!', 'All across the land the Fog lifts, and new Lumis leap from the Lantern like sparks.']);
+  G.end.scene = 3; Snd.play('capture');
+  if (!S.party.some(l => l.sp === 'echo')) S.party.push({ sp: 'echo', lv: 10, xp: 0 });
+  await say('"This one is called Echo," says Wick. "It is not afraid to answer out loud. I think it wants to go with you."', 'Wick');
+  await say([`Echo joined ${n}'s team!`, `${n}, Hero of Hearthome! The Lantern is safe, and nobody here is afraid of a wrong answer any more.`]);
+  G.mode = 'world'; G.end = null; G.parts = [];
 }
 
 // Title, intro, hero creator, main loop, input and the test hook.
@@ -1905,6 +2036,28 @@ function drawTitle(c) {
     else caption(c, ZT.cap4);
   }
 }
+function drawEnding(c) {
+  const E = G.end, t = G.t, l = activeLumi();
+  // The cast stands high on the screen so the story box below never covers them.
+  if (E.scene === 0) { const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1433'); g.addColorStop(1, '#4a3a7a'); c.fillStyle = g; c.fillRect(0, 0, W, H); } else sunburst(c, W / 2, 210, '#f59f00', '#ffd43b', t * 0.05);
+  c.save(); c.translate(0, -92);
+  if (E.scene === 0) {
+    for (let i = 0; i < 12; i++) { c.globalAlpha = 0.5 * (1 - E.k * 0.8); Art.ell(c, (i * 97 + Math.sin(t + i) * 30) % W, 120 + (i * 61) % 260, 120, 70, i % 2 ? '#4c3a8f' : '#2b1d5c'); } c.globalAlpha = 1;
+    c.fillStyle = '#2c2542'; c.beginPath(); c.ellipse(W / 2, 560, 640, 170, 0, 0, 6.283); c.fill();
+    Art.fog(c, { kind: 'wisp', col: E.k > 0.7 ? '#7048e8' : '#2b1d5c', boss: E.k < 0.45, eye: E.k > 0.7 ? '#ffe066' : '#ff6b6b', sym: '…' }, 690, 430, 2.6 - 1.75 * E.k, t);
+  } else {
+    c.fillStyle = '#69b55d'; c.beginPath(); c.ellipse(W / 2, 570, 680, 180, 0, 0, 6.283); c.fill();
+    lantern(c, W / 2, 392, 1.6, E.scene >= 2, false);
+    WORLD_ORDER.slice(0, 5).forEach((id, i) => { const a = t * 0.8 + i * 1.257, r = E.scene >= 2 ? 105 : 190; Art.crystal(c, W / 2 + Math.cos(a) * r, 250 + Math.sin(a) * r * 0.45, 17, WORLDS[id].crystal, t); });
+    Art.villager(c, { col: '#7048e8', hair: '#adb5bd', hat: 'elder', ph: 3 }, 800, 452, 1.7, t);
+    Art.villager(c, { col: '#5f3dc4', hair: '#343a40', ph: 1, sad: E.scene < 2 }, 680, 452, 1.35, t);
+    if (E.scene >= 3) Art.lumi(c, SPECIES.echo, 590, 462, 1.6, t, true, true);
+    if (E.scene >= 2 && Math.random() < 0.1) burst(W / 2, 160, '#fff9db', 3);
+  }
+  if (l) Art.lumi(c, SPECIES[l.sp], 345, 462, 1.6, t, isEvo(l), false);
+  Art.hero(c, 225, 452, 1.9, heroLook({ badge: true }));
+  c.restore();
+}
 function drawCreator(c) {
   sunburst(c, 250, 330, '#3b2a7a', '#4c3a8f', G.t * 0.05);
   Art.ell(c, 250, 452, 170, 34, 'rgba(255,255,255,.14)');
@@ -1919,6 +2072,7 @@ const WORLD_MUSIC = { hub: 'village', w1: 'march', w2: 'starry', w3: 'starry', w
 function musicNow() {
   if (G.mode === 'title') return G.intro.state === 'wait' ? null : 'anthem';
   if (G.mode === 'create' || G.breakOn) return 'box';
+  if (G.mode === 'ending') return G.end && G.end.scene >= 2 ? 'anthem' : 'mystery';
   if (G.mode === 'battle' && G.B) return G.B.e.boss ? 'mystery' : 'battle';
   return WORLD_MUSIC[G.world] || 'village';
 }
@@ -1927,10 +2081,11 @@ function frame(ts) {
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts; G.t += dt;
   for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; tw.t += dt; tw.fn(Math.min(1, tw.t / tw.dur)); if (tw.t >= tw.dur) { tweens.splice(i, 1); tw.res(); } }
   stepParts(dt);
-  Snd.setMusic(musicNow()); Snd.duck(QS ? (S && S.read ? 0.15 : 0.4) : dlg && S && S.read ? 0.35 : 1);
+  Snd.setMusic(musicNow()); Snd.duck(QS ? 0.4 : 1);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
+  else if (G.mode === 'ending' && G.end) { drawEnding(ctx); drawParts(ctx); }
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
   if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
   if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }

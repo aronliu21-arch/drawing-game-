@@ -144,6 +144,28 @@ function drawTitle(c) {
     else caption(c, ZT.cap4);
   }
 }
+function drawEnding(c) {
+  const E = G.end, t = G.t, l = activeLumi();
+  // The cast stands high on the screen so the story box below never covers them.
+  if (E.scene === 0) { const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1433'); g.addColorStop(1, '#4a3a7a'); c.fillStyle = g; c.fillRect(0, 0, W, H); } else sunburst(c, W / 2, 210, '#f59f00', '#ffd43b', t * 0.05);
+  c.save(); c.translate(0, -92);
+  if (E.scene === 0) {
+    for (let i = 0; i < 12; i++) { c.globalAlpha = 0.5 * (1 - E.k * 0.8); Art.ell(c, (i * 97 + Math.sin(t + i) * 30) % W, 120 + (i * 61) % 260, 120, 70, i % 2 ? '#4c3a8f' : '#2b1d5c'); } c.globalAlpha = 1;
+    c.fillStyle = '#2c2542'; c.beginPath(); c.ellipse(W / 2, 560, 640, 170, 0, 0, 6.283); c.fill();
+    Art.fog(c, { kind: 'wisp', col: E.k > 0.7 ? '#7048e8' : '#2b1d5c', boss: E.k < 0.45, eye: E.k > 0.7 ? '#ffe066' : '#ff6b6b', sym: '…' }, 690, 430, 2.6 - 1.75 * E.k, t);
+  } else {
+    c.fillStyle = '#69b55d'; c.beginPath(); c.ellipse(W / 2, 570, 680, 180, 0, 0, 6.283); c.fill();
+    lantern(c, W / 2, 392, 1.6, E.scene >= 2, false);
+    WORLD_ORDER.slice(0, 5).forEach((id, i) => { const a = t * 0.8 + i * 1.257, r = E.scene >= 2 ? 105 : 190; Art.crystal(c, W / 2 + Math.cos(a) * r, 250 + Math.sin(a) * r * 0.45, 17, WORLDS[id].crystal, t); });
+    Art.villager(c, { col: '#7048e8', hair: '#adb5bd', hat: 'elder', ph: 3 }, 800, 452, 1.7, t);
+    Art.villager(c, { col: '#5f3dc4', hair: '#343a40', ph: 1, sad: E.scene < 2 }, 680, 452, 1.35, t);
+    if (E.scene >= 3) Art.lumi(c, SPECIES.echo, 590, 462, 1.6, t, true, true);
+    if (E.scene >= 2 && Math.random() < 0.1) burst(W / 2, 160, '#fff9db', 3);
+  }
+  if (l) Art.lumi(c, SPECIES[l.sp], 345, 462, 1.6, t, isEvo(l), false);
+  Art.hero(c, 225, 452, 1.9, heroLook({ badge: true }));
+  c.restore();
+}
 function drawCreator(c) {
   sunburst(c, 250, 330, '#3b2a7a', '#4c3a8f', G.t * 0.05);
   Art.ell(c, 250, 452, 170, 34, 'rgba(255,255,255,.14)');
@@ -158,6 +180,7 @@ const WORLD_MUSIC = { hub: 'village', w1: 'march', w2: 'starry', w3: 'starry', w
 function musicNow() {
   if (G.mode === 'title') return G.intro.state === 'wait' ? null : 'anthem';
   if (G.mode === 'create' || G.breakOn) return 'box';
+  if (G.mode === 'ending') return G.end && G.end.scene >= 2 ? 'anthem' : 'mystery';
   if (G.mode === 'battle' && G.B) return G.B.e.boss ? 'mystery' : 'battle';
   return WORLD_MUSIC[G.world] || 'village';
 }
@@ -166,10 +189,11 @@ function frame(ts) {
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts; G.t += dt;
   for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; tw.t += dt; tw.fn(Math.min(1, tw.t / tw.dur)); if (tw.t >= tw.dur) { tweens.splice(i, 1); tw.res(); } }
   stepParts(dt);
-  Snd.setMusic(musicNow()); Snd.duck(QS ? (S && S.read ? 0.15 : 0.4) : dlg && S && S.read ? 0.35 : 1);
+  Snd.setMusic(musicNow()); Snd.duck(QS ? 0.4 : 1);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
+  else if (G.mode === 'ending' && G.end) { drawEnding(ctx); drawParts(ctx); }
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
   if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
   if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
