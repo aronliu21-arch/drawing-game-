@@ -61,11 +61,21 @@ async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
-  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0 };
+  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0], fx: null };
   setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
   G.fade = 0; G.busy = false; G.B.lock = false; renderMoves();
+}
+function playFx(name, s, t, dur) { const B = G.B; return tween(dur, k => { if (G.B === B) B.fx = k < 1 ? { name, k, s, t } : null; }); }
+// Choose which learned skill to use. Stronger skills rest for a few turns after each use.
+function movePanel() {
+  const B = G.B, l = activeLumi(), sp = SPECIES[l.sp], m = elemMult(sp.el, B.e.el), icon = { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el];
+  let h = `<h2>${icon} ${lumiName(l)}'s skills</h2><div class="rows">`;
+  MOVES[l.sp].forEach((name, t) => { const known = l.lv >= MOVE_LV[t], rest = B.rest[t]; h += `<div class="row${known ? '' : ' locked'}"><span class="ri">${'★'.repeat(t + 1)}</span><div><b>${known ? name : '???'}</b><small>${known ? `Power ${movePower(l, t)}${m > 1 ? ' · strong against this foe' : m < 1 ? ' · weak against this foe' : ''}${MOVE_REST[t] ? ` · rests ${MOVE_REST[t]} turns after use` : ''}` : `Learns at Level ${MOVE_LV[t]}`}</small></div>${!known ? '<em class="lock">🔒</em>' : rest ? `<em class="lock">Ready in ${rest}</em>` : `<button data-tier="${t}">Use</button>`}</div>`; });
+  const p = openPanel(h + '</div>');
+  $('panelBody').querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { Snd.play('tap'); closePanel(+b.dataset.tier); }));
+  return p;
 }
 function setLog(t) { $('bLog').textContent = t; }
 function elemMult(a, d) { if (BEATS[a] === d) return 1.5; if (BEATS[d] === a) return 0.75; return 1; }
@@ -75,7 +85,7 @@ function renderMoves() {
   const canCap = e.wild && S.orb > 0 && e.hp <= e.max * captureLine();
   const moves = [
     ['strike', '⚔️', WEAPONS[S.weapon].name, `Power ${heroAtk()}`, true],
-    ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], sp.skill, `Power ${lumiPower(l)}${m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''}`, true],
+    ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], knownMoves(l) > 1 ? `${lumiName(l)}'s Skills` : MOVES[l.sp][0], (knownMoves(l) > 1 ? `${knownMoves(l)} skills` : `Power ${lumiPower(l)}`) + (m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''), true],
     ['capture', '🔮', 'Capture', !e.wild ? 'Wild Lumis only' : S.orb < 1 ? 'No orbs left' : canCap ? `${S.orb} orbs` : 'Weaken it first', canCap],
     ['potion', '🧪', 'Potion', S.potion ? `${S.potion} left` : 'None left', S.potion > 0 && S.hp < maxHP()],
     ['swap', '🔁', 'Swap Lumi', lumiName(l), S.party.length > 1],
@@ -84,27 +94,32 @@ function renderMoves() {
   $('bMoves').innerHTML = moves.map(m => `<button class="move m-${m[0]}" data-m="${m[0]}" ${m[4] && !B.lock ? '' : 'disabled'}><span>${m[1]}</span><b>${m[2]}</b><small>${m[3]}</small></button>`).join('');
   $('bMoves').querySelectorAll('button').forEach(b => b.addEventListener('click', () => doMove(b.dataset.m)));
 }
-async function doMove(kind) {
+async function doMove(kind, tier) {
   const B = G.B; if (!B || B.lock) return; const e = B.e, n = KIDS[S.kid].name;
   Snd.play('tap');
   if (kind === 'swap') { await teamPanel(true); renderMoves(); return; }
+  if (kind === 'skill' && tier === undefined) { if (knownMoves(activeLumi()) > 1) { tier = await movePanel(); if (tier == null || G.B !== B || B.lock) return; } else tier = 0; }
   B.lock = true; renderMoves();
   if (kind === 'run') { setLog(`${n} got away safely.`); await wait(0.6); return leaveBattle(); }
   const r = await askQuestion(B.subject);
   if (kind === 'strike' || kind === 'skill') {
     const l = activeLumi(), sp = SPECIES[l.sp];
-    if (!r.ok) { setLog(kind === 'strike' ? `${n}'s swing missed!` : `${lumiName(l)}'s ${sp.skill} fizzled!`); await wait(0.7); }
+    const mv = kind === 'skill' ? MOVES[l.sp][tier] : '';
+    B.rest = B.rest.map(v => Math.max(0, v - 1));
+    if (!r.ok) { setLog(kind === 'strike' ? `${n}'s swing missed!` : `${lumiName(l)}'s ${mv} fizzled!`); await wait(0.7); }
     else {
       const em = kind === 'skill' ? elemMult(sp.el, e.el) : 1;
-      const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : lumiPower(l)) * em * r.mult * rnd(0.92, 1.08)));
-      const key = kind === 'strike' ? 'hx' : 'lx';
-      setMood('determined', 1);
+      const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : movePower(l, tier)) * em * r.mult * rnd(0.92, 1.08)));
+      const key = kind === 'strike' ? 'hx' : 'lx', reach = kind === 'strike' ? 300 : 46;
+      setMood('determined', 2);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
-      await tween(0.22, k => { B[key] = k * 300; });
-      Snd.play(kind === 'strike' ? 'hit' : 'skill'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
+      await tween(0.2, k => { B[key] = k * reach; });
+      if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier === 2) B.shake = 0.45; }
+      else await playFx(WEAPONS[S.weapon].kind, [505, 330], [720, 300], 0.42);
+      Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);
-      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${sp.skill}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
-      await tween(0.25, k => { B[key] = (1 - k) * 300; });
+      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
+      await tween(0.25, k => { B[key] = (1 - k) * reach; });
       await wait(0.35);
     }
   } else if (kind === 'capture') {
@@ -126,10 +141,10 @@ async function doMove(kind) {
   // enemy turn
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
-  await tween(0.2, k => { B.ex = -k * 260; });
+  if (e.wild) await tween(0.2, k => { B.ex = -k * 260; }); else await playFx('fogball', [690, 290], [215, 300], 0.55);
   setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
   setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`);
-  await tween(0.25, k => { B.ex = -(1 - k) * 260; });
+  if (e.wild) await tween(0.25, k => { B.ex = -(1 - k) * 260; }); else await wait(0.2);
   if (S.hp <= 0) return finishBattle('lose');
   B.lock = false; renderMoves(); save();
 }
@@ -198,6 +213,7 @@ function drawBattle(c) {
   const l = activeLumi();
   Art.lumi(c, SPECIES[l.sp], 345 + B.hx * 0.6 + B.lx, 384, 1.7, t, isEvo(l), false);
   c.save(); if (B.hHit > 0) c.globalAlpha = 0.55 + Math.sin(t * 60) * 0.3; Art.hero(c, 205 + B.hx, 376, 1.6, heroLook({ swing: B.swing, badge: true })); c.restore();
+  if (B.fx) FX.draw[B.fx.name](c, B.fx.k, B.fx.s, B.fx.t, t);
   if (B.orb) { const k = B.orb.k, ox = 240 + (720 - 240) * k, oy = 300 - Math.sin(k * Math.PI) * 190 + (k * 0); c.save(); c.shadowColor = '#e599f7'; c.shadowBlur = 16; Art.ell(c, ox, oy, 13, 13, '#e599f7', '#15131f', 3); c.restore(); Art.ell(c, ox - 4, oy - 4, 4, 4, '#fff'); }
   drawParts(c);
   c.restore();

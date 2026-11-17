@@ -195,6 +195,11 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .memh { color: var(--violet); margin-top: 12px; }
 .mems { margin: 4px 0 0; padding-left: 22px; font-size: 16px; font-weight: 600; line-height: 1.35; }
 .mems b { color: var(--violet); }
+
+.row.locked { opacity: .6; }
+.row em.lock { color: var(--muted); font-size: 15px; }
+.lumirow small { line-height: 1.35; display: block; }
+#saveNote { margin: 8px 0 0; color: #fff; font-weight: 800; font-size: 14px; text-shadow: 0 2px 0 var(--ink); }
 </style>
 </head>
 <body>
@@ -211,6 +216,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
           <button id="btnReset" class="ghost" aria-label="Reset records"></button>
           <button id="btnSound2" class="ghost" aria-label="Sound">🔊</button>
         </div>
+        <p id="saveNote"></p>
       </div>
     </div>
 
@@ -563,22 +569,32 @@ if (typeof module !== 'undefined') module.exports = Q;
 // C chest  c hidden treasure  G gate  N quest villager  n villager  E fog creature  B boss  F fog wall  P start
 // Hub only: S shopkeeper  I healer  L elder
 const SPECIES = {
-  emberpup: { name: 'Emberpup', evo: 'Blazehound', el: 'fire', col: '#ff8c42', body: 'round', ear: 'point', tail: 'flame', skill: 'Ember Dash' },
-  sproutle: { name: 'Sproutle', evo: 'Florabuck', el: 'leaf', col: '#69db7c', body: 'round', ear: 'leaf', tail: 'leaf', skill: 'Vine Whip' },
-  bubblit: { name: 'Bubblit', evo: 'Tidalon', el: 'water', col: '#4dabf7', body: 'round', ear: 'fin', tail: 'fin', skill: 'Bubble Burst' },
-  acornox: { name: 'Acornox', evo: 'Oakhorn', el: 'leaf', col: '#b08968', body: 'wide', ear: 'horn', tail: 'leaf', skill: 'Acorn Barrage' },
-  tallybird: { name: 'Tallybird', evo: 'Abacowl', el: 'star', col: '#ffd43b', body: 'tall', ear: 'point', tail: 'puff', extra: 'wings', skill: 'Count Strike' },
-  shellby: { name: 'Shellby', evo: 'Reefguard', el: 'water', col: '#38d9a9', body: 'wide', ear: 'none', tail: 'fin', extra: 'shell', skill: 'Shell Spin' },
-  steamlet: { name: 'Steamlet', evo: 'Geyserix', el: 'fire', col: '#ff8787', body: 'tall', ear: 'antenna', tail: 'puff', skill: 'Steam Jet' },
-  glaciub: { name: 'Glaciub', evo: 'Frostbear', el: 'water', col: '#a5d8ff', body: 'wide', ear: 'round', tail: 'puff', skill: 'Ice Tumble' },
-  peakit: { name: 'Peakit', evo: 'Summitar', el: 'star', col: '#ced4da', body: 'round', ear: 'long', tail: 'bolt', extra: 'spikes', skill: 'Echo Leap' },
-  cogbit: { name: 'Cogbit', evo: 'Gearon', el: 'star', col: '#e8a33d', body: 'round', ear: 'antenna', tail: 'none', extra: 'gear', skill: 'Gear Grind' },
-  sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes', skill: 'Sand Blaze' },
-  bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)', skill: 'Bamboo Bash' },
-  lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings', skill: 'Lantern Flash' },
-  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow', skill: 'Brave Voice' },
+  emberpup: { name: 'Emberpup', evo: 'Blazehound', el: 'fire', col: '#ff8c42', body: 'round', ear: 'point', tail: 'flame' },
+  sproutle: { name: 'Sproutle', evo: 'Florabuck', el: 'leaf', col: '#69db7c', body: 'round', ear: 'leaf', tail: 'leaf' },
+  bubblit: { name: 'Bubblit', evo: 'Tidalon', el: 'water', col: '#4dabf7', body: 'round', ear: 'fin', tail: 'fin' },
+  acornox: { name: 'Acornox', evo: 'Oakhorn', el: 'leaf', col: '#b08968', body: 'wide', ear: 'horn', tail: 'leaf' },
+  tallybird: { name: 'Tallybird', evo: 'Abacowl', el: 'star', col: '#ffd43b', body: 'tall', ear: 'point', tail: 'puff', extra: 'wings' },
+  shellby: { name: 'Shellby', evo: 'Reefguard', el: 'water', col: '#38d9a9', body: 'wide', ear: 'none', tail: 'fin', extra: 'shell' },
+  steamlet: { name: 'Steamlet', evo: 'Geyserix', el: 'fire', col: '#ff8787', body: 'tall', ear: 'antenna', tail: 'puff' },
+  glaciub: { name: 'Glaciub', evo: 'Frostbear', el: 'water', col: '#a5d8ff', body: 'wide', ear: 'round', tail: 'puff' },
+  peakit: { name: 'Peakit', evo: 'Summitar', el: 'star', col: '#ced4da', body: 'round', ear: 'long', tail: 'bolt', extra: 'spikes' },
+  cogbit: { name: 'Cogbit', evo: 'Gearon', el: 'star', col: '#e8a33d', body: 'round', ear: 'antenna', tail: 'none', extra: 'gear' },
+  sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes' },
+  bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)' },
+  lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings' },
+  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow' },
 };
 Object.values(SPECIES).forEach((s, i) => { s.ph = i * 1.3; });
+// Each Lumi learns three skills: the first at Level 1, a stronger one at Level 4, and its best at Level 8.
+// Stronger skills need a rest of a few turns after each use.
+const MOVES = {
+  emberpup: ['Ember Dash', 'Flame Wheel', 'Meteor Blaze'], sproutle: ['Vine Whip', 'Thorn Storm', 'Great Bloom'], bubblit: ['Bubble Burst', 'Tidal Wave', 'Whirlpool Crash'],
+  acornox: ['Acorn Barrage', 'Root Slam', 'Forest Stampede'], tallybird: ['Count Strike', 'Feather Flurry', 'Star Tally'], shellby: ['Shell Spin', 'Coral Crush', 'Deep Sea Surge'],
+  steamlet: ['Steam Jet', 'Boiling Burst', 'Geyser Blast'], glaciub: ['Ice Tumble', 'Snowball Roll', 'Avalanche'], peakit: ['Echo Leap', 'Rock Rumble', 'Summit Flash'],
+  cogbit: ['Gear Grind', 'Spring Punch', 'Clockwork Storm'], sandflare: ['Sand Blaze', 'Dune Fang', 'Desert Sun'], bambu: ['Bamboo Bash', 'Leaf Tornado', 'Panda Quake'],
+  lampfly: ['Lantern Flash', 'Glow Swarm', 'Festival Fireworks'], echo: ['Brave Voice', 'Loud Answer', 'Lantern Chorus'],
+};
+const MOVE_LV = [1, 4, 8], MOVE_MULT = [1, 1.45, 2], MOVE_REST = [0, 2, 3];
 const STARTERS = ['emberpup', 'sproutle', 'bubblit'];
 // fire beats leaf, leaf beats water, water beats fire. Star is neutral.
 const BEATS = { fire: 'leaf', leaf: 'water', water: 'fire' };
@@ -1192,6 +1208,59 @@ const Art = (() => {
   return { hero, lumi, fog, villager, weapon, ground, tallGrass, tree, rock, house, chest, gate, fogWall, sparkle, crystal, star, ell, rr, shade, EL, INK, hash };
 })();
 
+// Attack animations. Each one is drawn from a progress value k (0 to 1).
+// Lumi skills: one animation per element and per skill tier (12 in all). Weapons: one per weapon kind.
+const FX = (() => {
+  const TAU = Math.PI * 2;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const ease = k => 1 - Math.pow(1 - k, 2);
+  const seg = (k, a, b) => Math.max(0, Math.min(1, (k - a) / (b - a)));
+  const glow = (c, col, blur) => { c.shadowColor = col; c.shadowBlur = blur; };
+  function flame(c, x, y, r, t, col) {
+    c.save(); c.translate(x, y); glow(c, '#ff922b', 14);
+    c.beginPath(); c.moveTo(0, -r * 1.5 - Math.sin(t * 20) * r * 0.2); c.bezierCurveTo(r * 1.1, -r * 0.3, r, r, 0, r); c.bezierCurveTo(-r, r, -r * 1.1, -r * 0.3, 0, -r * 1.5); c.fillStyle = col || '#ff6b35'; c.fill();
+    c.beginPath(); c.arc(0, r * 0.25, r * 0.5, 0, TAU); c.fillStyle = '#ffe066'; c.fill(); c.restore();
+  }
+  function leaf(c, x, y, r, rot, col) { c.save(); c.translate(x, y); c.rotate(rot); c.beginPath(); c.moveTo(-r, 0); c.quadraticCurveTo(0, -r * 0.75, r, 0); c.quadraticCurveTo(0, r * 0.75, -r, 0); c.fillStyle = col || '#51cf66'; c.fill(); c.strokeStyle = '#2b8a3e'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-r, 0); c.lineTo(r, 0); c.stroke(); c.restore(); }
+  function bubble(c, x, y, r) { c.save(); c.beginPath(); c.arc(x, y, r, 0, TAU); c.fillStyle = 'rgba(116,192,252,.55)'; c.fill(); c.strokeStyle = '#d0ebff'; c.lineWidth = 2; c.stroke(); c.beginPath(); c.arc(x - r * 0.35, y - r * 0.35, r * 0.22, 0, TAU); c.fillStyle = '#fff'; c.fill(); c.restore(); }
+  function ring(c, x, y, r, col, lw, a) { c.save(); c.globalAlpha = a; c.strokeStyle = col; c.lineWidth = lw; c.beginPath(); c.ellipse(x, y, r, r * 0.38, 0, 0, TAU); c.stroke(); c.restore(); }
+  // Screen flashes stay gentle, and are skipped on devices set to reduce motion.
+  const CALM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function flash(c, a, col) { if (a <= 0 || CALM) return; a *= 0.45; c.save(); c.globalAlpha = Math.min(1, a); c.fillStyle = col || '#fff'; c.fillRect(-20, 0, 1000, 540); c.restore(); }
+  function arc(s, t, k, h) { return [lerp(s[0], t[0], k), lerp(s[1], t[1], k) - Math.sin(k * Math.PI) * h]; }
+
+  const draw = {
+    // ---- fire ----
+    fire1(c, k, s, t, T) { for (let i = 0; i < 3; i++) { const q = seg(k, i * 0.12, 0.62 + i * 0.12); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, ease(q), 70 + i * 25); for (let j = 3; j >= 0; j--) { const [tx, ty] = arc(s, t, Math.max(0, ease(q) - j * 0.035), 70 + i * 25); c.globalAlpha = 1 - j * 0.22; flame(c, tx, ty, 13 - j * 2.5, T + i); } c.globalAlpha = 1; } },
+    fire2(c, k, s, t, T) { const q = ease(seg(k, 0, 0.78)), x = lerp(s[0], t[0], q), y = t[1] + 26 - Math.abs(Math.sin(q * Math.PI * 3)) * 40; c.save(); c.translate(x, y); c.rotate(T * 14); for (let i = 0; i < 8; i++) { c.rotate(TAU / 8); flame(c, 0, -30, 12, T + i); } glow(c, '#ffe066', 20); c.beginPath(); c.arc(0, 0, 17, 0, TAU); c.fillStyle = '#ffd43b'; c.fill(); c.restore(); for (let i = 1; i < 6; i++) { c.globalAlpha = 0.5 - i * 0.08; flame(c, x - i * 26, t[1] + 30, 9 - i, T + i); } c.globalAlpha = 1; if (k > 0.78) { const e = seg(k, 0.78, 1); for (let i = 0; i < 10; i++) flame(c, t[0] + Math.cos(i * 0.63) * e * 110, t[1] - Math.abs(Math.sin(i * 0.63)) * e * 120, 16 * (1 - e), T + i); } },
+    fire3(c, k, s, t, T) { flash(c, 0.45 * Math.sin(seg(k, 0, 1) * Math.PI), '#3d0c02'); for (let i = 0; i < 7; i++) { const q = seg(k, i * 0.09, 0.4 + i * 0.09); if (q <= 0 || q >= 1) continue; const tx = t[0] - 90 + i * 30, sx = tx - 330, x = lerp(sx, tx, q), y = lerp(-60, t[1] + 20, q); c.save(); c.strokeStyle = 'rgba(255,169,77,.7)'; c.lineWidth = 12; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 60, y - 55); c.lineTo(x, y); c.stroke(); c.restore(); flame(c, x, y, 20, T + i, '#e8590c'); } for (let i = 0; i < 7; i++) { const e = seg(k, 0.4 + i * 0.09, 0.62 + i * 0.09); if (e > 0 && e < 1) ring(c, t[0] - 90 + i * 30, t[1] + 24, 20 + e * 70, '#ffd43b', 6 * (1 - e), 1 - e); } flash(c, 0.9 * (1 - seg(k, 0.9, 1)) * (k > 0.9 ? 1 : 0), '#fff4e6'); },
+    // ---- water ----
+    water1(c, k, s, t, T) { for (let i = 0; i < 9; i++) { const q = seg(k, i * 0.07, 0.42 + i * 0.07); if (q <= 0 || q >= 1) continue; bubble(c, lerp(s[0], t[0], q), lerp(s[1], t[1], q) + Math.sin(q * 9 + i) * 26, 8 + (i % 3) * 5); } if (k > 0.8) for (let i = 0; i < 8; i++) { const e = seg(k, 0.8, 1); bubble(c, t[0] + Math.cos(i * 0.8) * e * 90, t[1] + Math.sin(i * 0.8) * e * 70, 7 * (1 - e) + 2); } },
+    water2(c, k, s, t, T) { const q = ease(seg(k, 0, 0.8)), x = lerp(s[0] - 80, t[0] + 40, q), h = 150 * Math.sin(Math.min(1, q * 1.3) * Math.PI * 0.75), y0 = t[1] + 40; c.save(); const g = c.createLinearGradient(0, y0 - h, 0, y0); g.addColorStop(0, '#d0ebff'); g.addColorStop(0.3, '#4dabf7'); g.addColorStop(1, '#1971c2'); c.fillStyle = g; c.globalAlpha = 0.88; c.beginPath(); c.moveTo(x - 240, y0); c.bezierCurveTo(x - 150, y0 - h * 0.5, x - 60, y0 - h * 1.1, x + 20, y0 - h); c.bezierCurveTo(x + 70, y0 - h * 0.92, x + 62, y0 - h * 0.5, x + 22, y0 - h * 0.52); c.bezierCurveTo(x + 52, y0 - h * 0.25, x + 70, y0 - 10, x + 92, y0); c.closePath(); c.fill(); c.restore(); for (let i = 0; i < 6; i++) bubble(c, x + 30 + Math.sin(T * 9 + i) * 26, y0 - h - 6 + Math.cos(T * 7 + i * 2) * 14, 5 + (i % 3) * 3); if (k > 0.8) { const e = seg(k, 0.8, 1); for (let i = 0; i < 12; i++) bubble(c, t[0] + (i - 6) * 20 * e, t[1] - e * 130 * Math.abs(Math.sin(i)), 8 * (1 - e) + 2); } },
+    water3(c, k, s, t, T) { const a = Math.sin(seg(k, 0, 1) * Math.PI); c.save(); c.translate(t[0], t[1] + 30); for (let i = 0; i < 4; i++) { c.globalAlpha = 0.7 * a; c.strokeStyle = i % 2 ? '#d0ebff' : '#339af0'; c.lineWidth = 9 - i * 1.5; c.beginPath(); for (let j = 0; j <= 24; j++) { const ang = T * (9 + i * 2) + j * 0.26 + i * 1.6, r = (30 + i * 28) * (0.5 + j / 48); c.lineTo(Math.cos(ang) * r, Math.sin(ang) * r * 0.36); } c.stroke(); } c.restore(); const g = seg(k, 0.35, 0.8), d = seg(k, 0.8, 1); if (g > 0) { const h = 300 * ease(g) * (1 - d), w = 46 * (1 - d * 0.5); c.save(); const gr = c.createLinearGradient(t[0] - w, 0, t[0] + w, 0); gr.addColorStop(0, '#1c7ed6'); gr.addColorStop(0.5, '#e7f5ff'); gr.addColorStop(1, '#1c7ed6'); c.fillStyle = gr; c.globalAlpha = 0.9; c.beginPath(); c.moveTo(t[0] - w, t[1] + 30); c.quadraticCurveTo(t[0] - w * 0.7, t[1] + 30 - h, t[0], t[1] + 20 - h); c.quadraticCurveTo(t[0] + w * 0.7, t[1] + 30 - h, t[0] + w, t[1] + 30); c.fill(); c.restore(); for (let i = 0; i < 8; i++) bubble(c, t[0] + Math.sin(T * 8 + i * 2) * (w + 30), t[1] + 20 - h * ((i * 0.13 + T) % 1), 6 + (i % 3) * 3); } },
+    // ---- leaf ----
+    leaf1(c, k, s, t, T) { for (let i = 0; i < 6; i++) { const q = seg(k, i * 0.09, 0.5 + i * 0.09); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, q, 30 + (i % 3) * 30); leaf(c, x, y, 15, T * 18 + i, i % 2 ? '#8ce99a' : '#40c057'); } if (k > 0.85) for (let i = 0; i < 8; i++) { const e = seg(k, 0.85, 1); leaf(c, t[0] + Math.cos(i * 0.8) * e * 90, t[1] + Math.sin(i * 0.8) * e * 70, 10 * (1 - e) + 3, i + T * 10); } },
+    leaf2(c, k, s, t, T) { const y0 = t[1] + 42; for (let i = 0; i < 7; i++) { const q = seg(k, i * 0.07, 0.35 + i * 0.07), d = 1 - seg(k, 0.8, 1), h = (70 + (i % 3) * 45) * ease(q) * d, x = t[0] - 96 + i * 32; if (h <= 0) continue; c.save(); c.strokeStyle = '#2f9e44'; c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(x, y0); c.quadraticCurveTo(x + Math.sin(T * 6 + i) * 18, y0 - h * 0.5, x + (i % 2 ? 10 : -10), y0 - h); c.stroke(); c.fillStyle = '#d8f5a2'; for (let j = 1; j < 4; j++) { const yy = y0 - h * j / 4; c.beginPath(); c.moveTo(x - 3, yy); c.lineTo(x + (j % 2 ? 16 : -16), yy - 7); c.lineTo(x + 3, yy - 9); c.fill(); } c.restore(); leaf(c, x + (i % 2 ? 10 : -10), y0 - h, 12, i, '#69db7c'); } },
+    leaf3(c, k, s, t, T) { const grow = ease(seg(k, 0, 0.55)), pop = seg(k, 0.7, 1), cx = t[0], cy = t[1] - 20; c.save(); c.translate(cx, cy); c.rotate(T * 0.8); for (let ringI = 0; ringI < 2; ringI++) for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + ringI * 0.39, r = (ringI ? 62 : 104) * grow + pop * 190; c.save(); c.rotate(a); c.translate(r, 0); c.globalAlpha = 1 - pop; c.beginPath(); c.ellipse(0, 0, 44 * grow, 21 * grow, 0, 0, TAU); c.fillStyle = ringI ? '#ffa8c5' : '#f783ac'; c.fill(); c.restore(); } c.globalAlpha = 1 - pop; glow(c, '#ffe066', 24); c.beginPath(); c.arc(0, 0, 30 * grow, 0, TAU); c.fillStyle = '#ffd43b'; c.fill(); c.restore(); for (let i = 0; i < 10; i++) leaf(c, cx + Math.cos(i * 0.63 + T) * (60 + pop * 200), cy + Math.sin(i * 0.63 + T) * (40 + pop * 150), 11, T * 6 + i, '#8ce99a'); flash(c, 0.5 * Math.sin(pop * Math.PI), '#fff0f6'); },
+    // ---- star ----
+    star1(c, k, s, t, T) { for (let i = 0; i < 5; i++) { const q = seg(k, i * 0.1, 0.5 + i * 0.1); if (q <= 0 || q >= 1) continue; const x = lerp(s[0], t[0], q), y = lerp(s[1], t[1], q) + Math.sin(i * 2.2) * 34 * (1 - q); c.save(); c.strokeStyle = 'rgba(255,224,102,.6)'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 46, y); c.lineTo(x, y); c.stroke(); glow(c, '#ffe066', 14); Art.star(c, x, y, 13, '#ffe066', '#e67700', 1.5); c.restore(); } },
+    star2(c, k, s, t, T) { const close = seg(k, 0.55, 0.9), r = lerp(120, 0, ease(close)), a = 1 - seg(k, 0.9, 1); for (let i = 0; i < 8; i++) { const ang = T * 7 + i * TAU / 8; c.save(); c.globalAlpha = a; glow(c, '#ffe066', 12); Art.star(c, t[0] + Math.cos(ang) * r, t[1] - 20 + Math.sin(ang) * r * 0.55, 13, i % 2 ? '#fff9db' : '#ffd43b', '#e67700', 1.2); c.restore(); } ring(c, t[0], t[1] - 20, r + 12, '#ffe066', 4, 0.6 * a); if (k > 0.85) { const e = seg(k, 0.85, 1); ring(c, t[0], t[1] - 20, e * 150, '#fff', 8 * (1 - e), 1 - e); } },
+    star3(c, k, s, t, T) { flash(c, 0.5 * Math.sin(seg(k, 0, 1) * Math.PI), '#1a1433'); const b = seg(k, 0.2, 0.55), hold = seg(k, 0.55, 0.85), w = 70 * Math.sin(Math.min(1, b + hold) * Math.PI * 0.5) * (1 - seg(k, 0.85, 1)); if (w > 0) { c.save(); const g = c.createLinearGradient(t[0] - w, 0, t[0] + w, 0); g.addColorStop(0, 'rgba(255,212,59,0)'); g.addColorStop(0.5, '#fffbe6'); g.addColorStop(1, 'rgba(255,212,59,0)'); c.fillStyle = g; c.fillRect(t[0] - w, -10, w * 2, t[1] + 50); c.restore(); } for (let i = 0; i < 3; i++) { const e = seg(k, 0.5 + i * 0.1, 0.85 + i * 0.05); if (e > 0 && e < 1) ring(c, t[0], t[1] + 28, 30 + e * 190, '#ffe066', 9 * (1 - e), 1 - e); } for (let i = 0; i < 12; i++) { const e = seg(k, 0.55, 1); if (e > 0) { c.save(); c.globalAlpha = 1 - e; Art.star(c, t[0] + Math.cos(i * 0.52) * e * 230, t[1] - 30 + Math.sin(i * 0.52) * e * 160, 12, '#ffe066'); c.restore(); } } flash(c, 0.85 * Math.sin(seg(k, 0.5, 0.75) * Math.PI), '#fff'); },
+    // ---- weapons ----
+    sword(c, k, s, t) { const a = Math.sin(k * Math.PI); c.save(); c.translate(t[0], t[1] - 20); c.rotate(-0.6); glow(c, '#fff', 16); c.globalAlpha = a; c.beginPath(); c.arc(0, 0, 80, -1.2 + k * 0.6, 1.2 * k + 0.2); c.arc(14, 0, 62, 1.2 * k + 0.2, -1.2 + k * 0.6, true); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.restore(); },
+    axe(c, k, s, t, T) { const q = ease(seg(k, 0, 0.75)), [x, y] = arc(s, t, q, 120); if (k < 0.78) { c.save(); c.translate(x, y); c.rotate(T * 26); Art.weapon(c, { kind: 'axe', col: '#8ce99a' }); c.restore(); } else { const e = seg(k, 0.78, 1); ring(c, t[0], t[1] + 20, e * 110, '#fff', 7 * (1 - e), 1 - e); } },
+    spear(c, k, s, t) { const q = ease(seg(k, 0, 0.6)), a = 1 - seg(k, 0.6, 1); c.save(); c.globalAlpha = a; c.lineCap = 'round'; for (let i = -1; i <= 1; i++) { c.strokeStyle = i ? 'rgba(255,255,255,.5)' : '#fff'; c.lineWidth = i ? 4 : 9; c.beginPath(); c.moveTo(lerp(s[0], t[0], Math.max(0, q - 0.45)), s[1] - 30 + i * 16); c.lineTo(lerp(s[0], t[0] + 30, q), t[1] - 20 + i * 16); c.stroke(); } c.restore(); },
+    trident(c, k, s, t, T) { for (let i = -1; i <= 1; i++) { const q = ease(seg(k, (i + 1) * 0.1, 0.6 + (i + 1) * 0.1)), a = 1 - seg(k, 0.8, 1); c.save(); c.globalAlpha = a; c.strokeStyle = '#66d9e8'; c.lineWidth = 8; c.lineCap = 'round'; glow(c, '#66d9e8', 12); c.beginPath(); c.moveTo(lerp(s[0], t[0], Math.max(0, q - 0.4)), lerp(s[1] - 30, t[1] - 20 + i * 34, q)); c.lineTo(lerp(s[0], t[0] + 20, q), lerp(s[1] - 30, t[1] - 20 + i * 34, q)); c.stroke(); c.restore(); if (q > 0.9) bubble(c, t[0] + 10, t[1] - 20 + i * 34, 9 * a + 1); } },
+    hammer(c, k, s, t) { const q = seg(k, 0, 0.45), y = lerp(-80, t[1] - 40, q * q); if (k < 0.5) { c.save(); c.translate(t[0], y); c.rotate(Math.PI); Art.weapon(c, { kind: 'hammer', col: '#e8a33d' }); c.restore(); } for (let i = 0; i < 3; i++) { const e = seg(k, 0.45 + i * 0.1, 0.8 + i * 0.1); if (e > 0 && e < 1) ring(c, t[0], t[1] + 30, 20 + e * 150, '#ffd43b', 9 * (1 - e), 1 - e); } },
+    staff(c, k, s, t, T) { const a = Math.sin(k * Math.PI), w = 16 + Math.sin(T * 40) * 4; c.save(); c.globalAlpha = a; glow(c, '#ff8787', 26); c.strokeStyle = '#ff8787'; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(s[0] + 30, s[1] - 60); c.lineTo(t[0], t[1] - 20); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = w * 0.4; c.stroke(); c.restore(); for (let i = 0; i < 6; i++) { c.save(); c.globalAlpha = a; Art.star(c, t[0] + Math.cos(T * 9 + i) * 44, t[1] - 20 + Math.sin(T * 9 + i) * 34, 7, '#ffe3e3'); c.restore(); } },
+    // ---- enemies ----
+    fogball(c, k, s, t, T) { for (let i = 0; i < 3; i++) { const q = seg(k, i * 0.12, 0.7 + i * 0.12); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, q, 60); c.save(); c.globalAlpha = 0.85; glow(c, '#5f3dc4', 16); Art.ell(c, x, y, 22 - i * 4, 18 - i * 3, i % 2 ? '#7048e8' : '#3b2f6b'); c.restore(); } },
+    tackle() { },
+  };
+  const DUR = { 1: 0.75, 2: 1.05, 3: 1.6 };
+  return { draw, DUR };
+})();
+
 // Sound effects and music, all synthesized with the Web Audio API.
 const Snd = (() => {
   let ac = null, master = null, music = null, muted = false, timer = null, nextT = 0, stepI = 0;
@@ -1308,10 +1377,41 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
-function save() { if (!S) return; try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } }
-function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } }
+function save() { if (!S) return; S.ts = Date.now(); try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } Cloud.dirty[S.kid] = JSON.stringify(S); cloudSoon(); }
+function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } delete Cloud.dirty[k]; if (Cloud.ready) Cloud.doc(k).delete().catch(() => { }); }
+
+// ---------- account save ----------
+// When the page is opened signed in on claude.ai, each kid's progress is also kept in the viewer's private
+// account data, so it survives the browser clearing its storage and follows them to other devices.
+// Everywhere else (signed out, or the GitHub Pages copy) the game still saves on the device.
+const Cloud = { ready: false, dirty: {}, busy: false, timer: null, db: null, uid: null, doc: k => Cloud.db.collection('data/users/' + Cloud.uid).doc('lumi-' + k) };
+async function cloudInit() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return; const uid = await user.id(); if (!uid) return;
+    Cloud.db = db; Cloud.uid = uid;
+    for (const k of ['nora', 'lucas']) {
+      const local = loadSave(k); let remote = null;
+      try { const snap = await Cloud.doc(k).get(); if (snap.exists) remote = JSON.parse(snap.data().json); } catch (e) { }
+      const playing = S && S.kid === k;
+      if (remote && (remote.ts || 0) > (local.ts || 0) && !playing) { try { localStorage.setItem('lumiquest.v1.' + k, JSON.stringify(remote)); } catch (e) { } }
+      else if (local.created && (!remote || (local.ts || 0) > (remote.ts || 0))) Cloud.dirty[k] = JSON.stringify(playing ? S : local);
+    }
+    Cloud.ready = true; cloudFlush(); if (typeof onCloudReady === 'function') onCloudReady();
+  } catch (e) { }
+}
+function cloudSoon() { if (!Cloud.ready || Cloud.timer) return; Cloud.timer = setTimeout(() => { Cloud.timer = null; cloudFlush(); }, 4000); }
+async function cloudFlush() {
+  if (!Cloud.ready || Cloud.busy) return; Cloud.busy = true;
+  try { for (const k of Object.keys(Cloud.dirty)) { const json = Cloud.dirty[k]; delete Cloud.dirty[k]; try { await Cloud.doc(k).set({ json, ts: Date.now(), v: 1 }); } catch (e) { if (!Cloud.dirty[k]) Cloud.dirty[k] = json; Cloud.failed = true; break; } Cloud.failed = false; } }
+  finally { Cloud.busy = false; if (Object.keys(Cloud.dirty).length) { clearTimeout(Cloud.timer); Cloud.timer = setTimeout(() => { Cloud.timer = null; cloudFlush(); }, Cloud.failed ? 20000 : 4000); } }
+}
+// Save the moment the page is hidden or closed (switching apps on the iPad, locking the screen).
+document.addEventListener('visibilitychange', () => { if (document.hidden && S) { save(); clearTimeout(Cloud.timer); Cloud.timer = null; cloudFlush(); } });
+window.addEventListener('pagehide', () => { if (S) save(); });
 
 // ---------- stats ----------
 const maxHP = () => 40 + 8 * (S.lv - 1) + ARMORS[S.armor].hp + (S.cls === 'knight' ? 15 : 0);
@@ -1322,6 +1422,8 @@ const lumiNeed = lv => 18 * lv;
 const isEvo = l => l.lv >= 6;
 const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
+const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
+const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
 function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
@@ -1335,8 +1437,9 @@ function addXP(n) {
   return up;
 }
 function addLumiXP(n) {
-  const l = activeLumi(); if (!l) return; const was = isEvo(l); l.xp += n;
+  const l = activeLumi(); if (!l) return; const was = isEvo(l), knew = knownMoves(l); l.xp += n;
   while (l.xp >= lumiNeed(l.lv)) { l.xp -= lumiNeed(l.lv); l.lv++; toast(`🐾 ${lumiName(l)} grew to Level ${l.lv}!`); }
+  for (let t = knew; t < knownMoves(l); t++) { Snd.play('level'); toast(`💥 ${lumiName(l)} learned ${MOVES[l.sp][t]}!`); }
   if (!was && isEvo(l)) { Snd.play('level'); toast(`✨ ${SPECIES[l.sp].name} evolved into ${SPECIES[l.sp].evo}!`); }
 }
 
@@ -1596,7 +1699,7 @@ const bagPanel = () => gearPanel('🎒 Bag', false);
 function teamPanel(inBattle) {
   const render = () => {
     let h = `<h2>🐾 ${KIDS[S.kid].name}'s Lumis</h2><div class="rows">`;
-    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv} · ${sp.skill} power ${lumiPower(l)}${isEvo(l) ? '' : ' · evolves at Level 6'}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
+    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv}${isEvo(l) ? '' : ' · evolves at Level 6'}<br>${MOVES[l.sp].map((nm, t) => l.lv >= MOVE_LV[t] ? `${nm} ${movePower(l, t)}` : `🔒 Lv ${MOVE_LV[t]}`).join(' · ')}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
     h += '</div><p class="hint">Fire beats Leaf · Leaf beats Water · Water beats Fire</p>';
     $('panelBody').innerHTML = h; drawMinis($('panelBody'));
     $('panelBody').querySelectorAll('[data-act]').forEach(b => b.onclick = () => { S.active = +b.dataset.act; Snd.play('tap'); save(); if (inBattle) closePanel(); else render(); });
@@ -1717,11 +1820,21 @@ async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
-  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0 };
+  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0], fx: null };
   setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
   G.fade = 0; G.busy = false; G.B.lock = false; renderMoves();
+}
+function playFx(name, s, t, dur) { const B = G.B; return tween(dur, k => { if (G.B === B) B.fx = k < 1 ? { name, k, s, t } : null; }); }
+// Choose which learned skill to use. Stronger skills rest for a few turns after each use.
+function movePanel() {
+  const B = G.B, l = activeLumi(), sp = SPECIES[l.sp], m = elemMult(sp.el, B.e.el), icon = { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el];
+  let h = `<h2>${icon} ${lumiName(l)}'s skills</h2><div class="rows">`;
+  MOVES[l.sp].forEach((name, t) => { const known = l.lv >= MOVE_LV[t], rest = B.rest[t]; h += `<div class="row${known ? '' : ' locked'}"><span class="ri">${'★'.repeat(t + 1)}</span><div><b>${known ? name : '???'}</b><small>${known ? `Power ${movePower(l, t)}${m > 1 ? ' · strong against this foe' : m < 1 ? ' · weak against this foe' : ''}${MOVE_REST[t] ? ` · rests ${MOVE_REST[t]} turns after use` : ''}` : `Learns at Level ${MOVE_LV[t]}`}</small></div>${!known ? '<em class="lock">🔒</em>' : rest ? `<em class="lock">Ready in ${rest}</em>` : `<button data-tier="${t}">Use</button>`}</div>`; });
+  const p = openPanel(h + '</div>');
+  $('panelBody').querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { Snd.play('tap'); closePanel(+b.dataset.tier); }));
+  return p;
 }
 function setLog(t) { $('bLog').textContent = t; }
 function elemMult(a, d) { if (BEATS[a] === d) return 1.5; if (BEATS[d] === a) return 0.75; return 1; }
@@ -1731,7 +1844,7 @@ function renderMoves() {
   const canCap = e.wild && S.orb > 0 && e.hp <= e.max * captureLine();
   const moves = [
     ['strike', '⚔️', WEAPONS[S.weapon].name, `Power ${heroAtk()}`, true],
-    ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], sp.skill, `Power ${lumiPower(l)}${m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''}`, true],
+    ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], knownMoves(l) > 1 ? `${lumiName(l)}'s Skills` : MOVES[l.sp][0], (knownMoves(l) > 1 ? `${knownMoves(l)} skills` : `Power ${lumiPower(l)}`) + (m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''), true],
     ['capture', '🔮', 'Capture', !e.wild ? 'Wild Lumis only' : S.orb < 1 ? 'No orbs left' : canCap ? `${S.orb} orbs` : 'Weaken it first', canCap],
     ['potion', '🧪', 'Potion', S.potion ? `${S.potion} left` : 'None left', S.potion > 0 && S.hp < maxHP()],
     ['swap', '🔁', 'Swap Lumi', lumiName(l), S.party.length > 1],
@@ -1740,27 +1853,32 @@ function renderMoves() {
   $('bMoves').innerHTML = moves.map(m => `<button class="move m-${m[0]}" data-m="${m[0]}" ${m[4] && !B.lock ? '' : 'disabled'}><span>${m[1]}</span><b>${m[2]}</b><small>${m[3]}</small></button>`).join('');
   $('bMoves').querySelectorAll('button').forEach(b => b.addEventListener('click', () => doMove(b.dataset.m)));
 }
-async function doMove(kind) {
+async function doMove(kind, tier) {
   const B = G.B; if (!B || B.lock) return; const e = B.e, n = KIDS[S.kid].name;
   Snd.play('tap');
   if (kind === 'swap') { await teamPanel(true); renderMoves(); return; }
+  if (kind === 'skill' && tier === undefined) { if (knownMoves(activeLumi()) > 1) { tier = await movePanel(); if (tier == null || G.B !== B || B.lock) return; } else tier = 0; }
   B.lock = true; renderMoves();
   if (kind === 'run') { setLog(`${n} got away safely.`); await wait(0.6); return leaveBattle(); }
   const r = await askQuestion(B.subject);
   if (kind === 'strike' || kind === 'skill') {
     const l = activeLumi(), sp = SPECIES[l.sp];
-    if (!r.ok) { setLog(kind === 'strike' ? `${n}'s swing missed!` : `${lumiName(l)}'s ${sp.skill} fizzled!`); await wait(0.7); }
+    const mv = kind === 'skill' ? MOVES[l.sp][tier] : '';
+    B.rest = B.rest.map(v => Math.max(0, v - 1));
+    if (!r.ok) { setLog(kind === 'strike' ? `${n}'s swing missed!` : `${lumiName(l)}'s ${mv} fizzled!`); await wait(0.7); }
     else {
       const em = kind === 'skill' ? elemMult(sp.el, e.el) : 1;
-      const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : lumiPower(l)) * em * r.mult * rnd(0.92, 1.08)));
-      const key = kind === 'strike' ? 'hx' : 'lx';
-      setMood('determined', 1);
+      const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : movePower(l, tier)) * em * r.mult * rnd(0.92, 1.08)));
+      const key = kind === 'strike' ? 'hx' : 'lx', reach = kind === 'strike' ? 300 : 46;
+      setMood('determined', 2);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
-      await tween(0.22, k => { B[key] = k * 300; });
-      Snd.play(kind === 'strike' ? 'hit' : 'skill'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
+      await tween(0.2, k => { B[key] = k * reach; });
+      if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier === 2) B.shake = 0.45; }
+      else await playFx(WEAPONS[S.weapon].kind, [505, 330], [720, 300], 0.42);
+      Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);
-      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${sp.skill}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
-      await tween(0.25, k => { B[key] = (1 - k) * 300; });
+      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
+      await tween(0.25, k => { B[key] = (1 - k) * reach; });
       await wait(0.35);
     }
   } else if (kind === 'capture') {
@@ -1782,10 +1900,10 @@ async function doMove(kind) {
   // enemy turn
   await wait(0.25);
   const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
-  await tween(0.2, k => { B.ex = -k * 260; });
+  if (e.wild) await tween(0.2, k => { B.ex = -k * 260; }); else await playFx('fogball', [690, 290], [215, 300], 0.55);
   setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
   setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`);
-  await tween(0.25, k => { B.ex = -(1 - k) * 260; });
+  if (e.wild) await tween(0.25, k => { B.ex = -(1 - k) * 260; }); else await wait(0.2);
   if (S.hp <= 0) return finishBattle('lose');
   B.lock = false; renderMoves(); save();
 }
@@ -1854,6 +1972,7 @@ function drawBattle(c) {
   const l = activeLumi();
   Art.lumi(c, SPECIES[l.sp], 345 + B.hx * 0.6 + B.lx, 384, 1.7, t, isEvo(l), false);
   c.save(); if (B.hHit > 0) c.globalAlpha = 0.55 + Math.sin(t * 60) * 0.3; Art.hero(c, 205 + B.hx, 376, 1.6, heroLook({ swing: B.swing, badge: true })); c.restore();
+  if (B.fx) FX.draw[B.fx.name](c, B.fx.k, B.fx.s, B.fx.t, t);
   if (B.orb) { const k = B.orb.k, ox = 240 + (720 - 240) * k, oy = 300 - Math.sin(k * Math.PI) * 190 + (k * 0); c.save(); c.shadowColor = '#e599f7'; c.shadowBlur = 16; Art.ell(c, ox, oy, 13, 13, '#e599f7', '#15131f', 3); c.restore(); Art.ell(c, ox - 4, oy - 4, 4, 4, '#fff'); }
   drawParts(c);
   c.restore();
@@ -1897,6 +2016,7 @@ G.intro = { state: 'wait', t: 0 };
 // ---------- title ----------
 function profileCards() {
   $('whoText').innerHTML = zh(ZT.who); $('btnReset').innerHTML = zh(ZT.reset);
+  $('saveNote').textContent = Cloud.ready ? '☁️ Progress is saved to your Claude account, on every device' : '💾 Progress is saved on this device';
   $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `${zh(ZT.level)} ${s.lv} · ${zh(ZT.crystal)} ${s.crystals.length}/5${s.won ? ' 🏆' : ''}` : zh(ZT.fresh)}</small></button>`; }).join('');
   drawMinis($('profiles'));
   $('profiles').querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => pickKid(b.dataset.kid)));
@@ -2130,7 +2250,7 @@ $('btnSound2').textContent = Snd.isMuted() ? '🔇' : '🔊';
 // Expose for automated playtests. Harmless for players.
 window.__test = {
   G, save: () => S,
-  state: () => ({ music: Snd.track(), screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
+  state: () => ({ cloud: Cloud.ready, music: Snd.track(), screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
   fast: on => { G.fast = on; },
   warp: id => loadWorld(id, true),
   wild: () => wildBattle(),
@@ -2142,7 +2262,7 @@ window.__test = {
     if (dlg) return advanceDialog();
     if (panelOpen()) { const f = $('btnFinish'); if (f) return f.click(); return closePanel(); }
     if (G.busy) return;
-    if (G.mode === 'battle') { if (!G.B.lock) doMove(activeLumi() && elemMult(SPECIES[activeLumi().sp].el, G.B.e.el) > 1 ? 'skill' : 'strike'); return; }
+    if (G.mode === 'battle') { if (G.B.lock) return; const l = activeLumi(); let best = 0; for (let t = 0; t < knownMoves(l); t++) if (!G.B.rest[t]) best = t; if (movePower(l, best) * elemMult(SPECIES[l.sp].el, G.B.e.el) > heroAtk()) doMove('skill', best); else doMove('strike'); return; }
     if (G.mode === 'world') {
       if (G.world === 'hub') { if (!S.metElder) return interact(G.ents.find(e => e.role === 'elder')); const nx = WORLD_ORDER.find(id => !S.bosses[id]); if (nx) return teleport(nx); return; }
       const q = S.quests[G.world], giver = G.ents.find(e => e.role === 'giver');
@@ -2155,6 +2275,8 @@ window.__test = {
     }
   },
 };
+function onCloudReady() { if (G.mode === 'title' && !$('menu').hidden) profileCards(); }
+cloudInit();
 requestAnimationFrame(frame);
 </script>
 </body>

@@ -10,10 +10,41 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
-function save() { if (!S) return; try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } }
-function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } }
+function save() { if (!S) return; S.ts = Date.now(); try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } Cloud.dirty[S.kid] = JSON.stringify(S); cloudSoon(); }
+function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } delete Cloud.dirty[k]; if (Cloud.ready) Cloud.doc(k).delete().catch(() => { }); }
+
+// ---------- account save ----------
+// When the page is opened signed in on claude.ai, each kid's progress is also kept in the viewer's private
+// account data, so it survives the browser clearing its storage and follows them to other devices.
+// Everywhere else (signed out, or the GitHub Pages copy) the game still saves on the device.
+const Cloud = { ready: false, dirty: {}, busy: false, timer: null, db: null, uid: null, doc: k => Cloud.db.collection('data/users/' + Cloud.uid).doc('lumi-' + k) };
+async function cloudInit() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return; const uid = await user.id(); if (!uid) return;
+    Cloud.db = db; Cloud.uid = uid;
+    for (const k of ['nora', 'lucas']) {
+      const local = loadSave(k); let remote = null;
+      try { const snap = await Cloud.doc(k).get(); if (snap.exists) remote = JSON.parse(snap.data().json); } catch (e) { }
+      const playing = S && S.kid === k;
+      if (remote && (remote.ts || 0) > (local.ts || 0) && !playing) { try { localStorage.setItem('lumiquest.v1.' + k, JSON.stringify(remote)); } catch (e) { } }
+      else if (local.created && (!remote || (local.ts || 0) > (remote.ts || 0))) Cloud.dirty[k] = JSON.stringify(playing ? S : local);
+    }
+    Cloud.ready = true; cloudFlush(); if (typeof onCloudReady === 'function') onCloudReady();
+  } catch (e) { }
+}
+function cloudSoon() { if (!Cloud.ready || Cloud.timer) return; Cloud.timer = setTimeout(() => { Cloud.timer = null; cloudFlush(); }, 4000); }
+async function cloudFlush() {
+  if (!Cloud.ready || Cloud.busy) return; Cloud.busy = true;
+  try { for (const k of Object.keys(Cloud.dirty)) { const json = Cloud.dirty[k]; delete Cloud.dirty[k]; try { await Cloud.doc(k).set({ json, ts: Date.now(), v: 1 }); } catch (e) { if (!Cloud.dirty[k]) Cloud.dirty[k] = json; Cloud.failed = true; break; } Cloud.failed = false; } }
+  finally { Cloud.busy = false; if (Object.keys(Cloud.dirty).length) { clearTimeout(Cloud.timer); Cloud.timer = setTimeout(() => { Cloud.timer = null; cloudFlush(); }, Cloud.failed ? 20000 : 4000); } }
+}
+// Save the moment the page is hidden or closed (switching apps on the iPad, locking the screen).
+document.addEventListener('visibilitychange', () => { if (document.hidden && S) { save(); clearTimeout(Cloud.timer); Cloud.timer = null; cloudFlush(); } });
+window.addEventListener('pagehide', () => { if (S) save(); });
 
 // ---------- stats ----------
 const maxHP = () => 40 + 8 * (S.lv - 1) + ARMORS[S.armor].hp + (S.cls === 'knight' ? 15 : 0);
@@ -24,6 +55,8 @@ const lumiNeed = lv => 18 * lv;
 const isEvo = l => l.lv >= 6;
 const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
+const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
+const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
 function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
@@ -37,8 +70,9 @@ function addXP(n) {
   return up;
 }
 function addLumiXP(n) {
-  const l = activeLumi(); if (!l) return; const was = isEvo(l); l.xp += n;
+  const l = activeLumi(); if (!l) return; const was = isEvo(l), knew = knownMoves(l); l.xp += n;
   while (l.xp >= lumiNeed(l.lv)) { l.xp -= lumiNeed(l.lv); l.lv++; toast(`🐾 ${lumiName(l)} grew to Level ${l.lv}!`); }
+  for (let t = knew; t < knownMoves(l); t++) { Snd.play('level'); toast(`💥 ${lumiName(l)} learned ${MOVES[l.sp][t]}!`); }
   if (!was && isEvo(l)) { Snd.play('level'); toast(`✨ ${SPECIES[l.sp].name} evolved into ${SPECIES[l.sp].evo}!`); }
 }
 

@@ -75,7 +75,7 @@ A single-player RPG for Nora and Lucas. Explore six lands, capture and train cre
 | Lantern Isle | Chinese | Lantern Match (characters with zhuyin) |
 | Fog Citadel | All of the above | Final battle |
 
-It is one self-contained page (`lumi-quest/index.html`): canvas art, synthesized sound, no image or audio files. Progress saves per kid, per device, in `localStorage`. After merging to `main` it is served at `https://<user>.github.io/drawing-game-/lumi-quest/`.
+It is one self-contained page (`lumi-quest/index.html`): canvas art, synthesized sound, no image or audio files. Progress saves per kid on the device (`localStorage`). When the page is opened as a claude.ai artifact by a signed-in viewer, each save is also written to that viewer's private artifact data, so it survives cleared browser storage and follows them to other devices. Saving happens after every change and again the moment the app is hidden. After merging to `main` it is served at `https://<user>.github.io/drawing-game-/lumi-quest/`.
 
 ```bash
 node lumi-quest/build.mjs          # rebuild index.html after editing lumi-quest/src/
@@ -86,6 +86,7 @@ node lumi-quest/tests/check.cjs    # question and map checks (also part of npm t
 |---|---|
 | `lumi-quest/src/questions.js` | Question generators (maths, logic) and banks (science, geography, Chinese), per kid |
 | `lumi-quest/src/data.js` | Story, maps, Lumis, weapons, armour |
+| `lumi-quest/src/fx.js` | Attack animations: three skill tiers per element, one per weapon kind |
 | `lumi-quest/src/story.js` | Boss scenes, memories, villager news and King Mumble's backstory |
 | `lumi-quest/src/art.js` | All drawing: heroes, Lumis, Fog creatures, tiles |
 | `lumi-quest/src/world.js` | Walking, treasure, villagers, shop, teleport gate |

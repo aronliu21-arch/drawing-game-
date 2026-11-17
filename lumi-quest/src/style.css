@@ -187,3 +187,8 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .memh { color: var(--violet); margin-top: 12px; }
 .mems { margin: 4px 0 0; padding-left: 22px; font-size: 16px; font-weight: 600; line-height: 1.35; }
 .mems b { color: var(--violet); }
+
+.row.locked { opacity: .6; }
+.row em.lock { color: var(--muted); font-size: 15px; }
+.lumirow small { line-height: 1.35; display: block; }
+#saveNote { margin: 8px 0 0; color: #fff; font-weight: 800; font-size: 14px; text-shadow: 0 2px 0 var(--ink); }

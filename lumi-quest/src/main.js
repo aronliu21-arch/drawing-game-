@@ -5,6 +5,7 @@ G.intro = { state: 'wait', t: 0 };
 // ---------- title ----------
 function profileCards() {
   $('whoText').innerHTML = zh(ZT.who); $('btnReset').innerHTML = zh(ZT.reset);
+  $('saveNote').textContent = Cloud.ready ? '☁️ Progress is saved to your Claude account, on every device' : '💾 Progress is saved on this device';
   $('profiles').innerHTML = ['nora', 'lucas'].map(k => { const s = loadSave(k); return `<button class="pcard ${k}" data-kid="${k}"><canvas data-hero="${k}"></canvas><b style="background:${KIDS[k].col}">${KIDS[k].name}</b><small>${s.created ? `${zh(ZT.level)} ${s.lv} · ${zh(ZT.crystal)} ${s.crystals.length}/5${s.won ? ' 🏆' : ''}` : zh(ZT.fresh)}</small></button>`; }).join('');
   drawMinis($('profiles'));
   $('profiles').querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => pickKid(b.dataset.kid)));
@@ -238,7 +239,7 @@ $('btnSound2').textContent = Snd.isMuted() ? '🔇' : '🔊';
 // Expose for automated playtests. Harmless for players.
 window.__test = {
   G, save: () => S,
-  state: () => ({ music: Snd.track(), screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
+  state: () => ({ cloud: Cloud.ready, music: Snd.track(), screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
   fast: on => { G.fast = on; },
   warp: id => loadWorld(id, true),
   wild: () => wildBattle(),
@@ -250,7 +251,7 @@ window.__test = {
     if (dlg) return advanceDialog();
     if (panelOpen()) { const f = $('btnFinish'); if (f) return f.click(); return closePanel(); }
     if (G.busy) return;
-    if (G.mode === 'battle') { if (!G.B.lock) doMove(activeLumi() && elemMult(SPECIES[activeLumi().sp].el, G.B.e.el) > 1 ? 'skill' : 'strike'); return; }
+    if (G.mode === 'battle') { if (G.B.lock) return; const l = activeLumi(); let best = 0; for (let t = 0; t < knownMoves(l); t++) if (!G.B.rest[t]) best = t; if (movePower(l, best) * elemMult(SPECIES[l.sp].el, G.B.e.el) > heroAtk()) doMove('skill', best); else doMove('strike'); return; }
     if (G.mode === 'world') {
       if (G.world === 'hub') { if (!S.metElder) return interact(G.ents.find(e => e.role === 'elder')); const nx = WORLD_ORDER.find(id => !S.bosses[id]); if (nx) return teleport(nx); return; }
       const q = S.quests[G.world], giver = G.ents.find(e => e.role === 'giver');
@@ -263,4 +264,6 @@ window.__test = {
     }
   },
 };
+function onCloudReady() { if (G.mode === 'title' && !$('menu').hidden) profileCards(); }
+cloudInit();
 requestAnimationFrame(frame);

@@ -3,22 +3,32 @@
 // C chest  c hidden treasure  G gate  N quest villager  n villager  E fog creature  B boss  F fog wall  P start
 // Hub only: S shopkeeper  I healer  L elder
 const SPECIES = {
-  emberpup: { name: 'Emberpup', evo: 'Blazehound', el: 'fire', col: '#ff8c42', body: 'round', ear: 'point', tail: 'flame', skill: 'Ember Dash' },
-  sproutle: { name: 'Sproutle', evo: 'Florabuck', el: 'leaf', col: '#69db7c', body: 'round', ear: 'leaf', tail: 'leaf', skill: 'Vine Whip' },
-  bubblit: { name: 'Bubblit', evo: 'Tidalon', el: 'water', col: '#4dabf7', body: 'round', ear: 'fin', tail: 'fin', skill: 'Bubble Burst' },
-  acornox: { name: 'Acornox', evo: 'Oakhorn', el: 'leaf', col: '#b08968', body: 'wide', ear: 'horn', tail: 'leaf', skill: 'Acorn Barrage' },
-  tallybird: { name: 'Tallybird', evo: 'Abacowl', el: 'star', col: '#ffd43b', body: 'tall', ear: 'point', tail: 'puff', extra: 'wings', skill: 'Count Strike' },
-  shellby: { name: 'Shellby', evo: 'Reefguard', el: 'water', col: '#38d9a9', body: 'wide', ear: 'none', tail: 'fin', extra: 'shell', skill: 'Shell Spin' },
-  steamlet: { name: 'Steamlet', evo: 'Geyserix', el: 'fire', col: '#ff8787', body: 'tall', ear: 'antenna', tail: 'puff', skill: 'Steam Jet' },
-  glaciub: { name: 'Glaciub', evo: 'Frostbear', el: 'water', col: '#a5d8ff', body: 'wide', ear: 'round', tail: 'puff', skill: 'Ice Tumble' },
-  peakit: { name: 'Peakit', evo: 'Summitar', el: 'star', col: '#ced4da', body: 'round', ear: 'long', tail: 'bolt', extra: 'spikes', skill: 'Echo Leap' },
-  cogbit: { name: 'Cogbit', evo: 'Gearon', el: 'star', col: '#e8a33d', body: 'round', ear: 'antenna', tail: 'none', extra: 'gear', skill: 'Gear Grind' },
-  sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes', skill: 'Sand Blaze' },
-  bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)', skill: 'Bamboo Bash' },
-  lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings', skill: 'Lantern Flash' },
-  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow', skill: 'Brave Voice' },
+  emberpup: { name: 'Emberpup', evo: 'Blazehound', el: 'fire', col: '#ff8c42', body: 'round', ear: 'point', tail: 'flame' },
+  sproutle: { name: 'Sproutle', evo: 'Florabuck', el: 'leaf', col: '#69db7c', body: 'round', ear: 'leaf', tail: 'leaf' },
+  bubblit: { name: 'Bubblit', evo: 'Tidalon', el: 'water', col: '#4dabf7', body: 'round', ear: 'fin', tail: 'fin' },
+  acornox: { name: 'Acornox', evo: 'Oakhorn', el: 'leaf', col: '#b08968', body: 'wide', ear: 'horn', tail: 'leaf' },
+  tallybird: { name: 'Tallybird', evo: 'Abacowl', el: 'star', col: '#ffd43b', body: 'tall', ear: 'point', tail: 'puff', extra: 'wings' },
+  shellby: { name: 'Shellby', evo: 'Reefguard', el: 'water', col: '#38d9a9', body: 'wide', ear: 'none', tail: 'fin', extra: 'shell' },
+  steamlet: { name: 'Steamlet', evo: 'Geyserix', el: 'fire', col: '#ff8787', body: 'tall', ear: 'antenna', tail: 'puff' },
+  glaciub: { name: 'Glaciub', evo: 'Frostbear', el: 'water', col: '#a5d8ff', body: 'wide', ear: 'round', tail: 'puff' },
+  peakit: { name: 'Peakit', evo: 'Summitar', el: 'star', col: '#ced4da', body: 'round', ear: 'long', tail: 'bolt', extra: 'spikes' },
+  cogbit: { name: 'Cogbit', evo: 'Gearon', el: 'star', col: '#e8a33d', body: 'round', ear: 'antenna', tail: 'none', extra: 'gear' },
+  sandflare: { name: 'Sandflare', evo: 'Dunedrake', el: 'fire', col: '#f59f00', body: 'tall', ear: 'horn', tail: 'flame', extra: 'spikes' },
+  bambu: { name: 'Bambu', evo: 'Pandaroo', el: 'leaf', col: '#f1f3f5', body: 'wide', ear: 'round', tail: 'puff', belly: 'rgba(60,60,70,.25)' },
+  lampfly: { name: 'Lampfly', evo: 'Lanternix', el: 'fire', col: '#e599f7', body: 'round', ear: 'antenna', tail: 'none', extra: 'wings' },
+  echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow' },
 };
 Object.values(SPECIES).forEach((s, i) => { s.ph = i * 1.3; });
+// Each Lumi learns three skills: the first at Level 1, a stronger one at Level 4, and its best at Level 8.
+// Stronger skills need a rest of a few turns after each use.
+const MOVES = {
+  emberpup: ['Ember Dash', 'Flame Wheel', 'Meteor Blaze'], sproutle: ['Vine Whip', 'Thorn Storm', 'Great Bloom'], bubblit: ['Bubble Burst', 'Tidal Wave', 'Whirlpool Crash'],
+  acornox: ['Acorn Barrage', 'Root Slam', 'Forest Stampede'], tallybird: ['Count Strike', 'Feather Flurry', 'Star Tally'], shellby: ['Shell Spin', 'Coral Crush', 'Deep Sea Surge'],
+  steamlet: ['Steam Jet', 'Boiling Burst', 'Geyser Blast'], glaciub: ['Ice Tumble', 'Snowball Roll', 'Avalanche'], peakit: ['Echo Leap', 'Rock Rumble', 'Summit Flash'],
+  cogbit: ['Gear Grind', 'Spring Punch', 'Clockwork Storm'], sandflare: ['Sand Blaze', 'Dune Fang', 'Desert Sun'], bambu: ['Bamboo Bash', 'Leaf Tornado', 'Panda Quake'],
+  lampfly: ['Lantern Flash', 'Glow Swarm', 'Festival Fireworks'], echo: ['Brave Voice', 'Loud Answer', 'Lantern Chorus'],
+};
+const MOVE_LV = [1, 4, 8], MOVE_MULT = [1, 1.45, 2], MOVE_REST = [0, 2, 3];
 const STARTERS = ['emberpup', 'sproutle', 'bubblit'];
 // fire beats leaf, leaf beats water, water beats fire. Star is neutral.
 const BEATS = { fire: 'leaf', leaf: 'water', water: 'fire' };
