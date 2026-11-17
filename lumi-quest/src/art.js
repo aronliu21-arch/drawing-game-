@@ -35,6 +35,23 @@ const Art = (() => {
     } else if (k === 'hammer') {
       rr(c, -2.5, -34, 5, 40, 2, '#8d6e4a', INK, 2); rr(c, -13, -46, 26, 15, 3, col, INK, 2);
       ell(c, 0, -38.5, 4, 4, w.trim || '#f4b400', INK, 1.5);
+    } else if (k === 'wand') {
+      rr(c, -2, -32, 4, 38, 2, '#7b5a3a', INK, 1.8);
+      c.save(); c.shadowColor = col; c.shadowBlur = 10; star(c, 0, -38, 9, col, INK, 1.6); c.restore(); ell(c, -2, -40, 1.8, 1.8, '#fff');
+    } else if (k === 'bow') {
+      c.strokeStyle = INK; c.lineWidth = 6; c.beginPath(); c.arc(-18, -14, 28, -1.05, 1.05); c.stroke();
+      c.strokeStyle = col; c.lineWidth = 3; c.stroke();
+      const top = [-18 + 28 * Math.cos(-1.05), -14 + 28 * Math.sin(-1.05)], bot = [-18 + 28 * Math.cos(1.05), -14 + 28 * Math.sin(1.05)];
+      c.strokeStyle = '#f8f9fa'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(top[0], top[1]); c.lineTo(bot[0], bot[1]); c.stroke();
+      rr(c, 6, -20, 6, 12, 2, '#6d4c2f', INK, 1.5);
+    } else if (k === 'boomerang') {
+      c.beginPath(); c.moveTo(-4, 4); c.quadraticCurveTo(-4, -26, 14, -40); c.lineTo(20, -34); c.quadraticCurveTo(6, -22, 6, 0); c.quadraticCurveTo(-10, -6, -26, -2); c.lineTo(-26, -10); c.quadraticCurveTo(-12, -14, -4, 4); c.closePath();
+      c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke();
+    } else if (k === 'crossbow') {
+      rr(c, -3, -30, 6, 36, 2, '#8d6e4a', INK, 2);
+      c.strokeStyle = INK; c.lineWidth = 5; c.beginPath(); c.arc(0, -10, 20, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); c.strokeStyle = col; c.lineWidth = 2.5; c.stroke();
+      c.strokeStyle = '#f8f9fa'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-17, -20); c.lineTo(0, -14); c.lineTo(17, -20); c.stroke();
+      rr(c, -1.5, -40, 3, 16, 1, '#dee2e6', INK, 1);
     } else if (k === 'staff') {
       rr(c, -2.5, -38, 5, 46, 2, '#7b5a3a', INK, 2);
       c.save(); c.shadowColor = col; c.shadowBlur = 12; ell(c, 0, -44, 7.5, 7.5, col, INK, 2); c.restore(); ell(c, -2, -46, 2.3, 2.3, '#fff');
@@ -82,7 +99,6 @@ const Art = (() => {
     c.fillStyle = o.color; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
     c.beginPath(); c.moveTo(-7, -45); c.lineTo(0, -37); c.lineTo(7, -45); c.strokeStyle = trim; c.lineWidth = 3; c.stroke();
     rr(c, -16.5, -25, 33, 5, 1.5, '#3b2a1a'); ell(c, 0, -22.5, 3, 3, '#ffd43b', INK, 1.2);
-    c.fillStyle = trim; c.font = '900 10px system-ui'; c.textAlign = 'center'; c.fillText(nora ? '9' : '6', 0, -28);
     // armour
     const a = o.armor || 0;
     if (a > 0) {

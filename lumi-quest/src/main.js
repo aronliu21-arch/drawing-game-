@@ -118,7 +118,7 @@ function logo(c, y, s) {
   zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
-function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: WEAPONS[s.weapon], armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
+function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
 let titleLooks = null;
 function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;

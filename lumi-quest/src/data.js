@@ -45,6 +45,22 @@ const WEAPONS = {
   hammer: { name: 'Gear Hammer', atk: 13, kind: 'hammer', col: '#e8a33d', found: true },
   staff: { name: 'Lantern Staff', atk: 17, kind: 'staff', col: '#ff8787', found: true },
 };
+// Each weapon slot looks different for each hero class: Knights use blades and heavy weapons,
+// Mages use wands and staffs, Rangers use bows and throwing weapons. Stats come from WEAPONS.
+// [name, kind, colour, trim]
+const WEAPON_LOOKS = {
+  wood: { knight: ['Wooden Sword', 'sword', '#c9a66b', '#8d6e4a'], mage: ['Twig Wand', 'wand', '#c9a66b'], ranger: ['Twig Bow', 'bow', '#c9a66b'] },
+  bronze: { knight: ['Bronze Blade', 'sword', '#e0a060'], mage: ['Bronze Wand', 'wand', '#e0a060'], ranger: ['Bronze Bow', 'bow', '#e0a060'] },
+  silver: { knight: ['Silver Saber', 'sword', '#dee2e6'], mage: ['Moon Staff', 'staff', '#dee2e6'], ranger: ['Silver Longbow', 'bow', '#dee2e6'] },
+  axe: { knight: ['Abacus Axe', 'axe', '#8ce99a'], mage: ['Abacus Rod', 'wand', '#8ce99a'], ranger: ['Abacus Boomerang', 'boomerang', '#8ce99a'] },
+  trident: { knight: ['Tide Trident', 'trident', '#66d9e8'], mage: ['Tide Staff', 'staff', '#66d9e8'], ranger: ['Tide Bow', 'bow', '#66d9e8'] },
+  crystal: { knight: ['Crystal Lance', 'spear', '#7fe3ff'], mage: ['Crystal Staff', 'staff', '#7fe3ff'], ranger: ['Crystal Bow', 'bow', '#7fe3ff'] },
+  spear: { knight: ['Summit Spear', 'spear', '#e9ecef'], mage: ['Summit Scepter', 'wand', '#e9ecef'], ranger: ['Summit Javelin', 'spear', '#e9ecef'] },
+  hammer: { knight: ['Gear Hammer', 'hammer', '#e8a33d'], mage: ['Gear Scepter', 'staff', '#e8a33d'], ranger: ['Gear Crossbow', 'crossbow', '#e8a33d'] },
+  star: { knight: ['Starforged Blade', 'sword', '#ffe066', '#7048e8'], mage: ['Star Wand', 'wand', '#ffe066'], ranger: ['Starshot Bow', 'bow', '#ffe066'] },
+  staff: { knight: ['Lantern Blade', 'sword', '#ff8787'], mage: ['Lantern Staff', 'staff', '#ff8787'], ranger: ['Lantern Bow', 'bow', '#ff8787'] },
+};
+function weaponLook(id, cls) { const L = (WEAPON_LOOKS[id] || WEAPON_LOOKS.wood)[cls] || WEAPON_LOOKS[id].knight; return Object.assign({}, WEAPONS[id], { name: L[0], kind: L[1], col: L[2], trim: L[3] }); }
 const ARMORS = {
   cloth: { name: 'Cloth Tunic', hp: 0, def: 0, tier: 0 },
   leather: { name: 'Leather Vest', hp: 10, def: 1, tier: 1, price: 50 },

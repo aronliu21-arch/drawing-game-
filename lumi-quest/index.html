@@ -200,6 +200,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .row em.lock { color: var(--muted); font-size: 15px; }
 .lumirow small { line-height: 1.35; display: block; }
 #saveNote { margin: 8px 0 0; color: #fff; font-weight: 800; font-size: 14px; text-shadow: 0 2px 0 var(--ink); }
+.row canvas.ricon { flex: none; width: 60px; height: 60px; border-radius: 12px; background: #f1ead8; }
 </style>
 </head>
 <body>
@@ -611,6 +612,22 @@ const WEAPONS = {
   hammer: { name: 'Gear Hammer', atk: 13, kind: 'hammer', col: '#e8a33d', found: true },
   staff: { name: 'Lantern Staff', atk: 17, kind: 'staff', col: '#ff8787', found: true },
 };
+// Each weapon slot looks different for each hero class: Knights use blades and heavy weapons,
+// Mages use wands and staffs, Rangers use bows and throwing weapons. Stats come from WEAPONS.
+// [name, kind, colour, trim]
+const WEAPON_LOOKS = {
+  wood: { knight: ['Wooden Sword', 'sword', '#c9a66b', '#8d6e4a'], mage: ['Twig Wand', 'wand', '#c9a66b'], ranger: ['Twig Bow', 'bow', '#c9a66b'] },
+  bronze: { knight: ['Bronze Blade', 'sword', '#e0a060'], mage: ['Bronze Wand', 'wand', '#e0a060'], ranger: ['Bronze Bow', 'bow', '#e0a060'] },
+  silver: { knight: ['Silver Saber', 'sword', '#dee2e6'], mage: ['Moon Staff', 'staff', '#dee2e6'], ranger: ['Silver Longbow', 'bow', '#dee2e6'] },
+  axe: { knight: ['Abacus Axe', 'axe', '#8ce99a'], mage: ['Abacus Rod', 'wand', '#8ce99a'], ranger: ['Abacus Boomerang', 'boomerang', '#8ce99a'] },
+  trident: { knight: ['Tide Trident', 'trident', '#66d9e8'], mage: ['Tide Staff', 'staff', '#66d9e8'], ranger: ['Tide Bow', 'bow', '#66d9e8'] },
+  crystal: { knight: ['Crystal Lance', 'spear', '#7fe3ff'], mage: ['Crystal Staff', 'staff', '#7fe3ff'], ranger: ['Crystal Bow', 'bow', '#7fe3ff'] },
+  spear: { knight: ['Summit Spear', 'spear', '#e9ecef'], mage: ['Summit Scepter', 'wand', '#e9ecef'], ranger: ['Summit Javelin', 'spear', '#e9ecef'] },
+  hammer: { knight: ['Gear Hammer', 'hammer', '#e8a33d'], mage: ['Gear Scepter', 'staff', '#e8a33d'], ranger: ['Gear Crossbow', 'crossbow', '#e8a33d'] },
+  star: { knight: ['Starforged Blade', 'sword', '#ffe066', '#7048e8'], mage: ['Star Wand', 'wand', '#ffe066'], ranger: ['Starshot Bow', 'bow', '#ffe066'] },
+  staff: { knight: ['Lantern Blade', 'sword', '#ff8787'], mage: ['Lantern Staff', 'staff', '#ff8787'], ranger: ['Lantern Bow', 'bow', '#ff8787'] },
+};
+function weaponLook(id, cls) { const L = (WEAPON_LOOKS[id] || WEAPON_LOOKS.wood)[cls] || WEAPON_LOOKS[id].knight; return Object.assign({}, WEAPONS[id], { name: L[0], kind: L[1], col: L[2], trim: L[3] }); }
 const ARMORS = {
   cloth: { name: 'Cloth Tunic', hp: 0, def: 0, tier: 0 },
   leather: { name: 'Leather Vest', hp: 10, def: 1, tier: 1, price: 50 },
@@ -941,6 +958,23 @@ const Art = (() => {
     } else if (k === 'hammer') {
       rr(c, -2.5, -34, 5, 40, 2, '#8d6e4a', INK, 2); rr(c, -13, -46, 26, 15, 3, col, INK, 2);
       ell(c, 0, -38.5, 4, 4, w.trim || '#f4b400', INK, 1.5);
+    } else if (k === 'wand') {
+      rr(c, -2, -32, 4, 38, 2, '#7b5a3a', INK, 1.8);
+      c.save(); c.shadowColor = col; c.shadowBlur = 10; star(c, 0, -38, 9, col, INK, 1.6); c.restore(); ell(c, -2, -40, 1.8, 1.8, '#fff');
+    } else if (k === 'bow') {
+      c.strokeStyle = INK; c.lineWidth = 6; c.beginPath(); c.arc(-18, -14, 28, -1.05, 1.05); c.stroke();
+      c.strokeStyle = col; c.lineWidth = 3; c.stroke();
+      const top = [-18 + 28 * Math.cos(-1.05), -14 + 28 * Math.sin(-1.05)], bot = [-18 + 28 * Math.cos(1.05), -14 + 28 * Math.sin(1.05)];
+      c.strokeStyle = '#f8f9fa'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(top[0], top[1]); c.lineTo(bot[0], bot[1]); c.stroke();
+      rr(c, 6, -20, 6, 12, 2, '#6d4c2f', INK, 1.5);
+    } else if (k === 'boomerang') {
+      c.beginPath(); c.moveTo(-4, 4); c.quadraticCurveTo(-4, -26, 14, -40); c.lineTo(20, -34); c.quadraticCurveTo(6, -22, 6, 0); c.quadraticCurveTo(-10, -6, -26, -2); c.lineTo(-26, -10); c.quadraticCurveTo(-12, -14, -4, 4); c.closePath();
+      c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke();
+    } else if (k === 'crossbow') {
+      rr(c, -3, -30, 6, 36, 2, '#8d6e4a', INK, 2);
+      c.strokeStyle = INK; c.lineWidth = 5; c.beginPath(); c.arc(0, -10, 20, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); c.strokeStyle = col; c.lineWidth = 2.5; c.stroke();
+      c.strokeStyle = '#f8f9fa'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-17, -20); c.lineTo(0, -14); c.lineTo(17, -20); c.stroke();
+      rr(c, -1.5, -40, 3, 16, 1, '#dee2e6', INK, 1);
     } else if (k === 'staff') {
       rr(c, -2.5, -38, 5, 46, 2, '#7b5a3a', INK, 2);
       c.save(); c.shadowColor = col; c.shadowBlur = 12; ell(c, 0, -44, 7.5, 7.5, col, INK, 2); c.restore(); ell(c, -2, -46, 2.3, 2.3, '#fff');
@@ -988,7 +1022,6 @@ const Art = (() => {
     c.fillStyle = o.color; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
     c.beginPath(); c.moveTo(-7, -45); c.lineTo(0, -37); c.lineTo(7, -45); c.strokeStyle = trim; c.lineWidth = 3; c.stroke();
     rr(c, -16.5, -25, 33, 5, 1.5, '#3b2a1a'); ell(c, 0, -22.5, 3, 3, '#ffd43b', INK, 1.2);
-    c.fillStyle = trim; c.font = '900 10px system-ui'; c.textAlign = 'center'; c.fillText(nora ? '9' : '6', 0, -28);
     // armour
     const a = o.armor || 0;
     if (a > 0) {
@@ -1460,6 +1493,10 @@ const FX = (() => {
     trident(c, k, s, t, T) { for (let i = -1; i <= 1; i++) { const q = ease(seg(k, (i + 1) * 0.1, 0.6 + (i + 1) * 0.1)), a = 1 - seg(k, 0.8, 1); c.save(); c.globalAlpha = a; c.strokeStyle = '#66d9e8'; c.lineWidth = 8; c.lineCap = 'round'; glow(c, '#66d9e8', 12); c.beginPath(); c.moveTo(lerp(s[0], t[0], Math.max(0, q - 0.4)), lerp(s[1] - 30, t[1] - 20 + i * 34, q)); c.lineTo(lerp(s[0], t[0] + 20, q), lerp(s[1] - 30, t[1] - 20 + i * 34, q)); c.stroke(); c.restore(); if (q > 0.9) bubble(c, t[0] + 10, t[1] - 20 + i * 34, 9 * a + 1); } },
     hammer(c, k, s, t) { const q = seg(k, 0, 0.45), y = lerp(-80, t[1] - 40, q * q); if (k < 0.5) { c.save(); c.translate(t[0], y); c.rotate(Math.PI); Art.weapon(c, { kind: 'hammer', col: '#e8a33d' }); c.restore(); } for (let i = 0; i < 3; i++) { const e = seg(k, 0.45 + i * 0.1, 0.8 + i * 0.1); if (e > 0 && e < 1) ring(c, t[0], t[1] + 30, 20 + e * 150, '#ffd43b', 9 * (1 - e), 1 - e); } },
     staff(c, k, s, t, T) { const a = Math.sin(k * Math.PI), w = 16 + Math.sin(T * 40) * 4; c.save(); c.globalAlpha = a; glow(c, '#ff8787', 26); c.strokeStyle = '#ff8787'; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(s[0] + 30, s[1] - 60); c.lineTo(t[0], t[1] - 20); c.stroke(); c.strokeStyle = '#fff'; c.lineWidth = w * 0.4; c.stroke(); c.restore(); for (let i = 0; i < 6; i++) { c.save(); c.globalAlpha = a; Art.star(c, t[0] + Math.cos(T * 9 + i) * 44, t[1] - 20 + Math.sin(T * 9 + i) * 34, 7, '#ffe3e3'); c.restore(); } },
+    wand(c, k, s, t, T) { for (let i = 0; i < 3; i++) { const q = seg(k, i * 0.12, 0.62 + i * 0.12); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, ease(q), 40 + i * 24); c.save(); glow(c, '#e5dbff', 16); Art.star(c, x, y, 11, '#fff9db', '#7048e8', 1.4); c.restore(); for (let j = 1; j < 5; j++) { const [tx, ty] = arc(s, t, Math.max(0, ease(q) - j * 0.04), 40 + i * 24); c.globalAlpha = 0.5 - j * 0.1; Art.star(c, tx, ty, 5, '#d0bfff'); } c.globalAlpha = 1; } if (k > 0.8) { const e = seg(k, 0.8, 1); ring(c, t[0], t[1], e * 90, '#d0bfff', 6 * (1 - e), 1 - e); } },
+    bow(c, k, s, t) { for (let i = 0; i < 2; i++) { const q = ease(seg(k, i * 0.2, 0.6 + i * 0.2)); if (q <= 0 || q >= 1) continue; const x = lerp(s[0], t[0], q), y = lerp(s[1] - 30, t[1] - 16 + i * 26, q) - Math.sin(q * Math.PI) * 30, ang = Math.atan2(t[1] - s[1], t[0] - s[0]) - Math.cos(q * Math.PI) * 0.4; c.save(); c.translate(x, y); c.rotate(ang); c.strokeStyle = '#8d6e4a'; c.lineWidth = 3; c.beginPath(); c.moveTo(-34, 0); c.lineTo(0, 0); c.stroke(); c.beginPath(); c.moveTo(6, 0); c.lineTo(-4, -5); c.lineTo(-4, 5); c.fillStyle = '#dee2e6'; c.fill(); c.fillStyle = '#ff8787'; c.beginPath(); c.moveTo(-34, 0); c.lineTo(-40, -6); c.lineTo(-28, 0); c.lineTo(-40, 6); c.fill(); c.restore(); } if (k > 0.85) { const e = seg(k, 0.85, 1); ring(c, t[0], t[1], e * 70, '#fff', 5 * (1 - e), 1 - e); } },
+    boomerang(c, k, s, t, T) { const q = Math.sin(k * Math.PI), x = lerp(s[0], t[0] + 30, q), y = lerp(s[1] - 30, t[1] - 10, q) - Math.sin(k * Math.PI * 2) * 60; c.save(); c.translate(x, y); c.rotate(T * 24); Art.weapon(c, { kind: 'boomerang', col: '#8ce99a' }); c.restore(); },
+    crossbow(c, k, s, t) { const q = ease(seg(k, 0, 0.45)), a = 1 - seg(k, 0.45, 1); c.save(); c.globalAlpha = a; c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.beginPath(); c.moveTo(s[0], s[1] - 30); c.lineTo(lerp(s[0], t[0], q), lerp(s[1] - 30, t[1] - 16, q)); c.stroke(); c.restore(); if (q < 1) { c.save(); c.translate(lerp(s[0], t[0], q), lerp(s[1] - 30, t[1] - 16, q)); c.rotate(Math.atan2(t[1] - s[1] + 14, t[0] - s[0])); c.fillStyle = '#e8a33d'; c.fillRect(-26, -2, 26, 4); c.beginPath(); c.moveTo(8, 0); c.lineTo(-2, -6); c.lineTo(-2, 6); c.fillStyle = '#dee2e6'; c.fill(); c.restore(); } else { const e = seg(k, 0.45, 1); ring(c, t[0], t[1] - 16, e * 80, '#ffd43b', 6 * (1 - e), 1 - e); } },
     // ---- enemies ----
     fogball(c, k, s, t, T) { for (let i = 0; i < 3; i++) { const q = seg(k, i * 0.12, 0.7 + i * 0.12); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, q, 60); c.save(); c.globalAlpha = 0.85; glow(c, '#5f3dc4', 16); Art.ell(c, x, y, 22 - i * 4, 18 - i * 3, i % 2 ? '#7048e8' : '#3b2f6b'); c.restore(); } },
     tackle() { },
@@ -1632,7 +1669,7 @@ const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls
 const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
 const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: WEAPONS[S.weapon], armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
 function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
 function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }
@@ -1646,7 +1683,7 @@ function addXP(n) {
 function addLumiXP(n) {
   const l = activeLumi(); if (!l) return; const was = isEvo(l), knew = knownMoves(l); l.xp += n;
   while (l.xp >= lumiNeed(l.lv)) { l.xp -= lumiNeed(l.lv); l.lv++; toast(`🐾 ${lumiName(l)} grew to Level ${l.lv}!`); }
-  for (let t = knew; t < knownMoves(l); t++) { Snd.play('level'); toast(`💥 ${lumiName(l)} learned ${MOVES[l.sp][t]}!`); }
+  for (let t = knew; t < knownMoves(l); t++) { Snd.play('level'); toast(`💥 ${lumiName(l)} learned ${MOVES[l.sp][t]}!`); (G.learned = G.learned || []).push([lumiName(l), MOVES[l.sp][t], t]); }
   if (!was && isEvo(l)) { Snd.play('level'); toast(`✨ ${SPECIES[l.sp].name} evolved into ${SPECIES[l.sp].evo}!`); }
 }
 
@@ -1711,7 +1748,9 @@ const panelOpen = () => !$('panel').hidden;
 function mini(el, draw, w, h) { const d = Math.min(2, window.devicePixelRatio || 1); el.width = w * d; el.height = h * d; el.style.width = w + 'px'; el.style.height = h + 'px'; const c = el.getContext('2d'); c.scale(d, d); draw(c); }
 function drawMinis(root) {
   (root || document).querySelectorAll('canvas[data-lumi]').forEach(el => mini(el, c => Art.lumi(c, SPECIES[el.dataset.lumi], 32, 58, 1.15, 1, el.dataset.evo === '1'), 64, 64));
-  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: WEAPONS[s.weapon], armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-weapon]').forEach(el => mini(el, c => { const w = weaponLook(el.dataset.weapon, S.cls), bow = w.kind === 'bow'; c.translate(bow ? 44 : 30, bow ? 46 : 52); c.rotate(bow ? 0.15 : 0.62); c.scale(bow ? 0.95 : 1.05, bow ? 0.95 : 1.05); Art.weapon(c, w); }, 60, 60));
+  (root || document).querySelectorAll('canvas[data-armor]').forEach(el => mini(el, c => { c.beginPath(); c.rect(0, 0, 60, 60); c.clip(); Art.hero(c, 30, 104, 0.95, { kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: ARMORS[el.dataset.armor].tier, t: 0.3, glow: false, mood: 'calm' }); }, 60, 60));
 }
 
 // ---------- HUD ----------
@@ -1839,7 +1878,7 @@ async function interact(e) {
   }
   G.busy = false;
 }
-function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) return `the ${WEAPONS[l.weapon].name}`; return `${l.n} ${l.item === 'orb' ? 'Capture Orb' : 'Potion'}${l.n > 1 ? 's' : ''}`; }
+function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) return `the ${weaponLook(l.weapon, S.cls).name}`; return `${l.n} ${l.item === 'orb' ? 'Capture Orb' : 'Potion'}${l.n > 1 ? 's' : ''}`; }
 async function openChest(e, hidden) {
   G.busy = true; S.chests[e.key] = 1; const l = e.loot;
   if (hidden) e.gone = true; else e.open = true;
@@ -1847,7 +1886,7 @@ async function openChest(e, hidden) {
   if (l.gold) S.gold += l.gold; else if (l.weapon) { if (!S.weapons.includes(l.weapon)) S.weapons.push(l.weapon); } else S[l.item] += l.n;
   updateHUD(); save();
   await say((hidden ? `${KIDS[S.kid].name} searched the ground and dug up ` : `${KIDS[S.kid].name} opened the chest and found `) + lootText(l) + '!');
-  if (l.weapon && WEAPONS[l.weapon].atk > WEAPONS[S.weapon].atk) { S.weapon = l.weapon; save(); toast(`⚔️ Equipped ${WEAPONS[l.weapon].name} (+${WEAPONS[l.weapon].atk} attack)`); }
+  if (l.weapon && WEAPONS[l.weapon].atk > WEAPONS[S.weapon].atk) { S.weapon = l.weapon; save(); toast(`⚔️ Equipped ${weaponLook(l.weapon, S.cls).name} (+${WEAPONS[l.weapon].atk} attack)`); }
   G.busy = false;
 }
 
@@ -1878,15 +1917,15 @@ async function teleport(dest) {
 }
 function shopRows(tab) {
   let h = '';
-  if (tab === 'weapons') for (const [id, w] of Object.entries(WEAPONS)) { if (w.found && !S.weapons.includes(id)) continue; const own = S.weapons.includes(id), eq = S.weapon === id; h += `<div class="row"><span class="ri">⚔️</span><div><b>${w.name}</b><small>+${w.atk} attack${w.found ? ' · found treasure' : ''}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="weapon:${id}">Equip</button>` : `<button data-buy="weapon:${id}" ${S.gold >= w.price ? '' : 'disabled'}>🪙 ${w.price}</button>`}</div>`; }
-  if (tab === 'armour') for (const [id, a] of Object.entries(ARMORS)) { const own = S.armors.includes(id), eq = S.armor === id; h += `<div class="row"><span class="ri">🛡️</span><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="armor:${id}">Equip</button>` : `<button data-buy="armor:${id}" ${S.gold >= a.price ? '' : 'disabled'}>🪙 ${a.price}</button>`}</div>`; }
+  if (tab === 'weapons') for (const [id, w0] of Object.entries(WEAPONS)) { const w = weaponLook(id, S.cls); if (w.found && !S.weapons.includes(id)) continue; const own = S.weapons.includes(id), eq = S.weapon === id; h += `<div class="row"><canvas class="ricon" data-weapon="${id}"></canvas><div><b>${w.name}</b><small>+${w.atk} attack${w.found ? ' · found treasure' : ''}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="weapon:${id}">Equip</button>` : `<button data-buy="weapon:${id}" ${S.gold >= w.price ? '' : 'disabled'}>🪙 ${w.price}</button>`}</div>`; }
+  if (tab === 'armour') for (const [id, a] of Object.entries(ARMORS)) { const own = S.armors.includes(id), eq = S.armor === id; h += `<div class="row"><canvas class="ricon" data-armor="${id}"></canvas><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="armor:${id}">Equip</button>` : `<button data-buy="armor:${id}" ${S.gold >= a.price ? '' : 'disabled'}>🪙 ${a.price}</button>`}</div>`; }
   if (tab === 'items') h += `<div class="row"><span class="ri">🧪</span><div><b>Potion</b><small>Heals in battle · you have ${S.potion}</small></div><button data-buy="item:potion" ${S.gold >= 15 ? '' : 'disabled'}>🪙 15</button></div><div class="row"><span class="ri">🔮</span><div><b>Capture Orb</b><small>Catches a weak wild Lumi · you have ${S.orb}</small></div><button data-buy="item:orb" ${S.gold >= 20 ? '' : 'disabled'}>🪙 20</button></div>`;
   return h;
 }
 function gearPanel(title, shop) {
   let tab = shop ? 'weapons' : 'weapons';
   const render = () => {
-    $('panelBody').innerHTML = `<h2>${title} <span class="coins">🪙 ${S.gold}</span></h2><div class="tabs">${['weapons', 'armour', 'items'].map(t => `<button class="tab${t === tab ? ' on' : ''}" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div><div class="rows">${shop ? shopRows(tab) : bagRows(tab)}</div>`;
+    $('panelBody').innerHTML = `<h2>${title} <span class="coins">🪙 ${S.gold}</span></h2><div class="tabs">${['weapons', 'armour', 'items'].map(t => `<button class="tab${t === tab ? ' on' : ''}" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div><div class="rows">${shop ? shopRows(tab) : bagRows(tab)}</div>`; drawMinis($('panelBody'));
     $('panelBody').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; Snd.play('tap'); render(); });
     $('panelBody').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.buy.split(':'); const price = k === 'weapon' ? WEAPONS[id].price : k === 'armor' ? ARMORS[id].price : id === 'potion' ? 15 : 20; if (S.gold < price) return; S.gold -= price; if (k === 'weapon') { S.weapons.push(id); S.weapon = id; } else if (k === 'armor') { const full = S.hp >= maxHP(); S.armors.push(id); S.armor = id; if (full) S.hp = maxHP(); } else S[id]++; Snd.play('coin'); save(); updateHUD(); render(); });
     $('panelBody').querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.eq.split(':'); S[k] = id; S.hp = Math.min(S.hp, maxHP()); Snd.play('tap'); save(); updateHUD(); render(); });
@@ -1896,8 +1935,8 @@ function gearPanel(title, shop) {
 }
 function bagRows(tab) {
   let h = '';
-  if (tab === 'weapons') for (const id of S.weapons) { const w = WEAPONS[id]; h += `<div class="row"><span class="ri">⚔️</span><div><b>${w.name}</b><small>+${w.atk} attack</small></div>${S.weapon === id ? '<em>Equipped</em>' : `<button data-eq="weapon:${id}">Equip</button>`}</div>`; }
-  if (tab === 'armour') for (const id of S.armors) { const a = ARMORS[id]; h += `<div class="row"><span class="ri">🛡️</span><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${S.armor === id ? '<em>Equipped</em>' : `<button data-eq="armor:${id}">Equip</button>`}</div>`; }
+  if (tab === 'weapons') for (const id of S.weapons) { const w = weaponLook(id, S.cls); h += `<div class="row"><canvas class="ricon" data-weapon="${id}"></canvas><div><b>${w.name}</b><small>+${w.atk} attack</small></div>${S.weapon === id ? '<em>Equipped</em>' : `<button data-eq="weapon:${id}">Equip</button>`}</div>`; }
+  if (tab === 'armour') for (const id of S.armors) { const a = ARMORS[id]; h += `<div class="row"><canvas class="ricon" data-armor="${id}"></canvas><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${S.armor === id ? '<em>Equipped</em>' : `<button data-eq="armor:${id}">Equip</button>`}</div>`; }
   if (tab === 'items') h += `<div class="row"><span class="ri">🧪</span><div><b>Potion × ${S.potion}</b><small>Heals half your health</small></div><button data-use="potion" ${S.potion && S.hp < maxHP() ? '' : 'disabled'}>Use</button></div><div class="row"><span class="ri">🔮</span><div><b>Capture Orb × ${S.orb}</b><small>Use in battle on a weak wild Lumi</small></div></div>`;
   return h;
 }
@@ -2043,6 +2082,11 @@ function movePanel() {
   $('panelBody').querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { Snd.play('tap'); closePanel(+b.dataset.tier); }));
   return p;
 }
+// After a battle, show any skill a Lumi learned, with where to find it.
+async function announceSkills() {
+  const L = G.learned || []; G.learned = [];
+  for (const [who, mv, tier] of L) { setMood('happy', 4); Snd.play('level'); burst(W / 2, 200, '#ffe066', 30); await say([`${'★'.repeat(tier + 1)} ${who} learned a new skill: ${mv}!`, `In battle, tap ${who}'s Skills button and choose ${mv}.`]); }
+}
 function setLog(t) { $('bLog').textContent = t; }
 function elemMult(a, d) { if (BEATS[a] === d) return 1.5; if (BEATS[d] === a) return 0.75; return 1; }
 const captureLine = () => S.cls === 'ranger' ? 0.65 : 0.5;
@@ -2050,7 +2094,7 @@ function renderMoves() {
   const B = G.B; if (!B) return; const e = B.e, l = activeLumi(), sp = SPECIES[l.sp], m = elemMult(sp.el, e.el);
   const canCap = e.wild && S.orb > 0 && e.hp <= e.max * captureLine();
   const moves = [
-    ['strike', '⚔️', WEAPONS[S.weapon].name, `Power ${heroAtk()}`, true],
+    ['strike', { knight: '⚔️', mage: '🪄', ranger: '🏹' }[S.cls] || '⚔️', weaponLook(S.weapon, S.cls).name, `Power ${heroAtk()}`, true],
     ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], knownMoves(l) > 1 ? `${lumiName(l)}'s Skills` : MOVES[l.sp][0], (knownMoves(l) > 1 ? `${knownMoves(l)} skills` : `Power ${lumiPower(l)}`) + (m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''), true],
     ['capture', '🔮', 'Capture', !e.wild ? 'Wild Lumis only' : S.orb < 1 ? 'No orbs left' : canCap ? `${S.orb} orbs` : 'Weaken it first', canCap],
     ['potion', '🧪', 'Potion', S.potion ? `${S.potion} left` : 'None left', S.potion > 0 && S.hp < maxHP()],
@@ -2081,10 +2125,10 @@ async function doMove(kind, tier) {
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
       await tween(0.2, k => { B[key] = k * reach; });
       if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier >= 2) B.shake = tier === 3 ? 0.7 : 0.45; }
-      else await playFx(WEAPONS[S.weapon].kind, [505, 330], [720, 300], 0.42);
+      else { const wk = weaponLook(S.weapon, S.cls).kind; await playFx(wk, [505, 330], [720, 300], wk === 'boomerang' ? 0.8 : 0.48); }
       Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);
-      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
+      setLog((kind === 'strike' ? `${n} attacks with the ${weaponLook(S.weapon, S.cls).name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
       await tween(0.25, k => { B[key] = (1 - k) * reach; });
       await wait(0.35);
     }
@@ -2135,6 +2179,7 @@ async function finishBattle(how) {
   setLog(`${e.name} ${e.wild ? 'ran away' : 'faded into mist'}!`);
   S.gold += gold; addXP(e.xp); addLumiXP(e.xp); updateHUD();
   await say(`Victory! +${e.xp} XP` + (gold ? ` and ${gold} coins.` : '.'));
+  await announceSkills();
   if (B.ent) {
     B.ent.gone = true; const q = S.quests[G.world];
     if (B.ent.type === 'fog') { q.kills++; if (q.kills === 3) { G.ents.filter(x => x.type === 'wall').forEach(x => { x.gone = true; }); toast(`🌫️ The fog wall has lifted! Find ${w.boss.name}.`); } }
@@ -2336,7 +2381,7 @@ function logo(c, y, s) {
   zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
-function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: WEAPONS[s.weapon], armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
+function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
 let titleLooks = null;
 function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;

@@ -112,7 +112,7 @@ async function interact(e) {
   }
   G.busy = false;
 }
-function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) return `the ${WEAPONS[l.weapon].name}`; return `${l.n} ${l.item === 'orb' ? 'Capture Orb' : 'Potion'}${l.n > 1 ? 's' : ''}`; }
+function lootText(l) { if (l.gold) return `${l.gold} coins`; if (l.weapon) return `the ${weaponLook(l.weapon, S.cls).name}`; return `${l.n} ${l.item === 'orb' ? 'Capture Orb' : 'Potion'}${l.n > 1 ? 's' : ''}`; }
 async function openChest(e, hidden) {
   G.busy = true; S.chests[e.key] = 1; const l = e.loot;
   if (hidden) e.gone = true; else e.open = true;
@@ -120,7 +120,7 @@ async function openChest(e, hidden) {
   if (l.gold) S.gold += l.gold; else if (l.weapon) { if (!S.weapons.includes(l.weapon)) S.weapons.push(l.weapon); } else S[l.item] += l.n;
   updateHUD(); save();
   await say((hidden ? `${KIDS[S.kid].name} searched the ground and dug up ` : `${KIDS[S.kid].name} opened the chest and found `) + lootText(l) + '!');
-  if (l.weapon && WEAPONS[l.weapon].atk > WEAPONS[S.weapon].atk) { S.weapon = l.weapon; save(); toast(`⚔️ Equipped ${WEAPONS[l.weapon].name} (+${WEAPONS[l.weapon].atk} attack)`); }
+  if (l.weapon && WEAPONS[l.weapon].atk > WEAPONS[S.weapon].atk) { S.weapon = l.weapon; save(); toast(`⚔️ Equipped ${weaponLook(l.weapon, S.cls).name} (+${WEAPONS[l.weapon].atk} attack)`); }
   G.busy = false;
 }
 
@@ -151,15 +151,15 @@ async function teleport(dest) {
 }
 function shopRows(tab) {
   let h = '';
-  if (tab === 'weapons') for (const [id, w] of Object.entries(WEAPONS)) { if (w.found && !S.weapons.includes(id)) continue; const own = S.weapons.includes(id), eq = S.weapon === id; h += `<div class="row"><span class="ri">⚔️</span><div><b>${w.name}</b><small>+${w.atk} attack${w.found ? ' · found treasure' : ''}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="weapon:${id}">Equip</button>` : `<button data-buy="weapon:${id}" ${S.gold >= w.price ? '' : 'disabled'}>🪙 ${w.price}</button>`}</div>`; }
-  if (tab === 'armour') for (const [id, a] of Object.entries(ARMORS)) { const own = S.armors.includes(id), eq = S.armor === id; h += `<div class="row"><span class="ri">🛡️</span><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="armor:${id}">Equip</button>` : `<button data-buy="armor:${id}" ${S.gold >= a.price ? '' : 'disabled'}>🪙 ${a.price}</button>`}</div>`; }
+  if (tab === 'weapons') for (const [id, w0] of Object.entries(WEAPONS)) { const w = weaponLook(id, S.cls); if (w.found && !S.weapons.includes(id)) continue; const own = S.weapons.includes(id), eq = S.weapon === id; h += `<div class="row"><canvas class="ricon" data-weapon="${id}"></canvas><div><b>${w.name}</b><small>+${w.atk} attack${w.found ? ' · found treasure' : ''}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="weapon:${id}">Equip</button>` : `<button data-buy="weapon:${id}" ${S.gold >= w.price ? '' : 'disabled'}>🪙 ${w.price}</button>`}</div>`; }
+  if (tab === 'armour') for (const [id, a] of Object.entries(ARMORS)) { const own = S.armors.includes(id), eq = S.armor === id; h += `<div class="row"><canvas class="ricon" data-armor="${id}"></canvas><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${eq ? '<em>Equipped</em>' : own ? `<button data-eq="armor:${id}">Equip</button>` : `<button data-buy="armor:${id}" ${S.gold >= a.price ? '' : 'disabled'}>🪙 ${a.price}</button>`}</div>`; }
   if (tab === 'items') h += `<div class="row"><span class="ri">🧪</span><div><b>Potion</b><small>Heals in battle · you have ${S.potion}</small></div><button data-buy="item:potion" ${S.gold >= 15 ? '' : 'disabled'}>🪙 15</button></div><div class="row"><span class="ri">🔮</span><div><b>Capture Orb</b><small>Catches a weak wild Lumi · you have ${S.orb}</small></div><button data-buy="item:orb" ${S.gold >= 20 ? '' : 'disabled'}>🪙 20</button></div>`;
   return h;
 }
 function gearPanel(title, shop) {
   let tab = shop ? 'weapons' : 'weapons';
   const render = () => {
-    $('panelBody').innerHTML = `<h2>${title} <span class="coins">🪙 ${S.gold}</span></h2><div class="tabs">${['weapons', 'armour', 'items'].map(t => `<button class="tab${t === tab ? ' on' : ''}" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div><div class="rows">${shop ? shopRows(tab) : bagRows(tab)}</div>`;
+    $('panelBody').innerHTML = `<h2>${title} <span class="coins">🪙 ${S.gold}</span></h2><div class="tabs">${['weapons', 'armour', 'items'].map(t => `<button class="tab${t === tab ? ' on' : ''}" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div><div class="rows">${shop ? shopRows(tab) : bagRows(tab)}</div>`; drawMinis($('panelBody'));
     $('panelBody').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { tab = b.dataset.tab; Snd.play('tap'); render(); });
     $('panelBody').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.buy.split(':'); const price = k === 'weapon' ? WEAPONS[id].price : k === 'armor' ? ARMORS[id].price : id === 'potion' ? 15 : 20; if (S.gold < price) return; S.gold -= price; if (k === 'weapon') { S.weapons.push(id); S.weapon = id; } else if (k === 'armor') { const full = S.hp >= maxHP(); S.armors.push(id); S.armor = id; if (full) S.hp = maxHP(); } else S[id]++; Snd.play('coin'); save(); updateHUD(); render(); });
     $('panelBody').querySelectorAll('[data-eq]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.eq.split(':'); S[k] = id; S.hp = Math.min(S.hp, maxHP()); Snd.play('tap'); save(); updateHUD(); render(); });
@@ -169,8 +169,8 @@ function gearPanel(title, shop) {
 }
 function bagRows(tab) {
   let h = '';
-  if (tab === 'weapons') for (const id of S.weapons) { const w = WEAPONS[id]; h += `<div class="row"><span class="ri">⚔️</span><div><b>${w.name}</b><small>+${w.atk} attack</small></div>${S.weapon === id ? '<em>Equipped</em>' : `<button data-eq="weapon:${id}">Equip</button>`}</div>`; }
-  if (tab === 'armour') for (const id of S.armors) { const a = ARMORS[id]; h += `<div class="row"><span class="ri">🛡️</span><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${S.armor === id ? '<em>Equipped</em>' : `<button data-eq="armor:${id}">Equip</button>`}</div>`; }
+  if (tab === 'weapons') for (const id of S.weapons) { const w = weaponLook(id, S.cls); h += `<div class="row"><canvas class="ricon" data-weapon="${id}"></canvas><div><b>${w.name}</b><small>+${w.atk} attack</small></div>${S.weapon === id ? '<em>Equipped</em>' : `<button data-eq="weapon:${id}">Equip</button>`}</div>`; }
+  if (tab === 'armour') for (const id of S.armors) { const a = ARMORS[id]; h += `<div class="row"><canvas class="ricon" data-armor="${id}"></canvas><div><b>${a.name}</b><small>+${a.hp} health · blocks ${a.def}</small></div>${S.armor === id ? '<em>Equipped</em>' : `<button data-eq="armor:${id}">Equip</button>`}</div>`; }
   if (tab === 'items') h += `<div class="row"><span class="ri">🧪</span><div><b>Potion × ${S.potion}</b><small>Heals half your health</small></div><button data-use="potion" ${S.potion && S.hp < maxHP() ? '' : 'disabled'}>Use</button></div><div class="row"><span class="ri">🔮</span><div><b>Capture Orb × ${S.orb}</b><small>Use in battle on a weak wild Lumi</small></div></div>`;
   return h;
 }

@@ -77,6 +77,11 @@ function movePanel() {
   $('panelBody').querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { Snd.play('tap'); closePanel(+b.dataset.tier); }));
   return p;
 }
+// After a battle, show any skill a Lumi learned, with where to find it.
+async function announceSkills() {
+  const L = G.learned || []; G.learned = [];
+  for (const [who, mv, tier] of L) { setMood('happy', 4); Snd.play('level'); burst(W / 2, 200, '#ffe066', 30); await say([`${'★'.repeat(tier + 1)} ${who} learned a new skill: ${mv}!`, `In battle, tap ${who}'s Skills button and choose ${mv}.`]); }
+}
 function setLog(t) { $('bLog').textContent = t; }
 function elemMult(a, d) { if (BEATS[a] === d) return 1.5; if (BEATS[d] === a) return 0.75; return 1; }
 const captureLine = () => S.cls === 'ranger' ? 0.65 : 0.5;
@@ -84,7 +89,7 @@ function renderMoves() {
   const B = G.B; if (!B) return; const e = B.e, l = activeLumi(), sp = SPECIES[l.sp], m = elemMult(sp.el, e.el);
   const canCap = e.wild && S.orb > 0 && e.hp <= e.max * captureLine();
   const moves = [
-    ['strike', '⚔️', WEAPONS[S.weapon].name, `Power ${heroAtk()}`, true],
+    ['strike', { knight: '⚔️', mage: '🪄', ranger: '🏹' }[S.cls] || '⚔️', weaponLook(S.weapon, S.cls).name, `Power ${heroAtk()}`, true],
     ['skill', { fire: '🔥', water: '💧', leaf: '🍃', star: '⭐' }[sp.el], knownMoves(l) > 1 ? `${lumiName(l)}'s Skills` : MOVES[l.sp][0], (knownMoves(l) > 1 ? `${knownMoves(l)} skills` : `Power ${lumiPower(l)}`) + (m > 1 ? ' · strong!' : m < 1 ? ' · weak' : ''), true],
     ['capture', '🔮', 'Capture', !e.wild ? 'Wild Lumis only' : S.orb < 1 ? 'No orbs left' : canCap ? `${S.orb} orbs` : 'Weaken it first', canCap],
     ['potion', '🧪', 'Potion', S.potion ? `${S.potion} left` : 'None left', S.potion > 0 && S.hp < maxHP()],
@@ -115,10 +120,10 @@ async function doMove(kind, tier) {
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
       await tween(0.2, k => { B[key] = k * reach; });
       if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier >= 2) B.shake = tier === 3 ? 0.7 : 0.45; }
-      else await playFx(WEAPONS[S.weapon].kind, [505, 330], [720, 300], 0.42);
+      else { const wk = weaponLook(S.weapon, S.cls).kind; await playFx(wk, [505, 330], [720, 300], wk === 'boomerang' ? 0.8 : 0.48); }
       Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);
-      setLog((kind === 'strike' ? `${n} strikes with the ${WEAPONS[S.weapon].name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
+      setLog((kind === 'strike' ? `${n} attacks with the ${weaponLook(S.weapon, S.cls).name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
       await tween(0.25, k => { B[key] = (1 - k) * reach; });
       await wait(0.35);
     }
@@ -169,6 +174,7 @@ async function finishBattle(how) {
   setLog(`${e.name} ${e.wild ? 'ran away' : 'faded into mist'}!`);
   S.gold += gold; addXP(e.xp); addLumiXP(e.xp); updateHUD();
   await say(`Victory! +${e.xp} XP` + (gold ? ` and ${gold} coins.` : '.'));
+  await announceSkills();
   if (B.ent) {
     B.ent.gone = true; const q = S.quests[G.world];
     if (B.ent.type === 'fog') { q.kills++; if (q.kills === 3) { G.ents.filter(x => x.type === 'wall').forEach(x => { x.gone = true; }); toast(`🌫️ The fog wall has lifted! Find ${w.boss.name}.`); } }
