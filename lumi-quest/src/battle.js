@@ -61,7 +61,7 @@ async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
-  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0], fx: null };
+  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0, 0], fx: null };
   setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
@@ -114,7 +114,7 @@ async function doMove(kind, tier) {
       setMood('determined', 2);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
       await tween(0.2, k => { B[key] = k * reach; });
-      if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier === 2) B.shake = 0.45; }
+      if (kind === 'skill') { B.rest[tier] = MOVE_REST[tier]; Snd.play('skill'); await playFx(sp.el + (tier + 1), [391, 340], [720, 300], FX.DUR[tier + 1]); if (tier >= 2) B.shake = tier === 3 ? 0.7 : 0.45; }
       else await playFx(WEAPONS[S.weapon].kind, [505, 330], [720, 300], 0.42);
       Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);

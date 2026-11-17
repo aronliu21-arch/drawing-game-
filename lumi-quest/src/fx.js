@@ -36,6 +36,44 @@ const FX = (() => {
     star1(c, k, s, t, T) { for (let i = 0; i < 5; i++) { const q = seg(k, i * 0.1, 0.5 + i * 0.1); if (q <= 0 || q >= 1) continue; const x = lerp(s[0], t[0], q), y = lerp(s[1], t[1], q) + Math.sin(i * 2.2) * 34 * (1 - q); c.save(); c.strokeStyle = 'rgba(255,224,102,.6)'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 46, y); c.lineTo(x, y); c.stroke(); glow(c, '#ffe066', 14); Art.star(c, x, y, 13, '#ffe066', '#e67700', 1.5); c.restore(); } },
     star2(c, k, s, t, T) { const close = seg(k, 0.55, 0.9), r = lerp(120, 0, ease(close)), a = 1 - seg(k, 0.9, 1); for (let i = 0; i < 8; i++) { const ang = T * 7 + i * TAU / 8; c.save(); c.globalAlpha = a; glow(c, '#ffe066', 12); Art.star(c, t[0] + Math.cos(ang) * r, t[1] - 20 + Math.sin(ang) * r * 0.55, 13, i % 2 ? '#fff9db' : '#ffd43b', '#e67700', 1.2); c.restore(); } ring(c, t[0], t[1] - 20, r + 12, '#ffe066', 4, 0.6 * a); if (k > 0.85) { const e = seg(k, 0.85, 1); ring(c, t[0], t[1] - 20, e * 150, '#fff', 8 * (1 - e), 1 - e); } },
     star3(c, k, s, t, T) { flash(c, 0.5 * Math.sin(seg(k, 0, 1) * Math.PI), '#1a1433'); const b = seg(k, 0.2, 0.55), hold = seg(k, 0.55, 0.85), w = 70 * Math.sin(Math.min(1, b + hold) * Math.PI * 0.5) * (1 - seg(k, 0.85, 1)); if (w > 0) { c.save(); const g = c.createLinearGradient(t[0] - w, 0, t[0] + w, 0); g.addColorStop(0, 'rgba(255,212,59,0)'); g.addColorStop(0.5, '#fffbe6'); g.addColorStop(1, 'rgba(255,212,59,0)'); c.fillStyle = g; c.fillRect(t[0] - w, -10, w * 2, t[1] + 50); c.restore(); } for (let i = 0; i < 3; i++) { const e = seg(k, 0.5 + i * 0.1, 0.85 + i * 0.05); if (e > 0 && e < 1) ring(c, t[0], t[1] + 28, 30 + e * 190, '#ffe066', 9 * (1 - e), 1 - e); } for (let i = 0; i < 12; i++) { const e = seg(k, 0.55, 1); if (e > 0) { c.save(); c.globalAlpha = 1 - e; Art.star(c, t[0] + Math.cos(i * 0.52) * e * 230, t[1] - 30 + Math.sin(i * 0.52) * e * 160, 12, '#ffe066'); c.restore(); } } flash(c, 0.85 * Math.sin(seg(k, 0.5, 0.75) * Math.PI), '#fff'); },
+    // ---- Level 12 finishers ----
+    fire4(c, k, s, t, T) { // a phoenix of flame swoops down onto the foe
+      const q = ease(seg(k, 0, 0.7)), x = lerp(s[0] - 90, t[0], q), y = lerp(s[1] - 150, t[1] - 20, q) - Math.sin(q * Math.PI) * 50, flap = Math.sin(T * 16);
+      flash(c, 0.6 * Math.sin(seg(k, 0, 1) * Math.PI), '#3d0c02');
+      if (k < 0.74) { c.save(); c.translate(x, y); c.rotate(0.35 * (1 - q)); glow(c, '#ff922b', 24);
+        for (const side of [-1, 1]) { const w = side * (0.65 + 0.35 * flap * side); const g = c.createLinearGradient(0, 0, -70, -60 * w); g.addColorStop(0, '#ffe066'); g.addColorStop(1, '#e8590c'); c.fillStyle = g; c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(-18, -78 * w, -82, -62 * w); c.quadraticCurveTo(-60, -40 * w, -70, -22 * w); c.quadraticCurveTo(-36, -24 * w, -8, 0); c.fill(); }
+        for (let i = 0; i < 3; i++) { c.save(); c.translate(-34 - i * 16, (i - 1) * 9); c.rotate(-Math.PI / 2); flame(c, 0, 0, 13 - i * 2, T + i, '#ff6b35'); c.restore(); }
+        c.save(); c.rotate(Math.PI / 2); flame(c, 0, 0, 20, T, '#ff922b'); c.restore();
+        c.beginPath(); c.arc(22, -4, 11, 0, TAU); c.fillStyle = '#ffd43b'; c.fill(); c.beginPath(); c.moveTo(31, -6); c.lineTo(44, -2); c.lineTo(31, 2); c.fillStyle = '#e67700'; c.fill(); c.beginPath(); c.arc(25, -7, 2.4, 0, TAU); c.fillStyle = '#15131f'; c.fill(); c.restore();
+        for (let i = 1; i < 8; i++) { const [ex, ey] = [lerp(s[0] - 90, t[0], Math.max(0, q - i * 0.04)), lerp(s[1] - 150, t[1] - 20, Math.max(0, q - i * 0.04)) - Math.sin(Math.max(0, q - i * 0.04) * Math.PI) * 50]; c.globalAlpha = 0.6 - i * 0.07; flame(c, ex - 30, ey, 10 - i, T + i); } c.globalAlpha = 1; }
+      for (let i = 0; i < 3; i++) { const e = seg(k, 0.7 + i * 0.06, 0.95 + i * 0.02); if (e > 0 && e < 1) ring(c, t[0], t[1] + 20, 30 + e * 220, i % 2 ? '#ffd43b' : '#ff6b35', 10 * (1 - e), 1 - e); }
+      if (k > 0.7) { const e = seg(k, 0.7, 1); for (let i = 0; i < 14; i++) flame(c, t[0] + Math.cos(i * 0.45) * e * 170, t[1] - Math.abs(Math.sin(i * 0.45)) * e * 170, 18 * (1 - e) + 2, T + i); }
+      flash(c, Math.sin(seg(k, 0.68, 0.85) * Math.PI), '#fff4e6');
+    },
+    water4(c, k, s, t, T) { // a water dragon coils through the air and dives
+      const q = ease(seg(k, 0, 0.75)), n = 16;
+      const at = u => [lerp(s[0] - 140, t[0], u), lerp(s[1] - 30, t[1] - 10, u) - Math.sin(u * Math.PI) * 120 + Math.sin(u * 13 + T * 5) * 24 * (1 - u)];
+      if (k < 0.8) for (let i = n - 1; i >= 0; i--) { const u = q - i * 0.032; if (u < 0) continue; const [x, y] = at(u), r = (i ? 19 - i * 0.8 : 24) * (1 - seg(k, 0.74, 0.8));
+        const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 1, x, y, r); g.addColorStop(0, '#d0ebff'); g.addColorStop(0.6, '#339af0'); g.addColorStop(1, '#1864ab'); c.fillStyle = g; c.beginPath(); c.arc(x, y, Math.max(0, r), 0, TAU); c.fill();
+        if (i % 2 === 0 && i) { c.beginPath(); c.moveTo(x - 6, y - r + 2); c.lineTo(x, y - r - 11); c.lineTo(x + 6, y - r + 2); c.fillStyle = '#74c0fc'; c.fill(); }
+        if (!i) { c.fillStyle = '#fff'; c.beginPath(); c.arc(x + 9, y - 6, 6, 0, TAU); c.fill(); c.fillStyle = '#15131f'; c.beginPath(); c.arc(x + 10, y - 6, 3, 0, TAU); c.fill(); c.strokeStyle = '#d0ebff'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(x + 18, y + 4); c.quadraticCurveTo(x + 36, y + 6, x + 40, y + 18 + Math.sin(T * 8) * 4); c.moveTo(x - 4, y - 20); c.lineTo(x - 12, y - 36); c.stroke(); } }
+      if (k > 0.74) { const e = seg(k, 0.74, 1); for (let i = 0; i < 18; i++) bubble(c, t[0] + Math.cos(i * 0.35) * e * 160, t[1] + 10 - Math.abs(Math.sin(i * 0.35)) * e * 180, 12 * (1 - e) + 2); for (let i = 0; i < 2; i++) ring(c, t[0], t[1] + 34, 30 + e * (160 + i * 60), '#a5d8ff', 9 * (1 - e), 1 - e); }
+    },
+    leaf4(c, k, s, t, T) { // a giant tree grows and showers the foe with leaves
+      const g = ease(seg(k, 0, 0.45)), cg = ease(seg(k, 0.3, 0.6)), fade = 1 - seg(k, 0.88, 1), bx = t[0] + 80, by = t[1] + 46, h = 215 * g;
+      c.save(); c.globalAlpha = fade; c.fillStyle = '#7f5539'; c.beginPath(); c.moveTo(bx - 22, by); c.quadraticCurveTo(bx - 12, by - h * 0.5, bx - 6, by - h); c.lineTo(bx + 6, by - h); c.quadraticCurveTo(bx + 12, by - h * 0.5, bx + 22, by); c.fill();
+      [[0, 0, 90], [-80, 30, 64], [80, 30, 64], [-40, -40, 60], [40, -40, 60]].forEach(([dx, dy, r], i) => { c.beginPath(); c.arc(bx + dx, by - h + dy, r * cg, 0, TAU); c.fillStyle = i % 2 ? '#40c057' : '#2f9e44'; c.fill(); });
+      for (let i = 0; i < 8; i++) { c.beginPath(); c.arc(bx + Math.cos(i) * 70 * cg, by - h + Math.sin(i * 1.7) * 40 * cg, 6 * cg, 0, TAU); c.fillStyle = '#ff8787'; c.fill(); } c.restore();
+      for (let i = 0; i < 22; i++) { const q = seg(k, 0.45 + (i % 11) * 0.025, 0.85 + (i % 11) * 0.012); if (q <= 0 || q >= 1) continue; leaf(c, lerp(bx + (i - 11) * 14, t[0] + Math.sin(i) * 40, q) + Math.sin(q * 10 + i) * 20, lerp(by - h + 20, t[1], q), 11, T * 9 + i, i % 2 ? '#8ce99a' : '#51cf66'); }
+      const e = seg(k, 0.82, 1); if (e > 0) ring(c, t[0], t[1] + 30, e * 200, '#d8f5a2', 10 * (1 - e), 1 - e);
+    },
+    star4(c, k, s, t, T) { // stars rain from the sky, then one huge star bursts
+      flash(c, 0.7 * Math.sin(seg(k, 0, 1) * Math.PI), '#0b0820');
+      for (let i = 0; i < 18; i++) { const q = seg(k, i * 0.03, i * 0.03 + 0.28); if (q <= 0 || q >= 1) continue; const sx = t[0] + 260 + (i % 6) * 40, tx = t[0] + ((i * 37) % 120) - 60, x = lerp(sx, tx, q), y = lerp(-40, t[1] + ((i * 23) % 60) - 30, q);
+        c.save(); c.strokeStyle = 'rgba(255,224,102,.55)'; c.lineWidth = 5; c.lineCap = 'round'; c.beginPath(); c.moveTo(x + 55, y - 70); c.lineTo(x, y); c.stroke(); glow(c, '#ffe066', 14); Art.star(c, x, y, 11, '#fff9db', '#e67700', 1.2); c.restore(); }
+      const b = seg(k, 0.6, 0.9), fade = 1 - seg(k, 0.9, 1); if (b > 0) { c.save(); c.translate(t[0], t[1] - 20); c.rotate(T * 2); c.globalAlpha = fade; glow(c, '#ffe066', 40); Art.star(c, 0, 0, 30 + 120 * ease(b), '#ffe066', '#e67700', 3); c.restore(); for (let i = 0; i < 3; i++) { const e = seg(k, 0.7 + i * 0.06, 1); if (e > 0) ring(c, t[0], t[1] + 20, e * 260, '#fff', 8 * (1 - e), 1 - e); } }
+      flash(c, Math.sin(seg(k, 0.72, 0.9) * Math.PI), '#fff');
+    },
     // ---- weapons ----
     sword(c, k, s, t) { const a = Math.sin(k * Math.PI); c.save(); c.translate(t[0], t[1] - 20); c.rotate(-0.6); glow(c, '#fff', 16); c.globalAlpha = a; c.beginPath(); c.arc(0, 0, 80, -1.2 + k * 0.6, 1.2 * k + 0.2); c.arc(14, 0, 62, 1.2 * k + 0.2, -1.2 + k * 0.6, true); c.closePath(); c.fillStyle = '#fff'; c.fill(); c.restore(); },
     axe(c, k, s, t, T) { const q = ease(seg(k, 0, 0.75)), [x, y] = arc(s, t, q, 120); if (k < 0.78) { c.save(); c.translate(x, y); c.rotate(T * 26); Art.weapon(c, { kind: 'axe', col: '#8ce99a' }); c.restore(); } else { const e = seg(k, 0.78, 1); ring(c, t[0], t[1] + 20, e * 110, '#fff', 7 * (1 - e), 1 - e); } },
@@ -47,6 +85,6 @@ const FX = (() => {
     fogball(c, k, s, t, T) { for (let i = 0; i < 3; i++) { const q = seg(k, i * 0.12, 0.7 + i * 0.12); if (q <= 0 || q >= 1) continue; const [x, y] = arc(s, t, q, 60); c.save(); c.globalAlpha = 0.85; glow(c, '#5f3dc4', 16); Art.ell(c, x, y, 22 - i * 4, 18 - i * 3, i % 2 ? '#7048e8' : '#3b2f6b'); c.restore(); } },
     tackle() { },
   };
-  const DUR = { 1: 0.75, 2: 1.05, 3: 1.6 };
+  const DUR = { 1: 0.75, 2: 1.05, 3: 1.6, 4: 2.1 };
   return { draw, DUR };
 })();

@@ -86,7 +86,7 @@ node lumi-quest/tests/check.cjs    # question and map checks (also part of npm t
 |---|---|
 | `lumi-quest/src/questions.js` | Question generators (maths, logic) and banks (science, geography, Chinese), per kid |
 | `lumi-quest/src/data.js` | Story, maps, Lumis, weapons, armour |
-| `lumi-quest/src/fx.js` | Attack animations: three skill tiers per element, one per weapon kind |
+| `lumi-quest/src/fx.js` | Attack animations: four skill tiers per element, one per weapon kind |
 | `lumi-quest/src/story.js` | Boss scenes, memories, villager news and King Mumble's backstory |
 | `lumi-quest/src/art.js` | All drawing: heroes, Lumis, Fog creatures, tiles |
 | `lumi-quest/src/world.js` | Walking, treasure, villagers, shop, teleport gate |

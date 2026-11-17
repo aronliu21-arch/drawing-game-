@@ -19,16 +19,16 @@ const SPECIES = {
   echo: { name: 'Echo', evo: 'Echo', el: 'star', col: '#b197fc', body: 'round', ear: 'antenna', tail: 'bolt', extra: 'glow' },
 };
 Object.values(SPECIES).forEach((s, i) => { s.ph = i * 1.3; });
-// Each Lumi learns three skills: the first at Level 1, a stronger one at Level 4, and its best at Level 8.
+// Each Lumi learns four skills, at Levels 1, 4, 8 and 12.
 // Stronger skills need a rest of a few turns after each use.
 const MOVES = {
-  emberpup: ['Ember Dash', 'Flame Wheel', 'Meteor Blaze'], sproutle: ['Vine Whip', 'Thorn Storm', 'Great Bloom'], bubblit: ['Bubble Burst', 'Tidal Wave', 'Whirlpool Crash'],
-  acornox: ['Acorn Barrage', 'Root Slam', 'Forest Stampede'], tallybird: ['Count Strike', 'Feather Flurry', 'Star Tally'], shellby: ['Shell Spin', 'Coral Crush', 'Deep Sea Surge'],
-  steamlet: ['Steam Jet', 'Boiling Burst', 'Geyser Blast'], glaciub: ['Ice Tumble', 'Snowball Roll', 'Avalanche'], peakit: ['Echo Leap', 'Rock Rumble', 'Summit Flash'],
-  cogbit: ['Gear Grind', 'Spring Punch', 'Clockwork Storm'], sandflare: ['Sand Blaze', 'Dune Fang', 'Desert Sun'], bambu: ['Bamboo Bash', 'Leaf Tornado', 'Panda Quake'],
-  lampfly: ['Lantern Flash', 'Glow Swarm', 'Festival Fireworks'], echo: ['Brave Voice', 'Loud Answer', 'Lantern Chorus'],
+  emberpup: ['Ember Dash', 'Flame Wheel', 'Meteor Blaze', 'Phoenix Rise'], sproutle: ['Vine Whip', 'Thorn Storm', 'Great Bloom', 'World Tree'], bubblit: ['Bubble Burst', 'Tidal Wave', 'Whirlpool Crash', 'Ocean Dragon'],
+  acornox: ['Acorn Barrage', 'Root Slam', 'Forest Stampede', 'Mighty Oak'], tallybird: ['Count Strike', 'Feather Flurry', 'Star Tally', 'Starfall Count'], shellby: ['Shell Spin', 'Coral Crush', 'Deep Sea Surge', 'Tsunami Shell'],
+  steamlet: ['Steam Jet', 'Boiling Burst', 'Geyser Blast', 'Volcano Steam'], glaciub: ['Ice Tumble', 'Snowball Roll', 'Avalanche', 'Blizzard Roar'], peakit: ['Echo Leap', 'Rock Rumble', 'Summit Flash', 'Mountain Thunder'],
+  cogbit: ['Gear Grind', 'Spring Punch', 'Clockwork Storm', 'Great Clockwork'], sandflare: ['Sand Blaze', 'Dune Fang', 'Desert Sun', 'Sun Dragon'], bambu: ['Bamboo Bash', 'Leaf Tornado', 'Panda Quake', 'Bamboo Forest'],
+  lampfly: ['Lantern Flash', 'Glow Swarm', 'Festival Fireworks', 'Lantern Sky'], echo: ['Brave Voice', 'Loud Answer', 'Lantern Chorus', 'Hearthome Song'],
 };
-const MOVE_LV = [1, 4, 8], MOVE_MULT = [1, 1.45, 2], MOVE_REST = [0, 2, 3];
+const MOVE_LV = [1, 4, 8, 12], MOVE_MULT = [1, 1.45, 2, 2.6], MOVE_REST = [0, 2, 3, 4];
 const STARTERS = ['emberpup', 'sproutle', 'bubblit'];
 // fire beats leaf, leaf beats water, water beats fire. Star is neutral.
 const BEATS = { fire: 'leaf', leaf: 'water', water: 'fire' };
