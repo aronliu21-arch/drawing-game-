@@ -193,3 +193,5 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .lumirow small { line-height: 1.35; display: block; }
 #saveNote { margin: 8px 0 0; color: #fff; font-weight: 800; font-size: 14px; text-shadow: 0 2px 0 var(--ink); }
 .row canvas.ricon { flex: none; width: 60px; height: 60px; border-radius: 12px; background: #f1ead8; }
+.perk { display: block; font-size: 13.5px; font-weight: 700; color: #5f3dc4; line-height: 1.3; margin-top: 2px; }
+.perk b { font-size: 13.5px; display: inline; }

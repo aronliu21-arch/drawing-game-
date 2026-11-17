@@ -61,7 +61,7 @@ async function beginBattle(e, ent) {
   G.busy = true; Snd.play('battle');
   await tween(0.35, k => { G.fade = k; });
   G.mode = 'battle'; G.parts = [];
-  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0, 0], fx: null };
+  G.B = { e, ent, subject: WORLDS[G.world].subject, hx: -300, ex: 300, lx: 0, eHit: 0, hHit: 0, shake: 0, eScale: 1, orb: null, lock: true, swing: 0, rest: [0, 0, 0, 0], fx: null, chill: false, guard: (ARMORS[S.armor].perks || []).includes('guard') };
   setMood(e.wild ? 'surprised' : 'determined', 1.6); $('battle').hidden = false; showHUD(false); setLog(e.wild ? `A wild ${e.name} jumped out of the grass!` : e.boss ? `${e.name} blocks the way!` : `A ${e.name} drifts closer…`); renderMoves();
   tween(0.5, k => { G.B.hx = -300 * (1 - k); G.B.ex = 300 * (1 - k); });
   await tween(0.35, k => { G.fade = 1 - k; });
@@ -81,6 +81,13 @@ function movePanel() {
 async function announceSkills() {
   const L = G.learned || []; G.learned = [];
   for (const [who, mv, tier] of L) { setMood('happy', 4); Snd.play('level'); burst(W / 2, 200, '#ffe066', 30); await say([`${'★'.repeat(tier + 1)} ${who} learned a new skill: ${mv}!`, `In battle, tap ${who}'s Skills button and choose ${mv}.`]); }
+}
+// Weapon powers that act after a hit lands.
+async function weaponPowers(wp, dmg, r) {
+  const B = G.B, e = B.e;
+  if (wp.includes('drain') && S.hp < maxHP()) { const h = Math.max(1, Math.round(dmg * 0.25)); S.hp = Math.min(maxHP(), S.hp + h); floater(210, 200, '💚 +' + h, '#8ce99a', 24); updateHUD(); }
+  if (wp.includes('chill') && e.hp > 0) { B.chill = true; burst(720, 300, '#c5f6fa', 14); floater(720, 250, '❄️ Frozen', '#c5f6fa', 22); }
+  if (wp.includes('twin') && r.mult === 1 && e.hp > 0) { await wait(0.25); const k2 = weaponLook(S.weapon, S.cls).kind; await playFx(k2, [505, 330], [720, 300], 0.38); const d2 = Math.max(1, Math.round(dmg * 0.5)); Snd.play('hit'); e.hp = Math.max(0, e.hp - d2); B.eHit = 0.25; floater(740, 180, '⚡ -' + d2, '#ffe066', 28); }
 }
 function setLog(t) { $('bLog').textContent = t; }
 function elemMult(a, d) { if (BEATS[a] === d) return 1.5; if (BEATS[d] === a) return 0.75; return 1; }
@@ -114,7 +121,10 @@ async function doMove(kind, tier) {
     if (!r.ok) { setLog(kind === 'strike' ? `${n}'s swing missed!` : `${lumiName(l)}'s ${mv} fizzled!`); await wait(0.7); }
     else {
       const em = kind === 'skill' ? elemMult(sp.el, e.el) : 1;
-      const dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : movePower(l, tier)) * em * r.mult * rnd(0.92, 1.08)));
+      let dmg = Math.max(1, Math.round((kind === 'strike' ? heroAtk() : movePower(l, tier)) * em * r.mult * rnd(0.92, 1.08)));
+      const wp = kind === 'strike' ? (WEAPONS[S.weapon].perks || []) : [], lucky = wp.includes('lucky') && Math.random() < 0.25;
+      if (wp.includes('boss') && e.boss) dmg = Math.round(dmg * 1.5);
+      if (lucky) dmg *= 2;
       const key = kind === 'strike' ? 'hx' : 'lx', reach = kind === 'strike' ? 300 : 46;
       setMood('determined', 2);
       if (kind === 'strike') tween(0.3, k => { B.swing = -Math.sin(k * Math.PI) * 1.6; });
@@ -123,6 +133,8 @@ async function doMove(kind, tier) {
       else { const wk = weaponLook(S.weapon, S.cls).kind; await playFx(wk, [505, 330], [720, 300], wk === 'boomerang' ? 0.8 : 0.48); }
       Snd.play('hit'); e.hp = Math.max(0, e.hp - dmg); B.eHit = 0.25;
       burst(720, 280, kind === 'strike' ? '#fff' : Art.EL[sp.el], 18); floater(720, 210, '-' + dmg, r.mult === 1 ? '#ffe066' : '#fff', r.mult === 1 ? 34 : 26);
+      if (lucky) floater(720, 160, '🍀 Lucky!', '#8ce99a', 26);
+      if (wp.length) await weaponPowers(wp, dmg, r);
       setLog((kind === 'strike' ? `${n} attacks with the ${weaponLook(S.weapon, S.cls).name}!` : `${lumiName(l)} used ${mv}!`) + (em > 1 ? ' It is super strong!' : em < 1 ? ' It is not very strong…' : '') + (r.mult === 1 ? ' Full power!' : ''));
       await tween(0.25, k => { B[key] = (1 - k) * reach; });
       await wait(0.35);
@@ -145,12 +157,19 @@ async function doMove(kind, tier) {
   if (e.boss && !B.half && e.hp <= e.max / 2) { B.half = true; await say(LORE[G.world].half, e.name); }
   // enemy turn
   await wait(0.25);
-  const dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
+  let dmg = Math.max(1, Math.round(e.atk * rnd(0.85, 1.15)) - heroDef());
+  const ap = ARMORS[S.armor].perks || [];
+  if (B.chill) { dmg = Math.max(1, Math.round(dmg / 2)); B.chill = false; }
+  const blocked = B.guard; if (blocked) { dmg = 0; B.guard = false; }
   if (e.wild) await tween(0.2, k => { B.ex = -k * 260; }); else await playFx('fogball', [690, 290], [215, 300], 0.55);
-  setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); updateHUD();
-  setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`);
+  if (blocked) { Snd.play('ok'); burst(215, 300, '#7fe3ff', 20); floater(210, 220, '💎 Blocked!', '#c5f6fa', 26); setLog(`${n}'s Crystal Guard blocked the attack!`); }
+  else { setMood('hurt', 1); Snd.play('hurt'); S.hp = Math.max(0, S.hp - dmg); B.hHit = 0.25; B.shake = 0.3; floater(210, 220, '-' + dmg, '#ff8787'); setLog(`${e.name} ${e.wild ? 'tackles' : 'hurls fog at'} ${n}!`); }
+  updateHUD();
+  if (!blocked && ap.includes('thorns')) { e.hp = Math.max(0, e.hp - 4); B.eHit = 0.2; floater(720, 200, '🌵 -4', '#ffd43b', 24); }
   if (e.wild) await tween(0.25, k => { B.ex = -(1 - k) * 260; }); else await wait(0.2);
   if (S.hp <= 0) return finishBattle('lose');
+  if (e.hp <= 0) return finishBattle('win');
+  if (ap.includes('sunrise') && S.hp < maxHP()) { const h = Math.max(1, Math.round(maxHP() * 0.1)); S.hp = Math.min(maxHP(), S.hp + h); floater(210, 190, '🌅 +' + h, '#ffd43b', 22); updateHUD(); }
   B.lock = false; renderMoves(); save();
 }
 function leaveBattle() { G.B = null; $('battle').hidden = true; showHUD(true); G.mode = 'world'; G.grace = 5; G.parts = []; updateHUD(); save(); }
@@ -164,7 +183,7 @@ async function finishBattle(how) {
     await say(['You ran out of health, so Elder Lumen carried you home.', 'Nothing was lost. Rest, buy a potion or better armour, and try again!'], 'Healer Rosa'); return;
   }
   S.stats.wins++; setMood('happy', 5);
-  const gold = Math.round(e.gold * (S.cls === 'ranger' ? 1.25 : 1));
+  const gold = Math.round(e.gold * (S.cls === 'ranger' ? 1.25 : 1) * ((WEAPONS[S.weapon].perks || []).includes('coins') ? 1.5 : 1));
   if (how === 'capture') {
     S.party.push({ sp: e.sp, lv: e.lv, xp: 0 }); setLog(`Gotcha! ${e.name} joined ${n}'s team!`); await wait(0.5);
     addXP(e.xp); await say([`${e.name} was captured! It joins your team at Level ${e.lv}.`, 'Open 🐾 Team to choose which Lumi fights beside you.']);
