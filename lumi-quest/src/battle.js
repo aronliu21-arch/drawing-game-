@@ -165,7 +165,7 @@ async function bossWon() {
   leaveBattle(); Snd.play('level'); burst(W / 2, H / 2, w.crystal, 50);
   if (final) await say(['King Mumble melts away. The Fog lifts from every land!', `The five crystals fly together. The Great Lantern of Hearthome shines again.`, `${n}, you are the Hero of Hearthome!`]);
   else await say([`${w.boss.name} is defeated! The ${w.name} Knowledge Crystal is yours.`, `${w.name} remembers everything again. ${S.crystals.length} of 5 crystals found.`, S.crystals.length === 5 ? 'The way to the Fog Citadel is open. King Mumble awaits!' : `A new land has opened at the Teleport Gate: ${WORLDS[WORLD_ORDER[WORLD_ORDER.indexOf(id) + 1]].name}.`]);
-  save();
+  save(); G.breakOn = true;
   await openPanel(`<div class="break"><div class="bigc" style="color:${w.crystal}">◆</div><h2>Great practice! Time for a break</h2><p>${final ? 'You finished the whole adventure.' : 'Your adventure is saved. The next land will be waiting.'}</p><p class="tip">💡 ${w.tip}</p><button id="btnFinish" class="big">Finish for now</button></div>`, { noClose: true, cls: 'center' });
 }
 document.addEventListener('click', ev => { if (ev.target && ev.target.id === 'btnFinish') { Snd.play('tap'); closePanel(); goTitle(); } });

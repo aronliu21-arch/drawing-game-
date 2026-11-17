@@ -10,21 +10,21 @@ function profileCards() {
   $('profiles').querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => pickKid(b.dataset.kid)));
 }
 function startIntro() {
-  Snd.init(); Snd.setMusic(true); Snd.play('tap'); $('btnStart').hidden = true;
+  Snd.init(); Snd.play('tap'); $('btnStart').hidden = true;
   if (REDUCED) return showMenu();
   G.intro.state = 'play'; G.intro.t = 0;
 }
 function showMenu() { G.intro.state = 'menu'; G.intro.t = 99; profileCards(); $('menu').hidden = false; }
 function goTitle() {
   save(); S = null; kid = null; G.mode = 'title'; G.B = null; G.parts = []; showHUD(false); $('battle').hidden = true; $('creator').hidden = true; $('title').hidden = false;
-  Snd.setMusic(true); showMenu();
+  G.breakOn = false; showMenu();
 }
 function pickKid(k) {
   Snd.play('tap'); kid = k; S = loadSave(k); $('title').hidden = true; $('menu').hidden = true;
   if (!S.created) showCreator(); else enterGame(false);
 }
 async function enterGame(fresh) {
-  Snd.setMusic(false); $('creator').hidden = true;
+  $('creator').hidden = true;
   S.hp = Math.min(S.hp || maxHP(), maxHP()); if (S.hp <= 0) S.hp = maxHP();
   loadWorld('hub'); save();
   if (fresh) { G.busy = true; await say(STORY.intro); G.busy = false; toast('❗ Walk to Elder Lumen. Tap where you want to go.'); }
@@ -153,11 +153,20 @@ function drawCreator(c) {
 
 // ---------- loop ----------
 function mini2(el, draw) { const d = DPR; if (el.width !== 72 * d) { el.width = 72 * d; el.height = 72 * d; } const c = el.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, 72, 72); draw(c); }
+// Which track fits what is on screen right now.
+const WORLD_MUSIC = { hub: 'village', w1: 'march', w2: 'starry', w3: 'starry', w4: 'march', w5: 'lantern', w6: 'mystery' };
+function musicNow() {
+  if (G.mode === 'title') return G.intro.state === 'wait' ? null : 'anthem';
+  if (G.mode === 'create' || G.breakOn) return 'box';
+  if (G.mode === 'battle' && G.B) return G.B.e.boss ? 'mystery' : 'battle';
+  return WORLD_MUSIC[G.world] || 'village';
+}
 let lastTs = 0;
 function frame(ts) {
   const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0); lastTs = ts; G.t += dt;
   for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; tw.t += dt; tw.fn(Math.min(1, tw.t / tw.dur)); if (tw.t >= tw.dur) { tweens.splice(i, 1); tw.res(); } }
   stepParts(dt);
+  Snd.setMusic(musicNow()); Snd.duck(QS ? (S && S.read ? 0.15 : 0.4) : dlg && S && S.read ? 0.35 : 1);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
@@ -205,7 +214,7 @@ $('btnSound2').textContent = Snd.isMuted() ? '🔇' : '🔊';
 // Expose for automated playtests. Harmless for players.
 window.__test = {
   G, save: () => S,
-  state: () => ({ screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
+  state: () => ({ music: Snd.track(), screen: G.mode, intro: G.intro.state, world: G.world, kid, dialog: !!dlg, panel: panelOpen(), question: QS ? QS.q : null, battle: G.B ? { enemy: G.B.e.name, hp: G.B.e.hp, lock: G.B.lock } : null, lv: S && S.lv, hp: S && S.hp, done: !!(S && S.won) }),
   fast: on => { G.fast = on; },
   warp: id => loadWorld(id, true),
   wild: () => wildBattle(),
