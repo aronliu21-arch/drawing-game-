@@ -167,6 +167,8 @@ const Art = (() => {
   // ---------- Lumis (friendly creatures) ----------
   const EL = { fire: '#ff6b35', water: '#339af0', leaf: '#40c057', star: '#fcc419' };
   function lumi(c, sp, x, y, s, t, evo, flip) {
+    // Evolved Lumis are drawn as their animal form (see animals.js).
+    if (evo && sp.animal && typeof Animals !== 'undefined' && Animals[sp.animal]) { c.save(); c.translate(x, y); c.scale(s * 0.46 * (flip ? -1 : 1), s * 0.46); c.translate(-95, -160); Animals[sp.animal](c, t + (sp.ph || 0)); c.restore(); return; }
     const col = sp.col, dk = shade(col, -0.25), lt = shade(col, 0.45);
     const bounce = Math.abs(Math.sin(t * 3 + (sp.ph || 0))) * 3;
     c.save(); c.translate(x, y); c.scale(s * (flip ? -1 : 1) * (evo ? 1.25 : 1), s * (evo ? 1.25 : 1));
