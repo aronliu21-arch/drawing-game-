@@ -230,3 +230,5 @@ button.armed { outline: 4px solid var(--gold); outline-offset: 3px; animation: a
 #bLog .word, #panelBody .word, #crBody .word { cursor: pointer; }
 .pill.on, .opt.on { position: relative; }
 .chk { cursor: pointer; }
+.opts.heads.six .opt b { font-size: 14px; }
+.opts.heads.six canvas { width: 62px !important; height: 55px !important; }

@@ -10,8 +10,8 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, hair: HAIRS[k][0][0], hairCol: HAIR_COLS[0], face: 'sparkle', title: '', readBtns: false, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
-function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, hair: HAIRS[k][0][0], hairCol: HAIR_COLS[0], eyes: 'sparkle', eyeCol: '', extra: '', title: '', readBtns: false, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) { const o = Object.assign(newSave(k), s); if (s.face && s.eyes === undefined) { o.eyes = s.face === 'round' ? 'round' : 'sparkle'; o.extra = ['freckles', 'glasses'].includes(s.face) ? s.face : ''; } return o; } } } catch (e) { } return newSave(k); }
 function save() { if (!S) return; S.ts = Date.now(); try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } Cloud.dirty[S.kid] = JSON.stringify(S); cloudSoon(); }
 function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } delete Cloud.dirty[k]; if (Cloud.ready) Cloud.doc(k).delete().catch(() => { }); }
 
@@ -56,12 +56,12 @@ const isEvo = l => l.lv >= 6;
 const speciesName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
 const lumiName = l => l.nick || speciesName(l);
 const heroName = s => KIDS[s.kid].name + (s.title ? ' ' + s.title : '');
-const looksOf = s => ({ hair: s.hair, hairCol: s.hairCol, face: s.face });
+const looksOf = s => ({ hair: s.hair, hairCol: s.hairCol, eyes: s.eyes, eyeCol: s.eyeCol, extra: s.extra });
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
 const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
 const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ hair: S.hair, hairCol: S.hairCol, face: S.face, kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+function heroLook(extra) { return Object.assign({ ...looksOf(S), kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
 function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
 function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }

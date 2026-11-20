@@ -92,7 +92,9 @@ const HAIRS = {
   lucas: [['spiky', 'Spiky'], ['neat', 'Neat'], ['curly', 'Curly'], ['swoop', 'Swoop'], ['cap', 'Cap']],
 };
 const HAIR_COLS = ['#17141c', '#5c3d2e', '#a0522d', '#d9a441'];
-const FACES = [['sparkle', 'Sparkly'], ['round', 'Round'], ['freckles', 'Freckles'], ['glasses', 'Glasses']];
+const EYES = [['sparkle', 'Sparkly'], ['big', 'Big shiny'], ['starry', 'Starry'], ['round', 'Round'], ['almond', 'Cat'], ['sleepy', 'Sleepy']];
+const EYE_COLS = ['', '#17141c', '#1c7ed6', '#2f9e44', '#c2711e', '#7048e8'];
+const EXTRAS = [['', 'None'], ['freckles', 'Freckles'], ['glasses', 'Glasses'], ['stars', 'Star cheeks'], ['plaster', 'Plaster']];
 const TITLES = ['the Brave', 'the Clever', 'the Kind', 'the Swift', 'the Curious', 'the Bold'];
 const NICKS = { fire: ['Sparky', 'Blaze', 'Ember', 'Toasty', 'Flicker'], water: ['Splash', 'Bubbles', 'Drizzle', 'Puddle', 'Misty'], leaf: ['Sprout', 'Clover', 'Mossy', 'Pip', 'Fern'], star: ['Twinkle', 'Comet', 'Nova', 'Glimmer', 'Sunny'] };
 const TUNICS = ['#1c7ed6', '#e03131', '#2f9e44', '#7048e8', '#f76707', '#0ca678'];

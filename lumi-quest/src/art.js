@@ -124,7 +124,9 @@ const Art = (() => {
       c.fillStyle = o.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
     }
     // Hair that hangs behind the body: ponytail, long hair or braids.
-    const hc = o.hairCol || '#17141c', hs = o.hair || (nora ? 'ponytail' : 'spiky'), fs = o.face || 'sparkle';
+    const hc = o.hairCol || '#17141c', hs = o.hair || (nora ? 'ponytail' : 'spiky'), fs = o.face || '';
+    // eye shape, eye colour and an extra (old saves stored one 'face' value covering all three)
+    const es = o.eyes || (fs === 'round' ? 'round' : 'sparkle'), ec = o.eyeCol || (nora ? '#6b3a1e' : '#17141c'), xs = o.extra !== undefined ? o.extra : (fs === 'freckles' || fs === 'glasses' ? fs : '');
     if (hs === 'ponytail') {
       const sway = o.walk ? Math.sin(t * 7) * 2 : 0;
       c.beginPath(); c.moveTo(12, -86); c.bezierCurveTo(30 + sway, -100, 44 + sway, -84, 38 + sway, -62);
@@ -220,20 +222,27 @@ const Art = (() => {
       if (mood === 'happy') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.arc(ex, ey + 3, 5, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
       else if (mood === 'hurt') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.moveTo(ex - sx * 5, ey - 4); c.lineTo(ex + sx * 3, ey); c.lineTo(ex - sx * 5, ey + 4); c.stroke(); }
       else {
-        if (fs === 'round') { ell(c, ex, ey + 1, 4.2 * big, 4.6 * big, INK); ell(c, ex - 1.3, ey - 0.6 + look, 1.5, 1.6, '#fff'); }
-        else {
-        ell(c, ex, ey, 5.2 * big, 7 * big, nora ? '#6b3a1e' : '#17141c', INK, 1.6);
-        if (nora) ell(c, ex, ey + 1 + look, 2.8, 4, '#17141c');
-        ell(c, ex - 1.6, ey - 2.8 + look, 2, 2.4, '#fff'); ell(c, ex + 1.8, ey + 2.6 + look, 1, 1.1, '#fff');
+        const iris = (rx, ry) => { ell(c, ex, ey, rx * big, ry * big, ec, INK, 1.6); if (ec !== '#17141c') ell(c, ex, ey + 1 + look, rx * 0.54, ry * 0.57, '#17141c'); };
+        if (es === 'round') { ell(c, ex, ey + 1, 4.2 * big, 4.6 * big, ec === '#6b3a1e' ? INK : ec, INK, 1); ell(c, ex - 1.3, ey - 0.6 + look, 1.5, 1.6, '#fff'); }
+        else if (es === 'big') { iris(6.3, 8.2); ell(c, ex - 2, ey - 3.4 + look, 2.6, 3, '#fff'); ell(c, ex + 2.2, ey + 3 + look, 1.4, 1.5, '#fff'); c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(ex, ey + 1, 4.5, Math.PI * 0.2, Math.PI * 0.6); c.stroke(); }
+        else if (es === 'starry') { iris(5.4, 7.2); star(c, ex - 1.4, ey - 2.4 + look, 3, '#fff'); ell(c, ex + 2, ey + 3 + look, 1, 1.1, '#fff'); }
+        else if (es === 'almond') {
+          c.beginPath(); c.moveTo(ex - 6.5, ey + 1); c.quadraticCurveTo(ex, ey - 8, ex + 6.5, ey - 1.5); c.quadraticCurveTo(ex, ey + 6.5, ex - 6.5, ey + 1); c.closePath(); c.fillStyle = '#fff'; c.fill();
+          c.save(); c.clip(); ell(c, ex, ey, 4.2, 5.2, ec); ell(c, ex, ey + 0.3 + look, 2.2, 3, '#17141c'); ell(c, ex - 1.2, ey - 1.8 + look, 1.4, 1.5, '#fff'); c.restore();
+          c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.moveTo(ex - 6.5, ey + 1); c.quadraticCurveTo(ex, ey - 8, ex + 6.5, ey - 1.5); c.lineTo(ex + sx * 2 + 7, ey - 4); c.stroke();
         }
-        if (nora && fs !== 'round') { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, ey - 5.6 * big); c.quadraticCurveTo(ex, ey - 9.5 * big, sx * 15.4, ey - 5 * big); c.stroke(); }
+        else if (es === 'sleepy') { iris(5.2, 6.4); ell(c, ex - 1.4, ey + 0.4 + look, 1.6, 1.8, '#fff'); c.beginPath(); c.moveTo(ex - 6, ey - 1); c.quadraticCurveTo(ex, ey - 9, ex + 6, ey - 1); c.closePath(); c.fillStyle = '#ffd9b3'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.moveTo(ex - 6, ey - 1); c.quadraticCurveTo(ex, ey + 1.5, ex + 6, ey - 1); c.stroke(); }
+        else { iris(5.2, 7); ell(c, ex - 1.6, ey - 2.8 + look, 2, 2.4, '#fff'); ell(c, ex + 1.8, ey + 2.6 + look, 1, 1.1, '#fff'); }
+        if (nora && es !== 'round' && es !== 'almond') { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, ey - 5.6 * big); c.quadraticCurveTo(ex, ey - 9.5 * big, sx * 15.4, ey - 5 * big); c.stroke(); }
       }
       const up = mood === 'think' && sx === 1 ? -3 : 0;
       c.strokeStyle = INK; c.lineWidth = nora ? 1.7 : 3; c.beginPath(); c.moveTo(sx * 15, hy0 - 10.5 + BROW[0] + up); c.quadraticCurveTo(sx * 9.5, hy0 - 12.4 + (BROW[0] + BROW[1]) / 2 + up, sx * 4, hy0 - 10.5 + BROW[1] + up); c.stroke();
       ell(c, sx * 15.5, hy0 + 10, 4, 2.2, nora ? 'rgba(255,120,150,.55)' : 'rgba(255,140,120,.3)');
     }
-    if (fs === 'freckles') for (const sx of [-1, 1]) for (const [dx, dy] of [[12, 8], [16, 10], [14, 12.5], [18, 7]]) ell(c, sx * dx, hy0 + dy, 0.9, 0.9, '#b8693a');
-    if (fs === 'glasses') { c.strokeStyle = INK; c.lineWidth = 1.8; for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 9, hy0 + 3, 7.6, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-1.6, hy0 + 2); c.quadraticCurveTo(0, hy0, 1.6, hy0 + 2); c.stroke(); c.beginPath(); c.moveTo(-16.6, hy0 + 1); c.lineTo(-22, hy0 - 1); c.moveTo(16.6, hy0 + 1); c.lineTo(22, hy0 - 1); c.stroke(); }
+    if (xs === 'freckles') for (const sx of [-1, 1]) for (const [dx, dy] of [[12, 8], [16, 10], [14, 12.5], [18, 7]]) ell(c, sx * dx, hy0 + dy, 0.9, 0.9, '#b8693a');
+    if (xs === 'plaster') { c.save(); c.translate(15, hy0 + 11); c.rotate(-0.5); rr(c, -6, -2.5, 12, 5, 2, '#ffd8a8', INK, 1.2); c.fillStyle = 'rgba(0,0,0,.25)'; for (const dx of [-1.5, 1.5]) for (const dy of [-0.8, 0.8]) c.fillRect(dx - 0.4, dy - 0.4, 0.8, 0.8); c.restore(); }
+    if (xs === 'stars') for (const sx of [-1, 1]) star(c, sx * 15.5, hy0 + 10, 3.2, '#ffd43b', INK, 0.8);
+    if (xs === 'glasses') { c.strokeStyle = INK; c.lineWidth = 1.8; for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 9, hy0 + 3, 7.6, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-1.6, hy0 + 2); c.quadraticCurveTo(0, hy0, 1.6, hy0 + 2); c.stroke(); c.beginPath(); c.moveTo(-16.6, hy0 + 1); c.lineTo(-22, hy0 - 1); c.moveTo(16.6, hy0 + 1); c.lineTo(22, hy0 - 1); c.stroke(); }
     const my = hy0 + 13; c.strokeStyle = INK; c.lineWidth = 2;
     if (mood === 'happy') { c.beginPath(); c.moveTo(-6.5, my - 1); c.quadraticCurveTo(0, my + 9, 6.5, my - 1); c.closePath(); c.fillStyle = '#a01f3c'; c.fill(); c.lineWidth = 1.8; c.stroke(); ell(c, 0, my + 2.6, 2.8, 1.5, '#ff8fab'); }
     else if (mood === 'surprised' || mood === 'hurt') ell(c, 0, my + 1.5, mood === 'hurt' ? 3.6 : 2.8, mood === 'hurt' ? 3 : 3.6, '#a01f3c', INK, 1.8);
