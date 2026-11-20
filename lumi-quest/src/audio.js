@@ -43,10 +43,10 @@ const Snd = (() => {
   const P = str => str.trim().split(/\s+/).map(x => x === '-' ? 0 : x);
   const TRACKS = {
     anthem: { step: 0.19, voice: 'square', bassEvery: 2, drums: 'k.h.', lead: P('C5 - E5 G5 C6 - G5 E5 F5 - A5 F5 G5 - D5 - E5 - G5 C6 A5 - G5 E5 F5 G5 A5 G5 C6 - - -'), bass: P('C3 C3 C3 C3 F3 F3 G3 G3 C3 C3 A3 A3 F3 G3 C3 C3') },
-    village: { step: 0.3, voice: 'soft', bassEvery: 8, arp: true, lead: P('E4 G4 A4 G4 E4 D4 C4 - D4 E4 G4 E4 D4 C4 D4 - E4 G4 A4 C5 A4 G4 E4 - D4 E4 D4 C4 A3 C4 C4 -'), bass: P('C3 G2 A2 F2') },
+    village: { vol: 0.62, step: 0.3, voice: 'piano', bassEvery: 8, arp: true, pianoBass: true, lead: P('E4 G4 A4 G4 E4 D4 C4 - D4 E4 G4 E4 D4 C4 D4 - E4 G4 A4 C5 A4 G4 E4 - D4 E4 D4 C4 A3 C4 C4 -'), bass: P('C3 G2 A2 F2') },
     lantern: { step: 0.26, voice: 'pluck', bassEvery: 4, drums: '....t...', lead: P('G4 A4 C5 A4 G4 E4 G4 - E4 G4 A4 G4 E4 D4 E4 - C5 D5 C5 A4 G4 A4 G4 E4 D4 E4 G4 E4 D4 C4 C4 -'), bass: P('C3 G3 C3 G3 A2 E3 G2 C3') },
-    box: { step: 0.27, voice: 'bell', bassEvery: 6, lead: P('C5 E5 G5 E5 G5 E5 A4 C5 E5 C5 E5 C5 F4 A4 C5 A4 C5 A4 G4 B4 D5 B4 D5 G5'), bass: P('C3 A2 F2 G2') },
-    starry: { step: 0.5, voice: 'pad', bassEvery: 8, pad: true, lead: P('E5 - - G5 - - D5 - C5 - - E5 - - B4 - A4 - - C5 - - E5 - D5 - - - G4 - - -'), bass: P('C3 A2 F2 G2') },
+    box: { vol: 0.7, step: 0.27, voice: 'piano', bassEvery: 6, pianoBass: true, lead: P('C5 E5 G5 E5 G5 E5 A4 C5 E5 C5 E5 C5 F4 A4 C5 A4 C5 A4 G4 B4 D5 B4 D5 G5'), bass: P('C3 A2 F2 G2') },
+    starry: { vol: 1.55, step: 0.5, voice: 'piano', bassEvery: 8, pianoBass: true, roll: true, lead: P('E5 - - G5 - - D5 - C5 - - E5 - - B4 - A4 - - C5 - - E5 - D5 - - - G4 - - -'), bass: P('C3 A2 F2 G2') },
     march: { step: 0.22, voice: 'square', bassEvery: 4, drums: 'k.h.s.h.', lead: P('G4 G4 C5 - C5 D5 E5 - E5 D5 C5 - D5 - G4 - A4 A4 D5 - D5 E5 F5 - E5 D5 C5 B4 C5 - - -'), bass: P('C3 G3 C3 G3 D3 A3 G2 C3') },
     mystery: { step: 0.34, voice: 'reed', bassEvery: 8, lead: P('A3 - C4 E4 - D4 C4 - B3 - D4 F4 - E4 D4 - A3 - C4 E4 - A4 G4 - F4 E4 D4 C4 B3 - A3 -'), bass: P('A2 D3 A2 E2') },
     battle: { step: 0.15, voice: 'square', bassEvery: 2, drums: 'k.hsk.hs', lead: P('E4 E4 G4 E4 B4 E4 G4 E4 D4 D4 F#4 D4 A4 D4 F#4 D4 C4 C4 E4 C4 G4 C4 E4 C4 B3 D#4 F#4 B4 A4 F#4 D#4 B3'), bass: P('E2 E2 E2 E2 D2 D2 D2 D2 C2 C2 C2 C2 B1 B1 B1 B1') },
@@ -58,7 +58,14 @@ const Snd = (() => {
     g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(v, when + (attack || 0.012)); g.gain.exponentialRampToValueAtTime(0.0001, when + d);
     o.connect(g); g.connect(music); o.start(when); o.stop(when + d + 0.05);
   }
+  // A synthesized piano note: a sharp strike with a few overtones that fade, high notes fading faster.
+  function pianoNote(f, w, vel) {
+    const len = Math.min(2.6, 1.7 * Math.pow(440 / f, 0.3)), v = 0.13 * (vel || 1);
+    [[1, 1, 1], [2, 0.42, 0.7], [3, 0.18, 0.5], [4.02, 0.07, 0.32]].forEach(([r, a, d]) => mt(f * r, len * d, 'sine', v * a, w, 0.004));
+    mt(f * 1.003, len * 0.8, 'triangle', v * 0.25, w, 0.004);
+  }
   function leadNote(tr, f, w) {
+    if (tr.voice === 'piano') return pianoNote(f, w, tr.vol || 1);
     const L = tr.step;
     if (tr.voice === 'square') { mt(f, L * 1.7, 'square', 0.085, w); mt(f / 2, L * 1.7, 'triangle', 0.07, w); }
     else if (tr.voice === 'soft') { mt(f, L * 2.4, 'triangle', 0.17, w, 0.03); mt(f * 2, L * 1.6, 'sine', 0.035, w, 0.03); }
@@ -75,8 +82,10 @@ const Snd = (() => {
       const w = nextT, n = tr.lead[stepI % tr.lead.length];
       if (n) leadNote(tr, hz(n), w);
       const bf = hz(tr.bass[Math.floor(stepI / tr.bassEvery) % tr.bass.length]);
-      if (stepI % tr.bassEvery === 0) { if (tr.pad) [1, 1.5, 2, 2.52].forEach(m => mt(bf * m, tr.step * tr.bassEvery * 1.05, 'sine', 0.06, w, 0.4)); else mt(bf, tr.step * tr.bassEvery * 0.95, 'triangle', tr.voice === 'bell' ? 0.1 : 0.17, w, 0.02); }
-      if (tr.arp && stepI % 2 === 1) mt(bf * [2, 3, 4, 3][Math.floor(stepI / 2) % 4], tr.step * 1.6, 'sine', 0.05, w, 0.02);
+      if (stepI % tr.bassEvery === 0 && tr.pianoBass) { pianoNote(bf, w, 0.85 * (tr.vol || 1)); (tr.roll ? [1.5, 2, 2.52] : [1.5]).forEach((m, i) => pianoNote(bf * m, w + (i + 1) * (tr.roll ? 0.09 : tr.step), 0.45 * (tr.vol || 1))); }
+      else if (stepI % tr.bassEvery === 0) { if (tr.pad) [1, 1.5, 2, 2.52].forEach(m => mt(bf * m, tr.step * tr.bassEvery * 1.05, 'sine', 0.06, w, 0.4)); else mt(bf, tr.step * tr.bassEvery * 0.95, 'triangle', tr.voice === 'bell' ? 0.1 : 0.17, w, 0.02); }
+      if (tr.arp && tr.pianoBass && stepI % 2 === 1) pianoNote(bf * [2, 3, 4, 3][Math.floor(stepI / 2) % 4], w, 0.32 * (tr.vol || 1));
+      else if (tr.arp && stepI % 2 === 1) mt(bf * [2, 3, 4, 3][Math.floor(stepI / 2) % 4], tr.step * 1.6, 'sine', 0.05, w, 0.02);
       if (tr.drums) { const d = tr.drums[stepI % tr.drums.length], wr = w - ac.currentTime; if (d === 'k') tone(110, 0.1, 'sine', 0.3, wr, 45, music); else if (d === 'h') noise(0.04, 0.05, wr, music); else if (d === 's') noise(0.09, 0.1, wr, music); else if (d === 't') tone(900, 0.05, 'sine', 0.08, wr, 0, music); }
       nextT += tr.step; stepI++;
     }
