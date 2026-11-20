@@ -15,6 +15,7 @@ function loadWorld(id, quiet) {
       else if (ch === 'n') { const v = w.villagers[vi++ % w.villagers.length]; G.ents.push({ type: 'npc', role: 'chat', x, y, solid: true, v: Object.assign({ ph: vi * 2 }, v), li: 0 }); t = '.'; }
       else if (ch === 'S') { G.ents.push({ type: 'npc', role: 'shop', x, y, solid: true, v: { name: 'Shopkeeper Brom', col: '#e8590c', hair: '#5c3d2e', hat: 'shop', ph: 0, mark: '🛒' } }); t = '.'; }
       else if (ch === 'I') { G.ents.push({ type: 'npc', role: 'heal', x, y, solid: true, v: { name: 'Healer Rosa', col: '#f783ac', hair: '#862e9c', hat: 'heal', ph: 2, mark: '💗' } }); t = '.'; }
+      else if (ch === 'M') { G.ents.push({ type: 'mirror', x, y, solid: true }); t = '.'; }
       else if (ch === 'L') { G.ents.push({ type: 'npc', role: 'elder', x, y, solid: true, v: { name: 'Elder Lumen', col: '#7048e8', hair: '#adb5bd', hat: 'elder', ph: 3 } }); t = '.'; }
       else if (ch === 'E') { const f = w.fogs[fi++ % w.fogs.length]; G.ents.push({ type: 'fog', x, y, solid: true, def: Object.assign({ ph: fi * 1.7 }, f) }); t = '.'; }
       else if (ch === 'B') { if (S.bosses[id] && LORE[id].was) G.ents.push(restoredNpc(id, x, y)); if (!S.bosses[id]) G.ents.push({ type: 'boss', x, y, solid: true, def: Object.assign({ boss: true, ph: 0 }, w.boss) }); t = '.'; }
@@ -84,6 +85,7 @@ function onStep() {
 async function interact(e) {
   if (G.busy) return; G.path = [];
   if (e.type === 'chest') { if (!e.open) openChest(e); return; }
+  if (e.type === 'mirror') { openMirror(); return; }
   if (e.type === 'wall') { const q = S.quests[G.world]; await say(`A wall of fog blocks the way. Defeat ${3 - q.kills} more Fog creature${3 - q.kills === 1 ? '' : 's'} to clear it.`); return; }
   if (e.type === 'fog' || e.type === 'boss') { startBattle(e); return; }
   if (e.type !== 'npc') return;
@@ -214,6 +216,16 @@ function questPanel() {
 }
 
 // ---------- drawing ----------
+// The magic mirror in Hearthome: an oval glass in a gold frame that shimmers.
+function drawMirror(c, px, py, t) {
+  const cx = px + TILE / 2, by = py + TILE - 6;
+  Art.ell(c, cx, by + 2, 15, 4, 'rgba(0,0,0,.25)');
+  Art.rr(c, cx - 3, by - 10, 6, 12, 2, '#8d6e4a', Art.INK, 1.5); Art.ell(c, cx, by - 1, 11, 4, '#b5712c', Art.INK, 1.5);
+  Art.ell(c, cx, by - 30, 14, 20, '#ffd43b', Art.INK, 2.2);
+  const g = c.createLinearGradient(cx - 10, by - 48, cx + 10, by - 12); g.addColorStop(0, '#e7f5ff'); g.addColorStop(0.5 + Math.sin(t * 1.5) * 0.3, '#a5d8ff'); g.addColorStop(1, '#d0bfff');
+  Art.ell(c, cx, by - 30, 10, 16, g); c.save(); c.globalAlpha = 0.7; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(cx - 4, by - 40); c.lineTo(cx - 1, by - 34); c.stroke(); c.restore();
+  Art.star(c, cx, by - 52, 4, '#fff9db', Art.INK, 1); Art.sparkle(c, cx + 9, by - 40, t, 0.3); Art.sparkle(c, cx - 8, by - 22, t, 0.75);
+}
 function drawWorld(c) {
   const w = WORLDS[G.world], pal = PAL[G.world], t = G.t, cx = Math.round(G.cam.x), cy = Math.round(G.cam.y);
   c.fillStyle = Art.shade(pal.g1, -0.45); c.fillRect(0, 0, W, H);
@@ -233,6 +245,7 @@ function drawWorld(c) {
     if (e.type === 'chest') list.push([fy, () => Art.chest(c, px, py, TILE, e.open, t)]);
     else if (e.type === 'hidden') list.push([py, () => Art.sparkle(c, fx + Math.sin(e.ph * 9) * 8, py + 26, t, e.ph)]);
     else if (e.type === 'gate') list.push([py + 2, () => Art.gate(c, px, py, TILE, t, G.world === 'hub' ? '#9775fa' : w.crystal)]);
+    else if (e.type === 'mirror') list.push([fy, () => drawMirror(c, px, py, t)]);
     else if (e.type === 'wall') list.push([fy, () => Art.fogWall(c, px, py, TILE, t)]);
     else if (e.type === 'npc') { const q = S.quests[G.world]; const v = e.role === 'giver' ? Object.assign({}, e.v, { mark: S.bosses[G.world] ? '' : q.accepted ? '…' : '!', sad: !S.bosses[G.world] }) : e.role === 'elder' && (!S.metElder || (S.crystals.length === 5 && !S.elderTold && !S.won)) ? Object.assign({}, e.v, { mark: '!' }) : e.v; list.push([fy, () => Art.villager(c, v, fx, fy, 0.9, t)]); }
     else if (e.type === 'fog') list.push([fy, () => Art.fog(c, e.def, fx, fy, 0.8, t)]);

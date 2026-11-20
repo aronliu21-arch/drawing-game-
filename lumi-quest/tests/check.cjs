@@ -19,7 +19,7 @@ for (const kid of ['nora', 'lucas']) for (const s of ['math', 'science', 'geo', 
 { const seen = {}, ids = new Set(); for (let i = 0; i < 60; i++) { const q = Q.next('science', 'nora', seen); if (ids.has(q.id)) fail('Nora repeat', q.id); ids.add(q.id); } }
 
 // 3. Maps are 24x16, everything is reachable, and bosses sit behind the fog wall.
-const solid = 'TWRHCNnEBSIL', N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const solid = 'TWRHCNnEBSILM', N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function flood(m, start, extra) { const seen = new Set([start + '']), q = [start]; while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of N4) { const ch = (m[y + dy] || '')[x + dx], k = (x + dx) + ',' + (y + dy); if (!ch || (solid + extra).includes(ch) || seen.has(k)) continue; seen.add(k); q.push([x + dx, y + dy]); } } return seen; }
 for (const [id, w] of Object.entries(WORLDS)) {
   const m = w.map; if (m.length !== 16 || m.some(r => r.length !== 24)) fail(id, 'map size');
@@ -28,7 +28,7 @@ for (const [id, w] of Object.entries(WORLDS)) {
   const all = flood(m, start, ''), open = flood(m, start, 'F');
   m.forEach((r, y) => [...r].forEach((ch, x) => {
     const near = set => N4.some(([dx, dy]) => set.has((x + dx) + ',' + (y + dy)));
-    if ('CNnEBSIL'.includes(ch) && !near(all)) fail(id, 'unreachable', ch, x, y);
+    if ('CNnEBSILM'.includes(ch) && !near(all)) fail(id, 'unreachable', ch, x, y);
     if ('cGF'.includes(ch) && !all.has(x + ',' + y)) fail(id, 'unreachable', ch, x, y);
     if (ch === 'B' && near(open)) fail(id, 'boss reachable without clearing the fog wall');
   }));

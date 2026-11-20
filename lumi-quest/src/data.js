@@ -122,7 +122,7 @@ const WORLDS = {
       'T..HH...,..L..,...HH...T',
       'T..HH...,.....,...HH...T',
       'T...n,,,,,,,,,,,,,,n...T',
-      'T.......,..f..,........T',
+      'T.......,..f..,.M......T',
       'T.f.....,.....,....f...T',
       'TWWW....,,,P,,,....""".T',
       'TWWWW......,.......""""T',
@@ -132,7 +132,7 @@ const WORLDS = {
       'TTTTTTTTTTTTTTTTTTTTTTTT'],
     chests: [{ gold: 40 }, { item: 'orb', n: 2 }, { item: 'potion', n: 2 }, { gold: 25 }],
     wild: ['tallybird'], wildLv: 1,
-    villagers: [{ name: 'Baker Pim', col: '#f59f00', hair: '#6d4c41', hat: 'bun', lines: ['The fog made me forget my bread recipe! Was it 2 cups of flour or 20?', 'Tall grass hides wild Lumis. Weaken one, then throw a Capture Orb.'] }, { name: 'Farmer Jo', col: '#2f9e44', hair: '#343a40', lines: ['Look for sparkles on the ground. Treasure is buried there!', 'Fire beats Leaf, Leaf beats Water, Water beats Fire. Star is friends with all.'] }],
+    villagers: [{ name: 'Baker Pim', col: '#f59f00', hair: '#6d4c41', hat: 'bun', lines: ['The fog made me forget my bread recipe! Was it 2 cups of flour or 20?', 'Tall grass hides wild Lumis. Weaken one, then throw a Capture Orb.'] }, { name: 'Farmer Jo', col: '#2f9e44', hair: '#343a40', lines: ['Look for sparkles on the ground. Treasure is buried there!', 'Fire beats Leaf, Leaf beats Water, Water beats Fire. Star is friends with all.', 'See the magic mirror by the path? Look into it to change your hair, face and clothes!'] }],
   },
   w1: {
     name: 'Numberwood', subject: 'math', lvl: 1, crystal: '#40c057', icon: '🌳', blurb: 'Maths duels in the counting forest',

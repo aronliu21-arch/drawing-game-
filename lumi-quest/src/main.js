@@ -35,9 +35,12 @@ async function enterGame(fresh) {
 let pickSp = STARTERS[0], crStep = 0, crNick = '';
 const cleanNick = t => String(t || '').replace(/[^\p{L}\p{N} '\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
 // The hero creator has three steps: how the hero looks, their class and gear, then their first Lumi.
-function showCreator() { G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0]; crStep = 0; crNick = ''; drawCreatorUI(); }
+// The magic mirror reuses the creator's Hair, Face and Hero steps, and keeps all progress.
+function openMirror() { if (G.busy) return; G.mirror = true; G.path = []; G.mode = 'create'; showHUD(false); $('creator').hidden = false; crStep = 0; Snd.play('warp'); drawCreatorUI(); }
+function closeMirror() { G.mirror = false; $('creator').hidden = true; S.hp = Math.min(S.hp, maxHP()); save(); G.mode = 'world'; showHUD(true); updateHUD(); setMood('happy', 3); Snd.play('ok'); burst(W / 2, H / 2 - 40, '#fff9db', 24); toast(`✨ Looking great, ${heroName(S)}!`); }
+function showCreator() { G.mirror = false; G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0]; crStep = 0; crNick = ''; drawCreatorUI(); }
 function drawCreatorUI() {
-  const steps = ['Hair', 'Face', 'Hero', 'Lumi'], head = o => `data-head='${JSON.stringify(o)}'`;
+  const steps = G.mirror ? ['Hair', 'Face', 'Hero'] : ['Hair', 'Face', 'Hero', 'Lumi'], last = steps.length - 1, head = o => `data-head='${JSON.stringify(o)}'`;
   $('crName').textContent = [`${KIDS[kid].name}'s hair`, `${KIDS[kid].name}'s face`, `Choose ${KIDS[kid].name}'s gear`, `${KIDS[kid].name}'s first Lumi friend`][crStep];
   $('crSteps').innerHTML = steps.map((n, i) => `<span class="${i === crStep ? 'on' : i < crStep ? 'done' : ''}">${i + 1}. ${n}</span>`).join('');
   let h = '';
@@ -58,15 +61,18 @@ function drawCreatorUI() {
     h += `<div class="crsec"><h3>Give it a name</h3><input id="crNick" type="text" maxlength="12" autocomplete="off" placeholder="${SPECIES[pickSp].name}" value="${crNick}" aria-label="Lumi name"><div class="pills">${NICKS[SPECIES[pickSp].el].map(n => `<button class="pill${crNick === n ? ' on' : ''}" data-nick="${n}">${n}</button>`).join('')}</div></div>`;
   }
   $('crBody').innerHTML = h; drawMinis($('creator'));
-  $('crBack').hidden = crStep === 0; $('btnBegin').textContent = crStep < 3 ? 'Next ▶' : 'Begin the adventure ▶';
+  $('crBack').hidden = crStep === 0 && !G.mirror; $('crBack').textContent = G.mirror && crStep === 0 ? '✕ Close' : '◀ Back';
+  $('btnBegin').textContent = crStep < last ? 'Next ▶' : G.mirror ? 'Done ✓' : 'Begin the adventure ▶';
+  if (G.mirror) $('crName').textContent = ['Mirror: hair', 'Mirror: face', 'Mirror: gear and title'][crStep];
   const on = (sel, fn) => $('creator').querySelectorAll(sel).forEach(b => b.onclick = () => { fn(b); Snd.play('tap'); drawCreatorUI(); });
   on('[data-hair]', b => { S.hair = b.dataset.hair; }); on('[data-hc]', b => { S.hairCol = b.dataset.hc; }); on('[data-eyes]', b => { S.eyes = b.dataset.eyes; }); on('[data-ec]', b => { S.eyeCol = b.dataset.ec; }); on('[data-extra]', b => { S.extra = b.dataset.extra; });
   on('[data-cls]', b => { S.cls = b.dataset.cls; }); on('[data-col]', b => { S.color = b.dataset.col; }); on('[data-cape]', b => { S.cape = b.dataset.cape || null; }); on('[data-title]', b => { S.title = b.dataset.title; });
   on('[data-sp]', b => { if (pickSp !== b.dataset.sp) crNick = ''; pickSp = b.dataset.sp; }); on('[data-nick]', b => { crNick = b.dataset.nick; });
   const inp = $('crNick'); if (inp) inp.oninput = () => { crNick = cleanNick(inp.value); };
 }
-$('crBack').addEventListener('click', () => { if (crStep > 0) { crStep--; Snd.play('tap'); drawCreatorUI(); } });
+$('crBack').addEventListener('click', () => { if (G.mirror && crStep === 0) return closeMirror(); if (crStep > 0) { crStep--; Snd.play('tap'); drawCreatorUI(); } });
 $('btnBegin').addEventListener('click', () => {
+  if (G.mirror) { if (crStep < 2) { crStep++; Snd.play('tap'); drawCreatorUI(); } else closeMirror(); return; }
   if (crStep < 3) { crStep++; Snd.play('tap'); drawCreatorUI(); return; }
   Snd.play('ok'); S.created = true; S.party = [{ sp: pickSp, lv: 1, xp: 0, nick: cleanNick(crNick) }]; S.active = 0; S.hp = maxHP(); save(); enterGame(true);
 });
@@ -191,7 +197,7 @@ function drawCreator(c) {
   sunburst(c, 250, 330, '#3b2a7a', '#4c3a8f', G.t * 0.05);
   Art.ell(c, 250, 452, 170, 34, 'rgba(255,255,255,.14)');
   Art.hero(c, 190, 448, 3, heroLook({ badge: true }));
-  Art.lumi(c, SPECIES[pickSp], 372, 466, 1.8, G.t, false, true);
+  const ml = G.mirror && activeLumi(); if (ml) Art.lumi(c, SPECIES[ml.sp], 372, 466, 1.8, G.t, isEvo(ml), true); else Art.lumi(c, SPECIES[pickSp], 372, 466, 1.8, G.t, false, true);
 }
 
 // ---------- loop ----------
@@ -268,7 +274,7 @@ window.__test = {
   solve() { this.step(); },
   step() {
     if (G.mode === 'title') { if (G.intro.state === 'wait') return startIntro(); if (G.intro.state === 'play') return showMenu(); return pickKid('nora'); }
-    if (G.mode === 'create') { crStep = 3; return $('btnBegin').click(); }
+    if (G.mode === 'create') { if (G.mirror) return closeMirror(); crStep = 3; return $('btnBegin').click(); }
     if (QS) { if (QS.done) { if (!$('qNext').hidden) $('qNext').click(); return; } const q = QS.q; if (q.type === 'order') q.correct.forEach(i => pickAnswer(i)); else pickAnswer(q.answer); return; }
     if (dlg) return advanceDialog();
     if (panelOpen()) { const f = $('btnFinish'); if (f) return f.click(); return closePanel(); }
