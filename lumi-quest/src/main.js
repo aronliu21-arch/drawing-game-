@@ -206,6 +206,7 @@ function mini2(el, draw) { const d = DPR; if (el.width !== 72 * d) { el.width = 
 const WORLD_MUSIC = { hub: 'village', w1: 'march', w2: 'starry', w3: 'starry', w4: 'march', w5: 'lantern', w6: 'mystery' };
 function musicNow() {
   if (G.mode === 'title') return G.intro.state === 'wait' ? null : 'anthem';
+  if (G.mode === 'evolve') return null;
   if (G.mode === 'create' || G.breakOn) return 'box';
   if (G.mode === 'ending') return G.end && G.end.scene >= 2 ? 'anthem' : 'mystery';
   if (G.mode === 'battle' && G.B) return G.B.e.boss ? 'mystery' : 'battle';
@@ -220,6 +221,7 @@ function frame(ts) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (G.mode === 'title') { if (G.intro.state === 'play') { G.intro.t += dt; if (G.intro.t > 6.2) showMenu(); } drawTitle(ctx); }
   else if (G.mode === 'create') drawCreator(ctx);
+  else if (G.mode === 'evolve' && G.evo) { G.evo.k += dt * (G.fast ? 30 : 1); Evolve.draw(ctx, G.evo.st, Math.min(G.evo.k, Evolve.DURATION + 2), dt, n => { if (n === 'rise') Snd.play('warp'); if (n === 'reveal') { Snd.play('capture'); setTimeout(() => Snd.play('level'), 350); } }); if (G.evo.k > Evolve.DURATION + 1.2 && G.evo.done) { const d = G.evo.done; G.evo.done = null; d(); } }
   else if (G.mode === 'ending' && G.end) { drawEnding(ctx); drawParts(ctx); }
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
   if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));

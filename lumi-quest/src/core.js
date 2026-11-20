@@ -76,7 +76,7 @@ function addLumiXP(n) {
   const l = activeLumi(); if (!l) return; const was = isEvo(l), knew = knownMoves(l); l.xp += n;
   while (l.xp >= lumiNeed(l.lv)) { l.xp -= lumiNeed(l.lv); l.lv++; toast(`🐾 ${lumiName(l)} grew to Level ${l.lv}!`); }
   for (let t = knew; t < knownMoves(l); t++) { Snd.play('level'); toast(`💥 ${lumiName(l)} learned ${MOVES[l.sp][t]}!`); (G.learned = G.learned || []).push([lumiName(l), MOVES[l.sp][t], t]); }
-  if (!was && isEvo(l)) { Snd.play('level'); toast(`✨ ${SPECIES[l.sp].name} evolved into ${SPECIES[l.sp].evo}!`); }
+  if (!was && isEvo(l)) (G.evolved = G.evolved || []).push({ sp: l.sp, nick: l.nick }); // the evolution scene plays after the battle
 }
 
 // ---------- tweens & particles ----------

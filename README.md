@@ -87,6 +87,7 @@ node lumi-quest/tests/check.cjs    # question and map checks (also part of npm t
 | `lumi-quest/src/questions.js` | Question generators (maths, logic) and banks (science, geography, Chinese), per kid |
 | `lumi-quest/src/data.js` | Story, maps, Lumis, weapons, armour |
 | `lumi-quest/src/animals.js` | Evolved Lumis: each species becomes its own animal at Level 6 |
+| `lumi-quest/src/evolve.js` | The evolution scene played after the battle in which a Lumi reaches Level 6 |
 | `lumi-quest/src/portraits.js` | Talking portraits shown beside dialog for every speaking character |
 | `lumi-quest/src/fx.js` | Attack animations: four skill tiers per element, one per weapon kind |
 | `lumi-quest/src/story.js` | Boss scenes, memories, villager news and King Mumble's backstory |

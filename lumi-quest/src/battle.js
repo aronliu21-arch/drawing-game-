@@ -77,6 +77,16 @@ function movePanel() {
   $('panelBody').querySelectorAll('[data-tier]').forEach(b => b.addEventListener('click', () => { Snd.play('tap'); closePanel(+b.dataset.tier); }));
   return p;
 }
+// After a battle, play the evolution scene for any Lumi that reached Level 6. It cannot be skipped.
+async function playEvolutions() {
+  const list = G.evolved || []; G.evolved = [];
+  for (const st of list) {
+    const back = G.mode; G.mode = 'evolve'; G.evo = { st: Object.assign({}, st), k: 0 }; $('battle').hidden = true; showHUD(false);
+    await new Promise(res => { G.evo.done = res; });
+    G.evo = null; G.mode = back; if (back === 'battle') $('battle').hidden = false;
+    setMood('happy', 4);
+  }
+}
 // After a battle, show any skill a Lumi learned, with where to find it.
 async function announceSkills() {
   const L = G.learned || []; G.learned = [];
@@ -194,6 +204,7 @@ async function finishBattle(how) {
   setLog(`${e.name} ${e.wild ? 'ran away' : 'faded into mist'}!`);
   S.gold += gold; addXP(e.xp); addLumiXP(e.xp); updateHUD();
   await say(`Victory! +${e.xp} XP` + (gold ? ` and ${gold} coins.` : '.'));
+  await playEvolutions();
   await announceSkills();
   if (B.ent) {
     B.ent.gone = true; const q = S.quests[G.world];
