@@ -122,7 +122,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .crys span.got { color: var(--c); text-shadow: 0 0 12px var(--c); }
 .crys small { display: block; font: 800 11px var(--font-b); color: var(--muted); text-shadow: none; }
 .chk { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; min-height: 48px; }
-.chk input { width: 28px; height: 28px; }
+.chk input { width: 28px; height: 28px; flex: none; }
 .gateq { font: 400 40px var(--font-d) !important; text-align: center; }
 .gaterow { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 8px; }
 #gateIn { font: 800 26px var(--font-b); width: 180px; height: 60px; text-align: center; border: 4px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); -webkit-user-select: text; user-select: text; }
@@ -210,6 +210,34 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .row canvas.ricon { flex: none; width: 60px; height: 60px; border-radius: 12px; background: #f1ead8; }
 .perk { display: block; font-size: 13.5px; font-weight: 700; color: #5f3dc4; line-height: 1.3; margin-top: 2px; }
 .perk b { font-size: 13.5px; display: inline; }
+
+/* the listening player's face, with their name */
+#dlgMe { position: absolute; right: 22px; top: -126px; width: 118px; text-align: center; pointer-events: none; }
+#dlgMeFace { width: 110px; height: 110px; border-radius: 50%; background: #e5dbff; border: 4px solid var(--gold); box-shadow: 0 4px 0 var(--ink); display: block; margin: 0 auto; }
+#dlgMeName { display: inline-block; margin-top: -10px; position: relative; background: var(--violet); color: #fff; font: 400 15px var(--font-d); padding: 2px 10px; border-radius: 10px; border: 2px solid var(--ink); white-space: nowrap; }
+/* creator steps */
+.steps { display: flex; gap: 6px; } .steps span { flex: 1; text-align: center; font-weight: 800; font-size: 13px; padding: 4px 0; border-radius: 10px; background: rgba(255, 255, 255, .12); color: #ced4da; }
+.steps span.on { background: var(--gold); color: var(--ink); } .steps span.done { background: rgba(255, 212, 59, .35); color: #fff; }
+#crBody { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; padding: 4px 4px 6px; margin: 0 -4px; }
+#crBody .opt small { font-size: 11px; }
+#crBody .sw { height: 40px; }
+#crBody .pill { min-height: 44px; font-size: 14px; padding: 0 12px; }
+.crnav { display: flex; gap: 10px; } .crnav .big { flex: 1; } .crnav .ghost { min-width: 110px; }
+.opt.head { padding: 2px 2px 6px; min-height: 0; } .opt.head canvas { display: block; margin: 0 auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { min-height: 48px; padding: 0 14px; border-radius: 22px; background: #fff; color: var(--text); font-weight: 800; font-size: 15px; border: 3px solid transparent; }
+.pill.on { border-color: var(--gold); box-shadow: 0 0 0 3px var(--ink); }
+#crNick, #nickIn { font: 800 22px var(--font-b); height: 52px; border-radius: 14px; border: 3px solid var(--ink); padding: 0 14px; width: 100%; box-sizing: border-box; color: var(--ink); background: #fff; -webkit-user-select: text; user-select: text; }
+.nameRow { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; } .nameRow canvas { flex: none; }
+.ghost.dark { color: var(--ink); border-color: var(--ink); background: transparent; }
+.row .ren { min-width: 52px !important; background: #e5dbff !important; }
+.row b i.sp { font-style: normal; font-weight: 700; font-size: 14px; color: var(--muted); }
+/* read-to-me: a button that has just been read waits for a second tap */
+button.armed { outline: 4px solid var(--gold); outline-offset: 3px; animation: armedPulse .8s ease-in-out infinite; }
+@keyframes armedPulse { 50% { outline-color: #fff; } }
+#bLog .word, #panelBody .word, #crBody .word { cursor: pointer; }
+.pill.on, .opt.on { position: relative; }
+.chk { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -232,10 +260,9 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 
     <div id="creator" hidden>
       <h2 id="crName"></h2>
-      <div class="crsec"><h3>Hero class</h3><div id="crClass" class="opts"></div></div>
-      <div class="crsec two"><div><h3>Tunic</h3><div id="crColor" class="sws"></div></div><div><h3>Cape</h3><div id="crCape" class="sws"></div></div></div>
-      <div class="crsec"><h3>First Lumi friend</h3><div id="crLumi" class="opts"></div></div>
-      <button id="btnBegin" class="big">Begin the adventure ▶</button>
+      <div id="crSteps" class="steps"></div>
+      <div id="crBody"></div>
+      <div class="crnav"><button id="crBack" class="ghost">◀ Back</button><button id="btnBegin" class="big">Next ▶</button></div>
     </div>
 
     <div id="hud" hidden>
@@ -271,7 +298,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
       </div>
     </div>
 
-    <div id="dialog" hidden><canvas id="dlgFace" aria-hidden="true"></canvas><b id="dlgWho"></b><p id="dlgText"></p><button id="dlgNext" class="more" aria-label="Next">▶</button></div>
+    <div id="dialog" hidden><canvas id="dlgFace" aria-hidden="true"></canvas><div id="dlgMe" hidden><canvas id="dlgMeFace" aria-hidden="true"></canvas><span id="dlgMeName"></span></div><b id="dlgWho"></b><p id="dlgText"></p><button id="dlgNext" class="more" aria-label="Next">▶</button></div>
     <div id="panel" hidden><div id="panelCard"><button id="panelClose" aria-label="Close">✕</button><div id="panelBody"></div></div></div>
     <div id="toast"></div>
     <div id="rotate" hidden><div>📱↻<p>Turn your phone sideways</p></div></div>
@@ -662,6 +689,15 @@ const CLASSES = {
   mage: { name: 'Mage', icon: '✨', perk: 'Lumi skills hit 20% harder' },
   ranger: { name: 'Ranger', icon: '🏹', perk: '+25% coins, easier captures' },
 };
+// Hero creator choices. The first of each list is the kid's usual look.
+const HAIRS = {
+  nora: [['ponytail', 'Ponytail'], ['twinbuns', 'Twin buns'], ['long', 'Long'], ['bob', 'Bob'], ['braids', 'Braids']],
+  lucas: [['spiky', 'Spiky'], ['neat', 'Neat'], ['curly', 'Curly'], ['swoop', 'Swoop'], ['cap', 'Cap']],
+};
+const HAIR_COLS = ['#17141c', '#5c3d2e', '#a0522d', '#d9a441'];
+const FACES = [['sparkle', 'Sparkly'], ['round', 'Round'], ['freckles', 'Freckles'], ['glasses', 'Glasses']];
+const TITLES = ['the Brave', 'the Clever', 'the Kind', 'the Swift', 'the Curious', 'the Bold'];
+const NICKS = { fire: ['Sparky', 'Blaze', 'Ember', 'Toasty', 'Flicker'], water: ['Splash', 'Bubbles', 'Drizzle', 'Puddle', 'Misty'], leaf: ['Sprout', 'Clover', 'Mossy', 'Pip', 'Fern'], star: ['Twinkle', 'Comet', 'Nova', 'Glimmer', 'Sunny'] };
 const TUNICS = ['#1c7ed6', '#e03131', '#2f9e44', '#7048e8', '#f76707', '#0ca678'];
 const CAPES = [null, '#e03131', '#7048e8', '#ffd43b', '#12b886', '#343a40'];
 
@@ -1068,15 +1104,17 @@ const Art = (() => {
       c.quadraticCurveTo(10 + sw, -12, 0 + sw, -7); c.quadraticCurveTo(-10 + sw, -12, -20 + sw, -8); c.quadraticCurveTo(-24 + sw, -26, -13, -45);
       c.fillStyle = o.cape; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
     }
-    // Nora's ponytail sits behind her head
-    if (nora) {
+    // Hair that hangs behind the body: ponytail, long hair or braids.
+    const hc = o.hairCol || '#17141c', hs = o.hair || (nora ? 'ponytail' : 'spiky'), fs = o.face || 'sparkle';
+    if (hs === 'ponytail') {
       const sway = o.walk ? Math.sin(t * 7) * 2 : 0;
       c.beginPath(); c.moveTo(12, -86); c.bezierCurveTo(30 + sway, -100, 44 + sway, -84, 38 + sway, -62);
       c.bezierCurveTo(36 + sway, -52, 44 + sway, -48, 46 + sway, -54); c.bezierCurveTo(48 + sway, -44, 30 + sway, -42, 30 + sway, -58);
       c.bezierCurveTo(30 + sway, -72, 28, -80, 18, -78); c.closePath();
-      c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
+      c.fillStyle = hc; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
       ell(c, 15, -84, 5.5, 5.5, '#ff6fae', INK, 2);
-    }
+    } else if (hs === 'long') { rr(c, -28, -84, 56, 56, 16, hc, INK, 2.5); }
+    else if (hs === 'braids') { for (const sx of [-1, 1]) { for (let i = 0; i < 4; i++) ell(c, sx * (23 + i * 0.8), -58 + i * 8, 5.5, 5, hc, INK, 1.8); ell(c, sx * 26, -27, 3.5, 3, '#ff6fae', INK, 1.4); } }
     // legs and boots
     for (const sx of [-1, 1]) {
       const ly = o.walk ? Math.max(0, step * sx) * 4 : 0;
@@ -1113,30 +1151,47 @@ const Art = (() => {
     ell(c, hx, hy, 4.5, 4.5, '#ffd9b3', INK, 2);
     // head
     const hy0 = -66, mood = o.mood || 'calm';
-    if (nora) {
-      // back hair covers the top and sides only, so nothing dark shows under her chin
-      c.beginPath(); c.moveTo(-25.5, hy0 + 9); c.bezierCurveTo(-32, hy0 - 35, 32, hy0 - 35, 25.5, hy0 + 9); c.lineTo(19, hy0 + 2); c.lineTo(-19, hy0 + 2); c.closePath();
-      c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
-    } else {
-      // soft, short spikes
+    // back of the hair, behind the face
+    const fillHair = () => { c.fillStyle = hc; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke(); };
+    if (hs === 'spiky') {
       c.beginPath(); const n = 8;
       for (let i = 0; i <= n * 2; i++) { const a2 = -Math.PI * 1.06 + (i / (n * 2)) * Math.PI * 1.12; const rad = i % 2 ? 33 + (i % 4 === 1 ? 2 : 0) : 25.5; c.lineTo(Math.cos(a2) * rad, hy0 + Math.sin(a2) * rad * 0.98); }
-      c.closePath(); c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.5; c.stroke();
+      c.closePath(); fillHair();
+    } else if (hs === 'curly') { for (let i = 0; i < 11; i++) { const a2 = Math.PI * (1.02 + i * 0.096); c.beginPath(); c.arc(Math.cos(a2) * 24, hy0 + Math.sin(a2) * 23, 8.5, 0, TAU); fillHair(); } }
+    else if (hs === 'bob') { c.beginPath(); c.moveTo(-28, hy0 + 16); c.bezierCurveTo(-36, hy0 - 40, 36, hy0 - 40, 28, hy0 + 16); c.lineTo(18, hy0 + 8); c.lineTo(-18, hy0 + 8); c.closePath(); fillHair(); }
+    else if (hs === 'neat' || hs === 'swoop' || hs === 'cap') { c.beginPath(); c.ellipse(0, hy0 - 3, 25.5, 25, 0, 0, TAU); fillHair(); }
+    else { // ponytail, long, braids, twin buns: top and sides only, so nothing dark shows under the chin
+      c.beginPath(); c.moveTo(-25.5, hy0 + 9); c.bezierCurveTo(-32, hy0 - 35, 32, hy0 - 35, 25.5, hy0 + 9); c.lineTo(19, hy0 + 2); c.lineTo(-19, hy0 + 2); c.closePath(); fillHair();
+      if (hs === 'twinbuns') for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 21, hy0 - 22, 10, 0, TAU); fillHair(); c.beginPath(); c.arc(sx * 21, hy0 - 22, 10.5, Math.PI * (sx < 0 ? 0.1 : 0.6), Math.PI * (sx < 0 ? 0.45 : 0.95)); c.strokeStyle = '#ff6fae'; c.lineWidth = 3.5; c.stroke(); }
     }
     ell(c, 0, hy0, 23, 22, '#ffd9b3', INK, 2.8);
     for (const sx of [-1, 1]) ell(c, sx * 23, hy0 + 2, 3.5, 5, '#ffd9b3', INK, 2);
-    if (nora) {
-      // side-swept bangs, all curves
+    // front of the hair
+    const front = () => { c.fillStyle = hc; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke(); };
+    const shine = () => { c.beginPath(); c.moveTo(-8, hy0 - 21); c.quadraticCurveTo(2, hy0 - 24, 12, hy0 - 19); c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2.6; c.stroke(); };
+    const sideLocks = () => { for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 22, hy0 - 4); c.quadraticCurveTo(sx * 26.5, hy0 + 4, sx * 22.5, hy0 + 11); c.quadraticCurveTo(sx * 20, hy0 + 4, sx * 20, hy0 - 2); c.closePath(); c.fillStyle = hc; c.fill(); } };
+    if (hs === 'ponytail' || hs === 'long' || hs === 'braids') {
       c.beginPath(); c.moveTo(-24, hy0 + 2); c.bezierCurveTo(-27, hy0 - 26, 20, hy0 - 30, 24, hy0 - 2);
-      c.bezierCurveTo(20, hy0 - 12, 10, hy0 - 15, 2, hy0 - 14); c.bezierCurveTo(-8, hy0 - 12, -16, hy0 - 6, -19, hy0 + 4); c.closePath();
-      c.fillStyle = '#17141c'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2; c.stroke();
-      for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 22, hy0 - 4); c.quadraticCurveTo(sx * 26.5, hy0 + 4, sx * 22.5, hy0 + 11); c.quadraticCurveTo(sx * 20, hy0 + 4, sx * 20, hy0 - 2); c.closePath(); c.fillStyle = '#17141c'; c.fill(); }
-      c.beginPath(); c.moveTo(-8, hy0 - 21); c.quadraticCurveTo(2, hy0 - 24, 12, hy0 - 19); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 2.6; c.stroke();
-      star(c, -15, hy0 - 12, 5.5, '#ffd43b', INK, 1.2);
-    } else {
+      c.bezierCurveTo(20, hy0 - 12, 10, hy0 - 15, 2, hy0 - 14); c.bezierCurveTo(-8, hy0 - 12, -16, hy0 - 6, -19, hy0 + 4); c.closePath(); front(); sideLocks(); shine();
+    } else if (hs === 'twinbuns') {
+      c.beginPath(); c.moveTo(-24, hy0 + 2); c.bezierCurveTo(-26, hy0 - 27, 26, hy0 - 27, 24, hy0 + 2); c.bezierCurveTo(18, hy0 - 12, 6, hy0 - 13, 0, hy0 - 19); c.bezierCurveTo(-6, hy0 - 13, -18, hy0 - 12, -24, hy0 + 2); c.closePath(); front(); sideLocks(); shine();
+    } else if (hs === 'bob') {
+      c.beginPath(); c.moveTo(-24, hy0 + 4); c.bezierCurveTo(-27, hy0 - 28, 27, hy0 - 28, 24, hy0 + 4); c.lineTo(20, hy0 - 8); c.lineTo(-20, hy0 - 8); c.closePath(); front();
+      for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(sx * 20, hy0 - 8); c.lineTo(sx * 26, hy0 + 15); c.lineTo(sx * 19, hy0 + 15); c.closePath(); c.fillStyle = hc; c.fill(); } shine();
+    } else if (hs === 'spiky') {
       c.beginPath(); c.moveTo(-23, hy0 - 4); c.lineTo(-17, hy0 - 14); c.lineTo(-12, hy0 - 8); c.lineTo(-6, hy0 - 16); c.lineTo(-1, hy0 - 9); c.lineTo(6, hy0 - 16); c.lineTo(11, hy0 - 8); c.lineTo(17, hy0 - 14); c.lineTo(23, hy0 - 4);
-      c.quadraticCurveTo(14, hy0 - 26, 0, hy0 - 25); c.quadraticCurveTo(-14, hy0 - 26, -23, hy0 - 4); c.closePath(); c.fillStyle = '#17141c'; c.fill();
+      c.quadraticCurveTo(14, hy0 - 26, 0, hy0 - 25); c.quadraticCurveTo(-14, hy0 - 26, -23, hy0 - 4); c.closePath(); c.fillStyle = hc; c.fill();
+    } else if (hs === 'neat') {
+      c.beginPath(); c.moveTo(-23, hy0 - 1); c.bezierCurveTo(-25, hy0 - 27, 23, hy0 - 29, 23, hy0 - 4); c.bezierCurveTo(14, hy0 - 14, -2, hy0 - 18, -9, hy0 - 12); c.bezierCurveTo(-15, hy0 - 10, -20, hy0 - 6, -23, hy0 - 1); c.closePath(); front();
+      c.beginPath(); c.moveTo(-9, hy0 - 12); c.quadraticCurveTo(-8, hy0 - 20, -4, hy0 - 24); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.6; c.stroke();
+    } else if (hs === 'curly') { for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(-17 + i * 6.8, hy0 - 15 + Math.abs(i - 2.5) * 1.6, 6, 0, TAU); front(); } }
+    else if (hs === 'swoop') { c.beginPath(); c.moveTo(-23, hy0 - 2); c.bezierCurveTo(-27, hy0 - 32, 22, hy0 - 34, 27, hy0 - 8); c.bezierCurveTo(18, hy0 - 14, 6, hy0 - 6, -6, hy0 - 6); c.bezierCurveTo(-14, hy0 - 6, -19, hy0 - 4, -23, hy0 - 2); c.closePath(); front(); shine(); }
+    else if (hs === 'cap') {
+      for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(-12 + i * 8, hy0 - 12, 4.5, 0, TAU); c.fillStyle = hc; c.fill(); }
+      c.beginPath(); c.arc(0, hy0 - 10, 25, Math.PI * 1.02, Math.PI * 1.98); c.closePath(); c.fillStyle = '#e03131'; c.fill(); c.strokeStyle = INK; c.lineWidth = 2.2; c.stroke();
+      rr(c, -25, hy0 - 13, 50, 6, 3, '#c92a2a', INK, 1.8); ell(c, -27, hy0 - 12, 9, 3.6, '#c92a2a', INK, 1.8); ell(c, 0, hy0 - 34, 3, 2.4, '#fff');
     }
+    if (nora) star(c, -15, hy0 - 12, 5.5, '#ffd43b', INK, 1.2);
     // face: eyes, brows and mouth change with the mood
     const BROW = { calm: [0, nora ? 0 : 1.2], happy: [-1, -1], determined: [-1, 3.5], hurt: [0, 3], worried: [1.5, -2.5], sad: [2, -2.5], surprised: [-3.5, -3.5], think: [0, 0] }[mood] || [0, 0];
     const look = mood === 'think' ? -2.2 : 0, big = mood === 'surprised' ? 1.12 : 1;
@@ -1146,15 +1201,20 @@ const Art = (() => {
       if (mood === 'happy') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.arc(ex, ey + 3, 5, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
       else if (mood === 'hurt') { c.strokeStyle = INK; c.lineWidth = 2.8; c.beginPath(); c.moveTo(ex - sx * 5, ey - 4); c.lineTo(ex + sx * 3, ey); c.lineTo(ex - sx * 5, ey + 4); c.stroke(); }
       else {
+        if (fs === 'round') { ell(c, ex, ey + 1, 4.2 * big, 4.6 * big, INK); ell(c, ex - 1.3, ey - 0.6 + look, 1.5, 1.6, '#fff'); }
+        else {
         ell(c, ex, ey, 5.2 * big, 7 * big, nora ? '#6b3a1e' : '#17141c', INK, 1.6);
         if (nora) ell(c, ex, ey + 1 + look, 2.8, 4, '#17141c');
         ell(c, ex - 1.6, ey - 2.8 + look, 2, 2.4, '#fff'); ell(c, ex + 1.8, ey + 2.6 + look, 1, 1.1, '#fff');
-        if (nora) { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, ey - 5.6 * big); c.quadraticCurveTo(ex, ey - 9.5 * big, sx * 15.4, ey - 5 * big); c.stroke(); }
+        }
+        if (nora && fs !== 'round') { c.strokeStyle = INK; c.lineWidth = 2.6; c.beginPath(); c.moveTo(sx * 3.4, ey - 5.6 * big); c.quadraticCurveTo(ex, ey - 9.5 * big, sx * 15.4, ey - 5 * big); c.stroke(); }
       }
       const up = mood === 'think' && sx === 1 ? -3 : 0;
       c.strokeStyle = INK; c.lineWidth = nora ? 1.7 : 3; c.beginPath(); c.moveTo(sx * 15, hy0 - 10.5 + BROW[0] + up); c.quadraticCurveTo(sx * 9.5, hy0 - 12.4 + (BROW[0] + BROW[1]) / 2 + up, sx * 4, hy0 - 10.5 + BROW[1] + up); c.stroke();
       ell(c, sx * 15.5, hy0 + 10, 4, 2.2, nora ? 'rgba(255,120,150,.55)' : 'rgba(255,140,120,.3)');
     }
+    if (fs === 'freckles') for (const sx of [-1, 1]) for (const [dx, dy] of [[12, 8], [16, 10], [14, 12.5], [18, 7]]) ell(c, sx * dx, hy0 + dy, 0.9, 0.9, '#b8693a');
+    if (fs === 'glasses') { c.strokeStyle = INK; c.lineWidth = 1.8; for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * 9, hy0 + 3, 7.6, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-1.6, hy0 + 2); c.quadraticCurveTo(0, hy0, 1.6, hy0 + 2); c.stroke(); c.beginPath(); c.moveTo(-16.6, hy0 + 1); c.lineTo(-22, hy0 - 1); c.moveTo(16.6, hy0 + 1); c.lineTo(22, hy0 - 1); c.stroke(); }
     const my = hy0 + 13; c.strokeStyle = INK; c.lineWidth = 2;
     if (mood === 'happy') { c.beginPath(); c.moveTo(-6.5, my - 1); c.quadraticCurveTo(0, my + 9, 6.5, my - 1); c.closePath(); c.fillStyle = '#a01f3c'; c.fill(); c.lineWidth = 1.8; c.stroke(); ell(c, 0, my + 2.6, 2.8, 1.5, '#ff8fab'); }
     else if (mood === 'surprised' || mood === 'hurt') ell(c, 0, my + 1.5, mood === 'hurt' ? 3.6 : 2.8, mood === 'hurt' ? 3 : 3.6, '#a01f3c', INK, 1.8);
@@ -1574,13 +1634,21 @@ const Portraits = (() => {
     if (!p) return;
     c.save(); c.beginPath(); c.rect(0, 0, PW, PH); c.clip();
     if (p.type === 'bust') bust(c, p.v, p.mood, t, talk);
-    else if (p.type === 'hero') { const s = p.kid === S.kid ? S : loadSave(p.kid); Art.hero(c, 140, 448, 4.2, { kid: p.kid, color: s.color, cape: null, cls: null, weapon: null, armor: ARMORS[s.armor].tier, t, glow: false, mood: p.kid === S.kid ? curMood() : 'calm' }); }
+    else if (p.type === 'hero') { const s = p.kid === S.kid ? S : loadSave(p.kid); Art.hero(c, 140, 448, 4.2, { ...looksOf(s), kid: p.kid, color: s.color, cape: null, cls: null, weapon: null, armor: ARMORS[s.armor].tier, t, glow: false, mood: p.kid === S.kid ? curMood() : 'calm' }); }
     else if (p.type === 'owl') { c.translate(140 - 95 * 2.2, 176 - 80 * 2.2); c.scale(2.2, 2.2); Animals.owl(c, t); }
     else if (p.type === 'fog') Art.fog(c, p.def, 140, p.def.boss ? 352 : 330, p.def.boss ? 2.9 : 3.3, t, false);
     else if (p.type === 'voice') { const g = c.createRadialGradient(140, 200, 10, 140, 200, 150); g.addColorStop(0, 'rgba(43,29,92,.95)'); g.addColorStop(1, 'rgba(43,29,92,0)'); c.fillStyle = g; c.fillRect(0, 0, PW, PH); for (const sx of [-1, 1]) { c.save(); c.shadowColor = '#ff6b6b'; c.shadowBlur = 20; c.globalAlpha = 0.6 + Math.sin(t * 2) * 0.3; E(c, 140 + sx * 30, 190, 12, 7, '#ff6b6b', sx * 0.3); c.restore(); } }
     c.restore();
   }
-  return { forSpeaker, draw };
+  // The listening player's face: reacts to what is being said.
+  function reaction(text) { const m = moodOf(text); return m === 'sad' ? 'worried' : m === 'think' ? 'think' : m === 'happy' ? 'happy' : 'calm'; }
+  function drawMe(cv, mood, t) {
+    const d = Math.min(2, window.devicePixelRatio || 1), W0 = 110;
+    if (cv.width !== W0 * d) { cv.width = W0 * d; cv.height = W0 * d; }
+    const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W0, W0);
+    Art.hero(c, 55, 64 + 66 * 1.55, 1.55, Object.assign(heroLook({ cape: null, cls: null, weapon: null, glow: false }), { mood, t }));
+  }
+  return { forSpeaker, draw, reaction, drawMe };
 })();
 
 // Attack animations. Each one is drawn from a progress value k (0 to 1).
@@ -1794,7 +1862,7 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, hair: HAIRS[k][0][0], hairCol: HAIR_COLS[0], face: 'sparkle', title: '', readBtns: false, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
 function save() { if (!S) return; S.ts = Date.now(); try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } Cloud.dirty[S.kid] = JSON.stringify(S); cloudSoon(); }
 function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } delete Cloud.dirty[k]; if (Cloud.ready) Cloud.doc(k).delete().catch(() => { }); }
@@ -1837,12 +1905,15 @@ const heroDef = () => ARMORS[S.armor].def;
 const xpNeed = lv => 25 * lv;
 const lumiNeed = lv => 18 * lv;
 const isEvo = l => l.lv >= 6;
-const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
+const speciesName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
+const lumiName = l => l.nick || speciesName(l);
+const heroName = s => KIDS[s.kid].name + (s.title ? ' ' + s.title : '');
+const looksOf = s => ({ hair: s.hair, hairCol: s.hairCol, face: s.face });
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
 const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
 const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+function heroLook(extra) { return Object.assign({ hair: S.hair, hairCol: S.hairCol, face: S.face, kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
 function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
 function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }
@@ -1898,15 +1969,42 @@ document.addEventListener('click', ev => {
   ev.stopPropagation(); ev.preventDefault(); Snd.init(); Snd.say(w.dataset.say);
   w.classList.add('said'); setTimeout(() => w.classList.remove('said'), 700);
 }, true);
+// Any plain text in menus and the battle message becomes tappable words too.
+function wordifyAll(root) {
+  const skip = 'button, input, textarea, canvas, .zh, .word, [data-say], #qChoices, #toast';
+  const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => (!/[\p{L}\p{N}]/u.test(n.nodeValue) || n.parentElement.closest(skip)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; while (tw.nextNode()) nodes.push(tw.currentNode);
+  for (const n of nodes) { const span = document.createElement('span'); wordify(span, n.nodeValue); n.replaceWith(...span.childNodes); }
+}
+const wordWatch = new MutationObserver(() => { wordWatch.disconnect(); for (const id of ['panelBody', 'bLog', 'crBody', 'crName']) wordifyAll($(id)); watchWords(); });
+function watchWords() { for (const id of ['panelBody', 'bLog', 'crBody', 'crName']) wordWatch.observe($(id), { childList: true, subtree: true, characterData: true }); }
+// Read-to-me for buttons: with the setting on, the first tap on a button says it out loud and the second tap chooses it.
+let armed = null, armedHint = false;
+document.addEventListener('click', ev => {
+  if (!S || !S.readBtns || G.mode === 'title') return;
+  const b = ev.target.closest && ev.target.closest('button'); if (!b || b.disabled) return;
+  if (['dlgNext', 'panelClose', 'qNext', 'crBack'].includes(b.id) || b.classList.contains('choice') || ev.target.closest('[data-say]')) return;
+  if (armed === b) { armed.classList.remove('armed'); armed = null; return; }
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  let label = b.getAttribute('aria-label') || b.innerText;
+  label = label.replace(/[^\p{L}\p{N} ',.!?-]/gu, ' ').replace(/\s+/g, ' ').trim();
+  const row = b.closest('.row'); if (row && row.querySelector('b') && !label.includes(row.querySelector('b').innerText)) label = row.querySelector('b').innerText + '. ' + label + (b.dataset.buy ? ' coins' : '');
+  if (armed) armed.classList.remove('armed'); armed = b; b.classList.add('armed'); Snd.init(); Snd.say(label || 'button');
+  if (!armedHint) { armedHint = true; toast('👂 Tap again to choose it'); }
+  clearTimeout(b.__t); b.__t = setTimeout(() => { if (armed === b) { b.classList.remove('armed'); armed = null; } }, 4000);
+}, true);
 let dlg = null;
 function say(lines, who) {
   if (typeof lines === 'string') lines = [lines];
   return new Promise(res => { dlg = { lines: lines.slice(), who, res }; $('dialog').hidden = false; showLine(); });
 }
 function showLine() {
-  $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]);
+  $('dlgWho').textContent = S && dlg.who === KIDS[S.kid].name ? heroName(S) : dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]);
   // The speaker's portrait, which talks for a moment while the line appears.
   G.face = Portraits.forSpeaker(dlg.who, dlg.lines[0]); G.faceT0 = G.t; $('dialog').classList.toggle('has-face', !!G.face);
+  // The player's own face listens and reacts in a small circle, with their name.
+  G.me = S && (G.mode === 'world' || G.mode === 'battle' || G.mode === 'ending') && dlg.who !== KIDS[S.kid].name ? Portraits.reaction(dlg.lines[0]) : null;
+  $('dlgMe').hidden = !G.me; if (G.me) $('dlgMeName').textContent = heroName(S);
 }
 function advanceDialog() { if (!dlg) return; Snd.play('tap'); dlg.lines.shift(); if (dlg.lines.length) showLine(); else { const r = dlg.res; dlg = null; $('dialog').hidden = true; r(); } }
 $('dialog').addEventListener('click', advanceDialog);
@@ -1925,15 +2023,16 @@ const panelOpen = () => !$('panel').hidden;
 function mini(el, draw, w, h) { const d = Math.min(2, window.devicePixelRatio || 1); el.width = w * d; el.height = h * d; el.style.width = w + 'px'; el.style.height = h + 'px'; const c = el.getContext('2d'); c.scale(d, d); draw(c); }
 function drawMinis(root) {
   (root || document).querySelectorAll('canvas[data-lumi]').forEach(el => mini(el, c => Art.lumi(c, SPECIES[el.dataset.lumi], 32, 58, 1.15, 1, el.dataset.evo === '1'), 64, 64));
-  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { ...looksOf(s), kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-head]').forEach(el => mini(el, c => Art.hero(c, 36, 99, 1.0, Object.assign({ kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: 0, t: 0.3, glow: false, mood: 'calm' }, looksOf(S), JSON.parse(el.dataset.head))), 72, 64));
   (root || document).querySelectorAll('canvas[data-weapon]').forEach(el => mini(el, c => { const w = weaponLook(el.dataset.weapon, S.cls), bow = w.kind === 'bow'; c.translate(bow ? 44 : 22, bow ? 47 : 54); c.rotate(bow ? 0.15 : 0.62); c.scale(bow ? 0.85 : 0.8, bow ? 0.85 : 0.8); Art.weapon(c, w); }, 60, 60));
-  (root || document).querySelectorAll('canvas[data-armor]').forEach(el => mini(el, c => { c.beginPath(); c.rect(0, 0, 60, 60); c.clip(); Art.hero(c, 30, 78, 1.05, { kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: ARMORS[el.dataset.armor].tier, t: 0.3, glow: false, mood: 'calm' }); }, 60, 60));
+  (root || document).querySelectorAll('canvas[data-armor]').forEach(el => mini(el, c => { c.beginPath(); c.rect(0, 0, 60, 60); c.clip(); Art.hero(c, 30, 78, 1.05, { ...looksOf(S), kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: ARMORS[el.dataset.armor].tier, t: 0.3, glow: false, mood: 'calm' }); }, 60, 60));
 }
 
 // ---------- HUD ----------
 function updateHUD() {
   if (!S) return;
-  $('hudName').textContent = `${KIDS[S.kid].name}  Lv ${S.lv}`; $('hudName').style.background = KIDS[S.kid].col;
+  $('hudName').textContent = `${heroName(S)} · Lv ${S.lv}`; $('hudName').style.background = KIDS[S.kid].col;
   $('hudHP').style.width = clamp(S.hp / maxHP() * 100, 0, 100) + '%'; $('hudHPt').textContent = `${Math.max(0, S.hp)} / ${maxHP()}`;
   $('hudXP').style.width = (S.xp / xpNeed(S.lv) * 100) + '%';
   $('hudGold').textContent = S.gold; $('hudCrys').textContent = `${S.crystals.length}/5`;
@@ -2122,12 +2221,26 @@ const bagPanel = () => gearPanel('🎒 Bag', false);
 function teamPanel(inBattle) {
   const render = () => {
     let h = `<h2>🐾 ${KIDS[S.kid].name}'s Lumis</h2><div class="rows">`;
-    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv}${isEvo(l) ? '' : ' · evolves at Level 6'}<br>${MOVES[l.sp].map((nm, t) => l.lv >= MOVE_LV[t] ? `${nm} ${movePower(l, t)}` : `🔒 Lv ${MOVE_LV[t]}`).join(' · ')}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
+    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)}${l.nick ? ` <i class="sp">the ${speciesName(l)}</i>` : ''} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv}${isEvo(l) ? '' : ' · evolves at Level 6'}<br>${MOVES[l.sp].map((nm, t) => l.lv >= MOVE_LV[t] ? `${nm} ${movePower(l, t)}` : `🔒 Lv ${MOVE_LV[t]}`).join(' · ')}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div><button class="ren" data-ren="${i}" aria-label="Give ${speciesName(l)} a name">✏️</button>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
     h += '</div><p class="hint">Fire beats Leaf · Leaf beats Water · Water beats Fire</p>';
     $('panelBody').innerHTML = h; drawMinis($('panelBody'));
     $('panelBody').querySelectorAll('[data-act]').forEach(b => b.onclick = () => { S.active = +b.dataset.act; Snd.play('tap'); save(); if (inBattle) closePanel(); else render(); });
+    $('panelBody').querySelectorAll('[data-ren]').forEach(b => b.onclick = async () => { Snd.play('tap'); closePanel(); await nameLumi(S.party[+b.dataset.ren]); teamPanel(inBattle); });
   };
   const p = openPanel(''); render(); return p;
+}
+// Ask for a Lumi's nickname: type one, or tap a suggestion.
+function nameLumi(l) {
+  const sp = SPECIES[l.sp]; let pick = l.nick || '';
+  const render = () => {
+    $('panelBody').innerHTML = `<h2>Name your ${speciesName(l)}</h2><div class="nameRow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><input id="nickIn" type="text" maxlength="12" autocomplete="off" placeholder="${speciesName(l)}" value="${pick}" aria-label="Lumi name"></div><div class="pills">${NICKS[sp.el].map(n => `<button class="pill${pick === n ? ' on' : ''}" data-nick="${n}">${n}</button>`).join('')}</div><div class="gaterow"><button id="nickSkip" class="ghost dark">No name</button><button id="nickOk" class="big">Keep this name</button></div>`;
+    drawMinis($('panelBody'));
+    $('nickIn').oninput = () => { pick = cleanNick($('nickIn').value); };
+    $('panelBody').querySelectorAll('[data-nick]').forEach(b => b.onclick = () => { pick = b.dataset.nick; Snd.play('tap'); render(); });
+    $('nickOk').onclick = () => { l.nick = cleanNick(pick); Snd.play('ok'); save(); closePanel(); };
+    $('nickSkip').onclick = () => { l.nick = ''; Snd.play('tap'); save(); closePanel(); };
+  };
+  const p = openPanel('', { noClose: true }); render(); return p;
 }
 function questPanel() {
   const w = WORLDS[G.world], q = S.quests[G.world] || {};
@@ -2138,7 +2251,8 @@ function questPanel() {
   h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p>`;
   const mem = WORLD_ORDER.slice(0, 5).filter(id => S.bosses[id]).map(id => LORE[id].memory);
   h += '<h3 class="memh">Memories of the boy in the fog</h3>' + (mem.length ? '<ol class="mems">' + mem.map(m => `<li><b>${m[0]}</b> ${m[1]}</li>`).join('') + '</ol>' : '<p class="hint">Beat a Fog boss to find the first memory.</p>');
-  return openPanel(h);
+  h += `<label class="chk"><input type="checkbox" id="optRead" ${S.readBtns ? 'checked' : ''}> Read buttons out loud before choosing them</label>`;
+  const p = openPanel(h); $('optRead').onchange = e => { S.readBtns = e.target.checked; save(); }; return p;
 }
 
 // ---------- drawing ----------
@@ -2369,6 +2483,7 @@ async function finishBattle(how) {
   if (how === 'capture') {
     S.party.push({ sp: e.sp, lv: e.lv, xp: 0 }); setLog(`Gotcha! ${e.name} joined ${n}'s team!`); await wait(0.5);
     addXP(e.xp); await say([`${e.name} was captured! It joins your team at Level ${e.lv}.`, 'Open 🐾 Team to choose which Lumi fights beside you.']);
+    await nameLumi(S.party[S.party.length - 1]);
     return leaveBattle();
   }
   Snd.play('win'); await tween(0.5, k => { B.eScale = 1 - k; }); burst(720, 290, '#d0bfff', 26);
@@ -2491,24 +2606,41 @@ async function enterGame(fresh) {
 }
 
 // ---------- creator ----------
-let pickSp = STARTERS[0];
-function showCreator() {
-  G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0];
-  const draw = () => {
-    $('crName').textContent = `Create ${KIDS[kid].name}'s hero`;
-    $('crClass').innerHTML = Object.entries(CLASSES).map(([id, c]) => `<button class="opt${S.cls === id ? ' on' : ''}" data-cls="${id}"><span>${c.icon}</span><b>${c.name}</b><small>${c.perk}</small></button>`).join('');
-    $('crColor').innerHTML = TUNICS.map(c => `<button class="sw${S.color === c ? ' on' : ''}" data-col="${c}" style="background:${c}" aria-label="Tunic colour"></button>`).join('');
-    $('crCape').innerHTML = CAPES.map(c => `<button class="sw${S.cape === c ? ' on' : ''}" data-cape="${c || ''}" style="background:${c || 'transparent'}" aria-label="Cape">${c ? '' : '✕'}</button>`).join('');
-    $('crLumi').innerHTML = STARTERS.map(id => `<button class="opt lumi${pickSp === id ? ' on' : ''}" data-sp="${id}"><canvas data-lumi="${id}"></canvas><b>${SPECIES[id].name}</b><small class="el el-${SPECIES[id].el}">${SPECIES[id].el}</small></button>`).join('');
-    drawMinis($('creator'));
-    $('creator').querySelectorAll('[data-cls]').forEach(b => b.onclick = () => { S.cls = b.dataset.cls; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-col]').forEach(b => b.onclick = () => { S.color = b.dataset.col; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-cape]').forEach(b => b.onclick = () => { S.cape = b.dataset.cape || null; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { pickSp = b.dataset.sp; Snd.play('tap'); draw(); });
-  };
-  draw();
+let pickSp = STARTERS[0], crStep = 0, crNick = '';
+const cleanNick = t => String(t || '').replace(/[^\p{L}\p{N} '\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+// The hero creator has three steps: how the hero looks, their class and gear, then their first Lumi.
+function showCreator() { G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0]; crStep = 0; crNick = ''; drawCreatorUI(); }
+function drawCreatorUI() {
+  const steps = ['Look', 'Hero', 'Lumi'], head = o => `data-head='${JSON.stringify(o)}'`;
+  $('crName').textContent = crStep === 0 ? `How does ${KIDS[kid].name} look?` : crStep === 1 ? `Choose ${KIDS[kid].name}'s gear` : `${KIDS[kid].name}'s first Lumi friend`;
+  $('crSteps').innerHTML = steps.map((n, i) => `<span class="${i === crStep ? 'on' : i < crStep ? 'done' : ''}">${i + 1}. ${n}</span>`).join('');
+  let h = '';
+  if (crStep === 0) {
+    h += `<div class="crsec"><h3>Hair style</h3><div class="opts heads">${HAIRS[kid].map(([id, n]) => `<button class="opt head${S.hair === id ? ' on' : ''}" data-hair="${id}" aria-label="${n} hair"><canvas ${head({ hair: id })}></canvas><b>${n}</b></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Hair colour</h3><div class="sws">${HAIR_COLS.map(c => `<button class="sw${S.hairCol === c ? ' on' : ''}" data-hc="${c}" style="background:${c}" aria-label="Hair colour"></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Face</h3><div class="opts heads">${FACES.map(([id, n]) => `<button class="opt head${S.face === id ? ' on' : ''}" data-face="${id}" aria-label="${n} face"><canvas ${head({ face: id })}></canvas><b>${n}</b></button>`).join('')}</div></div>`;
+  } else if (crStep === 1) {
+    h += `<div class="crsec"><h3>Hero class</h3><div class="opts">${Object.entries(CLASSES).map(([id, c]) => `<button class="opt${S.cls === id ? ' on' : ''}" data-cls="${id}"><span>${c.icon}</span><b>${c.name}</b><small>${c.perk}</small></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Tunic</h3><div class="sws">${TUNICS.map(c => `<button class="sw${S.color === c ? ' on' : ''}" data-col="${c}" style="background:${c}" aria-label="Tunic colour"></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Cape</h3><div class="sws">${CAPES.map(c => `<button class="sw${S.cape === c ? ' on' : ''}" data-cape="${c || ''}" style="background:${c || 'transparent'}" aria-label="${c ? 'Cape colour' : 'No cape'}">${c ? '' : '✕'}</button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Hero title</h3><div class="pills">${['', ...TITLES].map(tl => `<button class="pill${S.title === tl ? ' on' : ''}" data-title="${tl}">${tl ? KIDS[kid].name + ' ' + tl : 'Just ' + KIDS[kid].name}</button>`).join('')}</div></div>`;
+  } else {
+    h += `<div class="crsec"><div class="opts">${STARTERS.map(id => `<button class="opt lumi${pickSp === id ? ' on' : ''}" data-sp="${id}"><canvas data-lumi="${id}"></canvas><b>${SPECIES[id].name}</b><small class="el el-${SPECIES[id].el}">${SPECIES[id].el}</small></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Give it a name</h3><input id="crNick" type="text" maxlength="12" autocomplete="off" placeholder="${SPECIES[pickSp].name}" value="${crNick}" aria-label="Lumi name"><div class="pills">${NICKS[SPECIES[pickSp].el].map(n => `<button class="pill${crNick === n ? ' on' : ''}" data-nick="${n}">${n}</button>`).join('')}</div></div>`;
+  }
+  $('crBody').innerHTML = h; drawMinis($('creator'));
+  $('crBack').hidden = crStep === 0; $('btnBegin').textContent = crStep < 2 ? 'Next ▶' : 'Begin the adventure ▶';
+  const on = (sel, fn) => $('creator').querySelectorAll(sel).forEach(b => b.onclick = () => { fn(b); Snd.play('tap'); drawCreatorUI(); });
+  on('[data-hair]', b => { S.hair = b.dataset.hair; }); on('[data-hc]', b => { S.hairCol = b.dataset.hc; }); on('[data-face]', b => { S.face = b.dataset.face; });
+  on('[data-cls]', b => { S.cls = b.dataset.cls; }); on('[data-col]', b => { S.color = b.dataset.col; }); on('[data-cape]', b => { S.cape = b.dataset.cape || null; }); on('[data-title]', b => { S.title = b.dataset.title; });
+  on('[data-sp]', b => { if (pickSp !== b.dataset.sp) crNick = ''; pickSp = b.dataset.sp; }); on('[data-nick]', b => { crNick = b.dataset.nick; });
+  const inp = $('crNick'); if (inp) inp.oninput = () => { crNick = cleanNick(inp.value); };
 }
-$('btnBegin').addEventListener('click', () => { Snd.play('ok'); S.created = true; S.party = [{ sp: pickSp, lv: 1, xp: 0 }]; S.active = 0; S.hp = maxHP(); save(); enterGame(true); });
+$('crBack').addEventListener('click', () => { if (crStep > 0) { crStep--; Snd.play('tap'); drawCreatorUI(); } });
+$('btnBegin').addEventListener('click', () => {
+  if (crStep < 2) { crStep++; Snd.play('tap'); drawCreatorUI(); return; }
+  Snd.play('ok'); S.created = true; S.party = [{ sp: pickSp, lv: 1, xp: 0, nick: cleanNick(crNick) }]; S.active = 0; S.hp = maxHP(); save(); enterGame(true);
+});
 
 // ---------- parent gate ----------
 function resetGate() {
@@ -2577,7 +2709,7 @@ function logo(c, y, s) {
   zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
-function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
+function heroFor(k, t) { const s = loadSave(k); return { ...looksOf(s), kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
 let titleLooks = null;
 function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;
@@ -2657,6 +2789,7 @@ function frame(ts) {
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
   if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
   if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
+  if (dlg && G.me) Portraits.drawMe($('dlgMeFace'), G.mood && G.moodUntil > G.t ? G.mood : G.me, G.t);
   if (dlg && G.face) Portraits.draw($('dlgFace'), G.face, G.t, G.t - G.faceT0 < Math.min(2.4, 0.5 + dlg.lines[0].length * 0.03));
   if (G.fade > 0) { ctx.fillStyle = `rgba(21,19,31,${G.fade})`; ctx.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
@@ -2706,7 +2839,7 @@ window.__test = {
   solve() { this.step(); },
   step() {
     if (G.mode === 'title') { if (G.intro.state === 'wait') return startIntro(); if (G.intro.state === 'play') return showMenu(); return pickKid('nora'); }
-    if (G.mode === 'create') return $('btnBegin').click();
+    if (G.mode === 'create') { crStep = 2; return $('btnBegin').click(); }
     if (QS) { if (QS.done) { if (!$('qNext').hidden) $('qNext').click(); return; } const q = QS.q; if (q.type === 'order') q.correct.forEach(i => pickAnswer(i)); else pickAnswer(q.answer); return; }
     if (dlg) return advanceDialog();
     if (panelOpen()) { const f = $('btnFinish'); if (f) return f.click(); return closePanel(); }
@@ -2724,6 +2857,7 @@ window.__test = {
     }
   },
 };
+watchWords();
 function onCloudReady() { if (G.mode === 'title' && !$('menu').hidden) profileCards(); }
 cloudInit();
 requestAnimationFrame(frame);

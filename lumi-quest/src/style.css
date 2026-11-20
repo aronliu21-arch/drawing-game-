@@ -114,7 +114,7 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .crys span.got { color: var(--c); text-shadow: 0 0 12px var(--c); }
 .crys small { display: block; font: 800 11px var(--font-b); color: var(--muted); text-shadow: none; }
 .chk { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; min-height: 48px; }
-.chk input { width: 28px; height: 28px; }
+.chk input { width: 28px; height: 28px; flex: none; }
 .gateq { font: 400 40px var(--font-d) !important; text-align: center; }
 .gaterow { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 8px; }
 #gateIn { font: 800 26px var(--font-b); width: 180px; height: 60px; text-align: center; border: 4px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); -webkit-user-select: text; user-select: text; }
@@ -202,3 +202,31 @@ h3 { font: 800 13px var(--font-b); letter-spacing: .08em; text-transform: upperc
 .row canvas.ricon { flex: none; width: 60px; height: 60px; border-radius: 12px; background: #f1ead8; }
 .perk { display: block; font-size: 13.5px; font-weight: 700; color: #5f3dc4; line-height: 1.3; margin-top: 2px; }
 .perk b { font-size: 13.5px; display: inline; }
+
+/* the listening player's face, with their name */
+#dlgMe { position: absolute; right: 22px; top: -126px; width: 118px; text-align: center; pointer-events: none; }
+#dlgMeFace { width: 110px; height: 110px; border-radius: 50%; background: #e5dbff; border: 4px solid var(--gold); box-shadow: 0 4px 0 var(--ink); display: block; margin: 0 auto; }
+#dlgMeName { display: inline-block; margin-top: -10px; position: relative; background: var(--violet); color: #fff; font: 400 15px var(--font-d); padding: 2px 10px; border-radius: 10px; border: 2px solid var(--ink); white-space: nowrap; }
+/* creator steps */
+.steps { display: flex; gap: 6px; } .steps span { flex: 1; text-align: center; font-weight: 800; font-size: 13px; padding: 4px 0; border-radius: 10px; background: rgba(255, 255, 255, .12); color: #ced4da; }
+.steps span.on { background: var(--gold); color: var(--ink); } .steps span.done { background: rgba(255, 212, 59, .35); color: #fff; }
+#crBody { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; padding: 4px 4px 6px; margin: 0 -4px; }
+#crBody .opt small { font-size: 11px; }
+#crBody .sw { height: 40px; }
+#crBody .pill { min-height: 44px; font-size: 14px; padding: 0 12px; }
+.crnav { display: flex; gap: 10px; } .crnav .big { flex: 1; } .crnav .ghost { min-width: 110px; }
+.opt.head { padding: 2px 2px 6px; min-height: 0; } .opt.head canvas { display: block; margin: 0 auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { min-height: 48px; padding: 0 14px; border-radius: 22px; background: #fff; color: var(--text); font-weight: 800; font-size: 15px; border: 3px solid transparent; }
+.pill.on { border-color: var(--gold); box-shadow: 0 0 0 3px var(--ink); }
+#crNick, #nickIn { font: 800 22px var(--font-b); height: 52px; border-radius: 14px; border: 3px solid var(--ink); padding: 0 14px; width: 100%; box-sizing: border-box; color: var(--ink); background: #fff; -webkit-user-select: text; user-select: text; }
+.nameRow { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; } .nameRow canvas { flex: none; }
+.ghost.dark { color: var(--ink); border-color: var(--ink); background: transparent; }
+.row .ren { min-width: 52px !important; background: #e5dbff !important; }
+.row b i.sp { font-style: normal; font-weight: 700; font-size: 14px; color: var(--muted); }
+/* read-to-me: a button that has just been read waits for a second tap */
+button.armed { outline: 4px solid var(--gold); outline-offset: 3px; animation: armedPulse .8s ease-in-out infinite; }
+@keyframes armedPulse { 50% { outline-color: #fff; } }
+#bLog .word, #panelBody .word, #crBody .word { cursor: pointer; }
+.pill.on, .opt.on { position: relative; }
+.chk { cursor: pointer; }

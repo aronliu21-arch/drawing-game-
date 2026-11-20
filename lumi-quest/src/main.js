@@ -32,24 +32,41 @@ async function enterGame(fresh) {
 }
 
 // ---------- creator ----------
-let pickSp = STARTERS[0];
-function showCreator() {
-  G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0];
-  const draw = () => {
-    $('crName').textContent = `Create ${KIDS[kid].name}'s hero`;
-    $('crClass').innerHTML = Object.entries(CLASSES).map(([id, c]) => `<button class="opt${S.cls === id ? ' on' : ''}" data-cls="${id}"><span>${c.icon}</span><b>${c.name}</b><small>${c.perk}</small></button>`).join('');
-    $('crColor').innerHTML = TUNICS.map(c => `<button class="sw${S.color === c ? ' on' : ''}" data-col="${c}" style="background:${c}" aria-label="Tunic colour"></button>`).join('');
-    $('crCape').innerHTML = CAPES.map(c => `<button class="sw${S.cape === c ? ' on' : ''}" data-cape="${c || ''}" style="background:${c || 'transparent'}" aria-label="Cape">${c ? '' : '✕'}</button>`).join('');
-    $('crLumi').innerHTML = STARTERS.map(id => `<button class="opt lumi${pickSp === id ? ' on' : ''}" data-sp="${id}"><canvas data-lumi="${id}"></canvas><b>${SPECIES[id].name}</b><small class="el el-${SPECIES[id].el}">${SPECIES[id].el}</small></button>`).join('');
-    drawMinis($('creator'));
-    $('creator').querySelectorAll('[data-cls]').forEach(b => b.onclick = () => { S.cls = b.dataset.cls; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-col]').forEach(b => b.onclick = () => { S.color = b.dataset.col; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-cape]').forEach(b => b.onclick = () => { S.cape = b.dataset.cape || null; Snd.play('tap'); draw(); });
-    $('creator').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { pickSp = b.dataset.sp; Snd.play('tap'); draw(); });
-  };
-  draw();
+let pickSp = STARTERS[0], crStep = 0, crNick = '';
+const cleanNick = t => String(t || '').replace(/[^\p{L}\p{N} '\-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+// The hero creator has three steps: how the hero looks, their class and gear, then their first Lumi.
+function showCreator() { G.mode = 'create'; $('creator').hidden = false; pickSp = STARTERS[0]; crStep = 0; crNick = ''; drawCreatorUI(); }
+function drawCreatorUI() {
+  const steps = ['Look', 'Hero', 'Lumi'], head = o => `data-head='${JSON.stringify(o)}'`;
+  $('crName').textContent = crStep === 0 ? `How does ${KIDS[kid].name} look?` : crStep === 1 ? `Choose ${KIDS[kid].name}'s gear` : `${KIDS[kid].name}'s first Lumi friend`;
+  $('crSteps').innerHTML = steps.map((n, i) => `<span class="${i === crStep ? 'on' : i < crStep ? 'done' : ''}">${i + 1}. ${n}</span>`).join('');
+  let h = '';
+  if (crStep === 0) {
+    h += `<div class="crsec"><h3>Hair style</h3><div class="opts heads">${HAIRS[kid].map(([id, n]) => `<button class="opt head${S.hair === id ? ' on' : ''}" data-hair="${id}" aria-label="${n} hair"><canvas ${head({ hair: id })}></canvas><b>${n}</b></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Hair colour</h3><div class="sws">${HAIR_COLS.map(c => `<button class="sw${S.hairCol === c ? ' on' : ''}" data-hc="${c}" style="background:${c}" aria-label="Hair colour"></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Face</h3><div class="opts heads">${FACES.map(([id, n]) => `<button class="opt head${S.face === id ? ' on' : ''}" data-face="${id}" aria-label="${n} face"><canvas ${head({ face: id })}></canvas><b>${n}</b></button>`).join('')}</div></div>`;
+  } else if (crStep === 1) {
+    h += `<div class="crsec"><h3>Hero class</h3><div class="opts">${Object.entries(CLASSES).map(([id, c]) => `<button class="opt${S.cls === id ? ' on' : ''}" data-cls="${id}"><span>${c.icon}</span><b>${c.name}</b><small>${c.perk}</small></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Tunic</h3><div class="sws">${TUNICS.map(c => `<button class="sw${S.color === c ? ' on' : ''}" data-col="${c}" style="background:${c}" aria-label="Tunic colour"></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Cape</h3><div class="sws">${CAPES.map(c => `<button class="sw${S.cape === c ? ' on' : ''}" data-cape="${c || ''}" style="background:${c || 'transparent'}" aria-label="${c ? 'Cape colour' : 'No cape'}">${c ? '' : '✕'}</button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Hero title</h3><div class="pills">${['', ...TITLES].map(tl => `<button class="pill${S.title === tl ? ' on' : ''}" data-title="${tl}">${tl ? KIDS[kid].name + ' ' + tl : 'Just ' + KIDS[kid].name}</button>`).join('')}</div></div>`;
+  } else {
+    h += `<div class="crsec"><div class="opts">${STARTERS.map(id => `<button class="opt lumi${pickSp === id ? ' on' : ''}" data-sp="${id}"><canvas data-lumi="${id}"></canvas><b>${SPECIES[id].name}</b><small class="el el-${SPECIES[id].el}">${SPECIES[id].el}</small></button>`).join('')}</div></div>`;
+    h += `<div class="crsec"><h3>Give it a name</h3><input id="crNick" type="text" maxlength="12" autocomplete="off" placeholder="${SPECIES[pickSp].name}" value="${crNick}" aria-label="Lumi name"><div class="pills">${NICKS[SPECIES[pickSp].el].map(n => `<button class="pill${crNick === n ? ' on' : ''}" data-nick="${n}">${n}</button>`).join('')}</div></div>`;
+  }
+  $('crBody').innerHTML = h; drawMinis($('creator'));
+  $('crBack').hidden = crStep === 0; $('btnBegin').textContent = crStep < 2 ? 'Next ▶' : 'Begin the adventure ▶';
+  const on = (sel, fn) => $('creator').querySelectorAll(sel).forEach(b => b.onclick = () => { fn(b); Snd.play('tap'); drawCreatorUI(); });
+  on('[data-hair]', b => { S.hair = b.dataset.hair; }); on('[data-hc]', b => { S.hairCol = b.dataset.hc; }); on('[data-face]', b => { S.face = b.dataset.face; });
+  on('[data-cls]', b => { S.cls = b.dataset.cls; }); on('[data-col]', b => { S.color = b.dataset.col; }); on('[data-cape]', b => { S.cape = b.dataset.cape || null; }); on('[data-title]', b => { S.title = b.dataset.title; });
+  on('[data-sp]', b => { if (pickSp !== b.dataset.sp) crNick = ''; pickSp = b.dataset.sp; }); on('[data-nick]', b => { crNick = b.dataset.nick; });
+  const inp = $('crNick'); if (inp) inp.oninput = () => { crNick = cleanNick(inp.value); };
 }
-$('btnBegin').addEventListener('click', () => { Snd.play('ok'); S.created = true; S.party = [{ sp: pickSp, lv: 1, xp: 0 }]; S.active = 0; S.hp = maxHP(); save(); enterGame(true); });
+$('crBack').addEventListener('click', () => { if (crStep > 0) { crStep--; Snd.play('tap'); drawCreatorUI(); } });
+$('btnBegin').addEventListener('click', () => {
+  if (crStep < 2) { crStep++; Snd.play('tap'); drawCreatorUI(); return; }
+  Snd.play('ok'); S.created = true; S.party = [{ sp: pickSp, lv: 1, xp: 0, nick: cleanNick(crNick) }]; S.active = 0; S.hp = maxHP(); save(); enterGame(true);
+});
 
 // ---------- parent gate ----------
 function resetGate() {
@@ -118,7 +135,7 @@ function logo(c, y, s) {
   zhDraw(c, ZT.sub, 0, 54, 38, '#fff', [['#15131f', 8]]);
   c.restore();
 }
-function heroFor(k, t) { const s = loadSave(k); return { kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
+function heroFor(k, t) { const s = loadSave(k); return { ...looksOf(s), kid: k, color: s.color, cape: s.cape || (k === 'nora' ? '#ffd43b' : '#e03131'), weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, cls: s.created ? s.cls : null, t, glow: false }; }
 let titleLooks = null;
 function drawTitle(c) {
   const I = G.intro, t = I.t, gt = G.t;
@@ -198,6 +215,7 @@ function frame(ts) {
   else if (G.mode === 'world') { if (held && !G.path.length) worldKey(held[0], held[1]); stepWorld(dt); drawWorld(ctx); drawParts(ctx); }
   if (QS && S) mini2($('qFace'), c => Art.hero(c, 36, 106, 1.05, heroLook({ glow: false, weapon: null, cls: null, cape: null })));
   if (G.mode === 'battle' && G.B) { const B = G.B; B.eHit = Math.max(0, B.eHit - dt); B.hHit = Math.max(0, B.hHit - dt); B.shake = Math.max(0, B.shake - dt); drawBattle(ctx); }
+  if (dlg && G.me) Portraits.drawMe($('dlgMeFace'), G.mood && G.moodUntil > G.t ? G.mood : G.me, G.t);
   if (dlg && G.face) Portraits.draw($('dlgFace'), G.face, G.t, G.t - G.faceT0 < Math.min(2.4, 0.5 + dlg.lines[0].length * 0.03));
   if (G.fade > 0) { ctx.fillStyle = `rgba(21,19,31,${G.fade})`; ctx.fillRect(0, 0, W, H); }
   requestAnimationFrame(frame);
@@ -247,7 +265,7 @@ window.__test = {
   solve() { this.step(); },
   step() {
     if (G.mode === 'title') { if (G.intro.state === 'wait') return startIntro(); if (G.intro.state === 'play') return showMenu(); return pickKid('nora'); }
-    if (G.mode === 'create') return $('btnBegin').click();
+    if (G.mode === 'create') { crStep = 2; return $('btnBegin').click(); }
     if (QS) { if (QS.done) { if (!$('qNext').hidden) $('qNext').click(); return; } const q = QS.q; if (q.type === 'order') q.correct.forEach(i => pickAnswer(i)); else pickAnswer(q.answer); return; }
     if (dlg) return advanceDialog();
     if (panelOpen()) { const f = $('btnFinish'); if (f) return f.click(); return closePanel(); }
@@ -265,6 +283,7 @@ window.__test = {
     }
   },
 };
+watchWords();
 function onCloudReady() { if (G.mode === 'title' && !$('menu').hidden) profileCards(); }
 cloudInit();
 requestAnimationFrame(frame);

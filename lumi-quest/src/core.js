@@ -10,7 +10,7 @@ let kid = null, S = null;
 const G = { mode: 'title', t: 0, fast: false, world: null, grid: null, ents: [], px: 0, py: 0, fx: 0, fy: 0, path: [], after: null, walking: false, grace: 0, cam: { x: 0, y: 0 }, parts: [], B: null, intro: null, busy: false };
 
 // ---------- save ----------
-function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
+function newSave(k) { return { v: 1, kid: k, created: false, cls: 'knight', color: TUNICS[0], cape: null, hair: HAIRS[k][0][0], hairCol: HAIR_COLS[0], face: 'sparkle', title: '', readBtns: false, lv: 1, xp: 0, hp: 40, gold: 30, weapon: 'wood', armor: 'cloth', weapons: ['wood'], armors: ['cloth'], potion: 2, orb: 3, party: [], active: 0, crystals: [], chests: {}, bosses: {}, quests: {}, ts: 0, seen: {}, met: {}, news: {}, elderTold: false, stats: { right: 0, asked: 0, wins: 0, first: 0 }, read: k === 'lucas', metElder: false, won: false }; }
 function loadSave(k) { try { const r = localStorage.getItem('lumiquest.v1.' + k); if (r) { const s = JSON.parse(r); if (s && s.v === 1) return Object.assign(newSave(k), s); } } catch (e) { } return newSave(k); }
 function save() { if (!S) return; S.ts = Date.now(); try { localStorage.setItem('lumiquest.v1.' + S.kid, JSON.stringify(S)); } catch (e) { } Cloud.dirty[S.kid] = JSON.stringify(S); cloudSoon(); }
 function wipe(k) { try { localStorage.removeItem('lumiquest.v1.' + k); } catch (e) { } delete Cloud.dirty[k]; if (Cloud.ready) Cloud.doc(k).delete().catch(() => { }); }
@@ -53,12 +53,15 @@ const heroDef = () => ARMORS[S.armor].def;
 const xpNeed = lv => 25 * lv;
 const lumiNeed = lv => 18 * lv;
 const isEvo = l => l.lv >= 6;
-const lumiName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
+const speciesName = l => isEvo(l) ? SPECIES[l.sp].evo : SPECIES[l.sp].name;
+const lumiName = l => l.nick || speciesName(l);
+const heroName = s => KIDS[s.kid].name + (s.title ? ' ' + s.title : '');
+const looksOf = s => ({ hair: s.hair, hairCol: s.hairCol, face: s.face });
 const lumiPower = l => Math.round((9 + 3 * l.lv) * (isEvo(l) ? 1.2 : 1) * (S.cls === 'mage' ? 1.2 : 1));
 const knownMoves = l => MOVE_LV.filter(lv => l.lv >= lv).length;
 const movePower = (l, tier) => Math.round(lumiPower(l) * MOVE_MULT[tier]);
 const activeLumi = () => S.party[S.active] || S.party[0];
-function heroLook(extra) { return Object.assign({ kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
+function heroLook(extra) { return Object.assign({ hair: S.hair, hairCol: S.hairCol, face: S.face, kid: S.kid, color: S.color, cape: S.cape, cls: S.cls, weapon: weaponLook(S.weapon, S.cls), armor: ARMORS[S.armor].tier, t: G.t, mood: curMood() }, extra || {}); }
 // The hero's face follows what is happening: a timed mood first, then thinking, then worry at low health.
 function setMood(m, secs) { G.mood = m; G.moodUntil = G.t + (secs || 1.2); }
 function curMood() { if (G.moodUntil > G.t) return G.mood; if (QS && !QS.done) return 'think'; if (S && G.mode === 'battle' && S.hp < maxHP() * 0.3) return 'worried'; return 'calm'; }
@@ -114,15 +117,42 @@ document.addEventListener('click', ev => {
   ev.stopPropagation(); ev.preventDefault(); Snd.init(); Snd.say(w.dataset.say);
   w.classList.add('said'); setTimeout(() => w.classList.remove('said'), 700);
 }, true);
+// Any plain text in menus and the battle message becomes tappable words too.
+function wordifyAll(root) {
+  const skip = 'button, input, textarea, canvas, .zh, .word, [data-say], #qChoices, #toast';
+  const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => (!/[\p{L}\p{N}]/u.test(n.nodeValue) || n.parentElement.closest(skip)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; while (tw.nextNode()) nodes.push(tw.currentNode);
+  for (const n of nodes) { const span = document.createElement('span'); wordify(span, n.nodeValue); n.replaceWith(...span.childNodes); }
+}
+const wordWatch = new MutationObserver(() => { wordWatch.disconnect(); for (const id of ['panelBody', 'bLog', 'crBody', 'crName']) wordifyAll($(id)); watchWords(); });
+function watchWords() { for (const id of ['panelBody', 'bLog', 'crBody', 'crName']) wordWatch.observe($(id), { childList: true, subtree: true, characterData: true }); }
+// Read-to-me for buttons: with the setting on, the first tap on a button says it out loud and the second tap chooses it.
+let armed = null, armedHint = false;
+document.addEventListener('click', ev => {
+  if (!S || !S.readBtns || G.mode === 'title') return;
+  const b = ev.target.closest && ev.target.closest('button'); if (!b || b.disabled) return;
+  if (['dlgNext', 'panelClose', 'qNext', 'crBack'].includes(b.id) || b.classList.contains('choice') || ev.target.closest('[data-say]')) return;
+  if (armed === b) { armed.classList.remove('armed'); armed = null; return; }
+  ev.preventDefault(); ev.stopImmediatePropagation();
+  let label = b.getAttribute('aria-label') || b.innerText;
+  label = label.replace(/[^\p{L}\p{N} ',.!?-]/gu, ' ').replace(/\s+/g, ' ').trim();
+  const row = b.closest('.row'); if (row && row.querySelector('b') && !label.includes(row.querySelector('b').innerText)) label = row.querySelector('b').innerText + '. ' + label + (b.dataset.buy ? ' coins' : '');
+  if (armed) armed.classList.remove('armed'); armed = b; b.classList.add('armed'); Snd.init(); Snd.say(label || 'button');
+  if (!armedHint) { armedHint = true; toast('👂 Tap again to choose it'); }
+  clearTimeout(b.__t); b.__t = setTimeout(() => { if (armed === b) { b.classList.remove('armed'); armed = null; } }, 4000);
+}, true);
 let dlg = null;
 function say(lines, who) {
   if (typeof lines === 'string') lines = [lines];
   return new Promise(res => { dlg = { lines: lines.slice(), who, res }; $('dialog').hidden = false; showLine(); });
 }
 function showLine() {
-  $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]);
+  $('dlgWho').textContent = S && dlg.who === KIDS[S.kid].name ? heroName(S) : dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]);
   // The speaker's portrait, which talks for a moment while the line appears.
   G.face = Portraits.forSpeaker(dlg.who, dlg.lines[0]); G.faceT0 = G.t; $('dialog').classList.toggle('has-face', !!G.face);
+  // The player's own face listens and reacts in a small circle, with their name.
+  G.me = S && (G.mode === 'world' || G.mode === 'battle' || G.mode === 'ending') && dlg.who !== KIDS[S.kid].name ? Portraits.reaction(dlg.lines[0]) : null;
+  $('dlgMe').hidden = !G.me; if (G.me) $('dlgMeName').textContent = heroName(S);
 }
 function advanceDialog() { if (!dlg) return; Snd.play('tap'); dlg.lines.shift(); if (dlg.lines.length) showLine(); else { const r = dlg.res; dlg = null; $('dialog').hidden = true; r(); } }
 $('dialog').addEventListener('click', advanceDialog);
@@ -141,15 +171,16 @@ const panelOpen = () => !$('panel').hidden;
 function mini(el, draw, w, h) { const d = Math.min(2, window.devicePixelRatio || 1); el.width = w * d; el.height = h * d; el.style.width = w + 'px'; el.style.height = h + 'px'; const c = el.getContext('2d'); c.scale(d, d); draw(c); }
 function drawMinis(root) {
   (root || document).querySelectorAll('canvas[data-lumi]').forEach(el => mini(el, c => Art.lumi(c, SPECIES[el.dataset.lumi], 32, 58, 1.15, 1, el.dataset.evo === '1'), 64, 64));
-  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-hero]').forEach(el => { const s = el.dataset.hero === 'me' ? S : loadSave(el.dataset.hero); mini(el, c => Art.hero(c, 60, 128, 1.15, { ...looksOf(s), kid: s.kid, color: s.color, cape: s.cape, cls: s.created ? s.cls : null, weapon: weaponLook(s.weapon, s.cls), armor: ARMORS[s.armor].tier, t: 0.3 }), 120, 136); });
+  (root || document).querySelectorAll('canvas[data-head]').forEach(el => mini(el, c => Art.hero(c, 36, 99, 1.0, Object.assign({ kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: 0, t: 0.3, glow: false, mood: 'calm' }, looksOf(S), JSON.parse(el.dataset.head))), 72, 64));
   (root || document).querySelectorAll('canvas[data-weapon]').forEach(el => mini(el, c => { const w = weaponLook(el.dataset.weapon, S.cls), bow = w.kind === 'bow'; c.translate(bow ? 44 : 22, bow ? 47 : 54); c.rotate(bow ? 0.15 : 0.62); c.scale(bow ? 0.85 : 0.8, bow ? 0.85 : 0.8); Art.weapon(c, w); }, 60, 60));
-  (root || document).querySelectorAll('canvas[data-armor]').forEach(el => mini(el, c => { c.beginPath(); c.rect(0, 0, 60, 60); c.clip(); Art.hero(c, 30, 78, 1.05, { kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: ARMORS[el.dataset.armor].tier, t: 0.3, glow: false, mood: 'calm' }); }, 60, 60));
+  (root || document).querySelectorAll('canvas[data-armor]').forEach(el => mini(el, c => { c.beginPath(); c.rect(0, 0, 60, 60); c.clip(); Art.hero(c, 30, 78, 1.05, { ...looksOf(S), kid: S.kid, color: S.color, cape: null, cls: null, weapon: null, armor: ARMORS[el.dataset.armor].tier, t: 0.3, glow: false, mood: 'calm' }); }, 60, 60));
 }
 
 // ---------- HUD ----------
 function updateHUD() {
   if (!S) return;
-  $('hudName').textContent = `${KIDS[S.kid].name}  Lv ${S.lv}`; $('hudName').style.background = KIDS[S.kid].col;
+  $('hudName').textContent = `${heroName(S)} · Lv ${S.lv}`; $('hudName').style.background = KIDS[S.kid].col;
   $('hudHP').style.width = clamp(S.hp / maxHP() * 100, 0, 100) + '%'; $('hudHPt').textContent = `${Math.max(0, S.hp)} / ${maxHP()}`;
   $('hudXP').style.width = (S.xp / xpNeed(S.lv) * 100) + '%';
   $('hudGold').textContent = S.gold; $('hudCrys').textContent = `${S.crystals.length}/5`;

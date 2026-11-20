@@ -17,10 +17,9 @@
 
     <div id="creator" hidden>
       <h2 id="crName"></h2>
-      <div class="crsec"><h3>Hero class</h3><div id="crClass" class="opts"></div></div>
-      <div class="crsec two"><div><h3>Tunic</h3><div id="crColor" class="sws"></div></div><div><h3>Cape</h3><div id="crCape" class="sws"></div></div></div>
-      <div class="crsec"><h3>First Lumi friend</h3><div id="crLumi" class="opts"></div></div>
-      <button id="btnBegin" class="big">Begin the adventure ▶</button>
+      <div id="crSteps" class="steps"></div>
+      <div id="crBody"></div>
+      <div class="crnav"><button id="crBack" class="ghost">◀ Back</button><button id="btnBegin" class="big">Next ▶</button></div>
     </div>
 
     <div id="hud" hidden>
@@ -56,7 +55,7 @@
       </div>
     </div>
 
-    <div id="dialog" hidden><canvas id="dlgFace" aria-hidden="true"></canvas><b id="dlgWho"></b><p id="dlgText"></p><button id="dlgNext" class="more" aria-label="Next">▶</button></div>
+    <div id="dialog" hidden><canvas id="dlgFace" aria-hidden="true"></canvas><div id="dlgMe" hidden><canvas id="dlgMeFace" aria-hidden="true"></canvas><span id="dlgMeName"></span></div><b id="dlgWho"></b><p id="dlgText"></p><button id="dlgNext" class="more" aria-label="Next">▶</button></div>
     <div id="panel" hidden><div id="panelCard"><button id="panelClose" aria-label="Close">✕</button><div id="panelBody"></div></div></div>
     <div id="toast"></div>
     <div id="rotate" hidden><div>📱↻<p>Turn your phone sideways</p></div></div>

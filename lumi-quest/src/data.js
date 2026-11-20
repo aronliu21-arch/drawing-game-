@@ -86,6 +86,15 @@ const CLASSES = {
   mage: { name: 'Mage', icon: '✨', perk: 'Lumi skills hit 20% harder' },
   ranger: { name: 'Ranger', icon: '🏹', perk: '+25% coins, easier captures' },
 };
+// Hero creator choices. The first of each list is the kid's usual look.
+const HAIRS = {
+  nora: [['ponytail', 'Ponytail'], ['twinbuns', 'Twin buns'], ['long', 'Long'], ['bob', 'Bob'], ['braids', 'Braids']],
+  lucas: [['spiky', 'Spiky'], ['neat', 'Neat'], ['curly', 'Curly'], ['swoop', 'Swoop'], ['cap', 'Cap']],
+};
+const HAIR_COLS = ['#17141c', '#5c3d2e', '#a0522d', '#d9a441'];
+const FACES = [['sparkle', 'Sparkly'], ['round', 'Round'], ['freckles', 'Freckles'], ['glasses', 'Glasses']];
+const TITLES = ['the Brave', 'the Clever', 'the Kind', 'the Swift', 'the Curious', 'the Bold'];
+const NICKS = { fire: ['Sparky', 'Blaze', 'Ember', 'Toasty', 'Flicker'], water: ['Splash', 'Bubbles', 'Drizzle', 'Puddle', 'Misty'], leaf: ['Sprout', 'Clover', 'Mossy', 'Pip', 'Fern'], star: ['Twinkle', 'Comet', 'Nova', 'Glimmer', 'Sunny'] };
 const TUNICS = ['#1c7ed6', '#e03131', '#2f9e44', '#7048e8', '#f76707', '#0ca678'];
 const CAPES = [null, '#e03131', '#7048e8', '#ffd43b', '#12b886', '#343a40'];
 

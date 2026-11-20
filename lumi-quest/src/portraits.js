@@ -91,11 +91,19 @@ const Portraits = (() => {
     if (!p) return;
     c.save(); c.beginPath(); c.rect(0, 0, PW, PH); c.clip();
     if (p.type === 'bust') bust(c, p.v, p.mood, t, talk);
-    else if (p.type === 'hero') { const s = p.kid === S.kid ? S : loadSave(p.kid); Art.hero(c, 140, 448, 4.2, { kid: p.kid, color: s.color, cape: null, cls: null, weapon: null, armor: ARMORS[s.armor].tier, t, glow: false, mood: p.kid === S.kid ? curMood() : 'calm' }); }
+    else if (p.type === 'hero') { const s = p.kid === S.kid ? S : loadSave(p.kid); Art.hero(c, 140, 448, 4.2, { ...looksOf(s), kid: p.kid, color: s.color, cape: null, cls: null, weapon: null, armor: ARMORS[s.armor].tier, t, glow: false, mood: p.kid === S.kid ? curMood() : 'calm' }); }
     else if (p.type === 'owl') { c.translate(140 - 95 * 2.2, 176 - 80 * 2.2); c.scale(2.2, 2.2); Animals.owl(c, t); }
     else if (p.type === 'fog') Art.fog(c, p.def, 140, p.def.boss ? 352 : 330, p.def.boss ? 2.9 : 3.3, t, false);
     else if (p.type === 'voice') { const g = c.createRadialGradient(140, 200, 10, 140, 200, 150); g.addColorStop(0, 'rgba(43,29,92,.95)'); g.addColorStop(1, 'rgba(43,29,92,0)'); c.fillStyle = g; c.fillRect(0, 0, PW, PH); for (const sx of [-1, 1]) { c.save(); c.shadowColor = '#ff6b6b'; c.shadowBlur = 20; c.globalAlpha = 0.6 + Math.sin(t * 2) * 0.3; E(c, 140 + sx * 30, 190, 12, 7, '#ff6b6b', sx * 0.3); c.restore(); } }
     c.restore();
   }
-  return { forSpeaker, draw };
+  // The listening player's face: reacts to what is being said.
+  function reaction(text) { const m = moodOf(text); return m === 'sad' ? 'worried' : m === 'think' ? 'think' : m === 'happy' ? 'happy' : 'calm'; }
+  function drawMe(cv, mood, t) {
+    const d = Math.min(2, window.devicePixelRatio || 1), W0 = 110;
+    if (cv.width !== W0 * d) { cv.width = W0 * d; cv.height = W0 * d; }
+    const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W0, W0);
+    Art.hero(c, 55, 64 + 66 * 1.55, 1.55, Object.assign(heroLook({ cape: null, cls: null, weapon: null, glow: false }), { mood, t }));
+  }
+  return { forSpeaker, draw, reaction, drawMe };
 })();

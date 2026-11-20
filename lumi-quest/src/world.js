@@ -179,12 +179,26 @@ const bagPanel = () => gearPanel('🎒 Bag', false);
 function teamPanel(inBattle) {
   const render = () => {
     let h = `<h2>🐾 ${KIDS[S.kid].name}'s Lumis</h2><div class="rows">`;
-    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv}${isEvo(l) ? '' : ' · evolves at Level 6'}<br>${MOVES[l.sp].map((nm, t) => l.lv >= MOVE_LV[t] ? `${nm} ${movePower(l, t)}` : `🔒 Lv ${MOVE_LV[t]}`).join(' · ')}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
+    S.party.forEach((l, i) => { const sp = SPECIES[l.sp]; h += `<div class="row lumirow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><div><b>${lumiName(l)}${l.nick ? ` <i class="sp">the ${speciesName(l)}</i>` : ''} <span class="el el-${sp.el}">${sp.el}</span></b><small>Level ${l.lv}${isEvo(l) ? '' : ' · evolves at Level 6'}<br>${MOVES[l.sp].map((nm, t) => l.lv >= MOVE_LV[t] ? `${nm} ${movePower(l, t)}` : `🔒 Lv ${MOVE_LV[t]}`).join(' · ')}</small><div class="bar xp"><i style="width:${l.xp / lumiNeed(l.lv) * 100}%"></i></div></div><button class="ren" data-ren="${i}" aria-label="Give ${speciesName(l)} a name">✏️</button>${i === S.active ? '<em>Active</em>' : `<button data-act="${i}">Choose</button>`}</div>`; });
     h += '</div><p class="hint">Fire beats Leaf · Leaf beats Water · Water beats Fire</p>';
     $('panelBody').innerHTML = h; drawMinis($('panelBody'));
     $('panelBody').querySelectorAll('[data-act]').forEach(b => b.onclick = () => { S.active = +b.dataset.act; Snd.play('tap'); save(); if (inBattle) closePanel(); else render(); });
+    $('panelBody').querySelectorAll('[data-ren]').forEach(b => b.onclick = async () => { Snd.play('tap'); closePanel(); await nameLumi(S.party[+b.dataset.ren]); teamPanel(inBattle); });
   };
   const p = openPanel(''); render(); return p;
+}
+// Ask for a Lumi's nickname: type one, or tap a suggestion.
+function nameLumi(l) {
+  const sp = SPECIES[l.sp]; let pick = l.nick || '';
+  const render = () => {
+    $('panelBody').innerHTML = `<h2>Name your ${speciesName(l)}</h2><div class="nameRow"><canvas data-lumi="${l.sp}" data-evo="${isEvo(l) ? 1 : 0}"></canvas><input id="nickIn" type="text" maxlength="12" autocomplete="off" placeholder="${speciesName(l)}" value="${pick}" aria-label="Lumi name"></div><div class="pills">${NICKS[sp.el].map(n => `<button class="pill${pick === n ? ' on' : ''}" data-nick="${n}">${n}</button>`).join('')}</div><div class="gaterow"><button id="nickSkip" class="ghost dark">No name</button><button id="nickOk" class="big">Keep this name</button></div>`;
+    drawMinis($('panelBody'));
+    $('nickIn').oninput = () => { pick = cleanNick($('nickIn').value); };
+    $('panelBody').querySelectorAll('[data-nick]').forEach(b => b.onclick = () => { pick = b.dataset.nick; Snd.play('tap'); render(); });
+    $('nickOk').onclick = () => { l.nick = cleanNick(pick); Snd.play('ok'); save(); closePanel(); };
+    $('nickSkip').onclick = () => { l.nick = ''; Snd.play('tap'); save(); closePanel(); };
+  };
+  const p = openPanel('', { noClose: true }); render(); return p;
 }
 function questPanel() {
   const w = WORLDS[G.world], q = S.quests[G.world] || {};
@@ -195,7 +209,8 @@ function questPanel() {
   h += `<p class="hint">Answers right first try: ${S.stats.first} · Questions answered: ${S.stats.asked} · Battles won: ${S.stats.wins}</p>`;
   const mem = WORLD_ORDER.slice(0, 5).filter(id => S.bosses[id]).map(id => LORE[id].memory);
   h += '<h3 class="memh">Memories of the boy in the fog</h3>' + (mem.length ? '<ol class="mems">' + mem.map(m => `<li><b>${m[0]}</b> ${m[1]}</li>`).join('') + '</ol>' : '<p class="hint">Beat a Fog boss to find the first memory.</p>');
-  return openPanel(h);
+  h += `<label class="chk"><input type="checkbox" id="optRead" ${S.readBtns ? 'checked' : ''}> Read buttons out loud before choosing them</label>`;
+  const p = openPanel(h); $('optRead').onchange = e => { S.readBtns = e.target.checked; save(); }; return p;
 }
 
 // ---------- drawing ----------
