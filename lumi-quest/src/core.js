@@ -119,7 +119,11 @@ function say(lines, who) {
   if (typeof lines === 'string') lines = [lines];
   return new Promise(res => { dlg = { lines: lines.slice(), who, res }; $('dialog').hidden = false; showLine(); });
 }
-function showLine() { $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]); }
+function showLine() {
+  $('dlgWho').textContent = dlg.who || ''; $('dlgWho').hidden = !dlg.who; wordify($('dlgText'), dlg.lines[0]);
+  // The speaker's portrait, which talks for a moment while the line appears.
+  G.face = Portraits.forSpeaker(dlg.who, dlg.lines[0]); G.faceT0 = G.t; $('dialog').classList.toggle('has-face', !!G.face);
+}
 function advanceDialog() { if (!dlg) return; Snd.play('tap'); dlg.lines.shift(); if (dlg.lines.length) showLine(); else { const r = dlg.res; dlg = null; $('dialog').hidden = true; r(); } }
 $('dialog').addEventListener('click', advanceDialog);
 
